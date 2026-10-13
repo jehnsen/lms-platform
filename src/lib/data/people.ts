@@ -4,9 +4,9 @@ import { quizzes } from "./quizzes";
 /** The signed-in learner in this demo. Their scores come from the local store. */
 export const currentUser = {
   id: "me",
-  name: "Alex Rivera",
+  name: "Mike Manabat",
   initials: "AR",
-  email: "alex.rivera@example.com",
+  email: "mike.manabat@example.com",
 };
 
 const classRoster = [
