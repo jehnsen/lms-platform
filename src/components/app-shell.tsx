@@ -9,6 +9,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   ListChecks,
+  LogOut,
   Menu,
   Sparkles,
   Table2,
@@ -16,6 +17,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { Brand } from "@/components/brand";
 import { currentUser } from "@/lib/data/people";
 import { cn } from "@/lib/utils";
 
@@ -92,17 +94,6 @@ function ActiveNavLinks({ onNavigate }: { onNavigate?: () => void }) {
   return <NavLinks pathname={usePathname()} onNavigate={onNavigate} />;
 }
 
-function Brand() {
-  return (
-    <Link href="/" className="flex items-center gap-2.5">
-      <span className="grid size-8 place-items-center rounded-lg bg-primary text-on-primary">
-        <GraduationCap aria-hidden className="size-4.5" />
-      </span>
-      <span className="font-display text-xl font-semibold tracking-tight">3rdLoopLearning</span>
-    </Link>
-  );
-}
-
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-8 p-4">
@@ -119,10 +110,19 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2 text-sm font-semibold">
           {currentUser.initials}
         </span>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium">{currentUser.name}</div>
           <div className="truncate text-xs text-ink-3">Demo account</div>
         </div>
+        <Link
+          href="/login"
+          onClick={onNavigate}
+          aria-label="Sign out"
+          title="Sign out"
+          className="grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-surface-2 hover:text-ink"
+        >
+          <LogOut aria-hidden className="size-4" />
+        </Link>
       </div>
     </div>
   );

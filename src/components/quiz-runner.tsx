@@ -82,7 +82,7 @@ export function QuizRunner({ quizId }: { quizId: string }) {
             {course.title}
           </ButtonLink>
         ) : null}
-        <h1 className="mt-2 font-display text-3xl leading-tight font-semibold tracking-tight text-balance">
+        <h1 className="mt-2 text-3xl leading-tight font-semibold tracking-tight text-balance">
           {quiz.title}
         </h1>
       </div>

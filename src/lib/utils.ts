@@ -41,3 +41,9 @@ export function formatMinutes(minutes: number) {
 export function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
+
+/** Month and day for calendar-style date tiles, e.g. { month: "Oct", day: "24" }. */
+export function dateParts(iso: string) {
+  const [month, day] = formatDate(iso).split(" ");
+  return { month, day };
+}

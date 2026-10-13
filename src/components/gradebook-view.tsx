@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowDownUp, Download, Search, TriangleAlert } from "lucide-react";
-import { DistributionChart, type Bucket } from "@/components/charts";
+import { ColumnChart, type Column } from "@/components/charts";
 import { Badge, Button, Card, PageContainer, PageHeader, StatTile } from "@/components/ui";
 import { courses } from "@/lib/data/courses";
 import { currentUser, students } from "@/lib/data/people";
@@ -83,11 +83,12 @@ export function GradebookView() {
     (row) => (row.overall !== null && row.overall < PASS_MARK) || row.missing > 0,
   );
 
-  const buckets: Bucket[] = BANDS.map((band) => {
+  const bands: Column[] = BANDS.map((band) => {
     const inBand = graded.filter((row) => row.overall >= band.min && row.overall <= band.max);
     return {
       label: band.label,
-      count: inBand.length,
+      value: inBand.length,
+      valueLabel: `${inBand.length} ${inBand.length === 1 ? "learner" : "learners"}`,
       detail: inBand.map((row) => row.name).join(", ") || undefined,
     };
   });
@@ -187,7 +188,7 @@ export function GradebookView() {
         <Card className="p-5">
           <h2 className="font-semibold">Overall grade distribution</h2>
           <p className="mb-4 text-sm text-ink-3">Learners per score band, {course.title}.</p>
-          <DistributionChart buckets={buckets} unit="learners" />
+          <ColumnChart columns={bands} ariaLabel="Learners per overall grade band" />
         </Card>
       </div>
 

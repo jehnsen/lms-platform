@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "spark";
@@ -54,7 +54,7 @@ export function ButtonLink({
 }
 
 export function Card({ className, ...props }: ComponentProps<"div">) {
-  return <div className={cn("rounded-xl border border-line bg-surface", className)} {...props} />;
+  return <div className={cn("rounded-xl border border-line bg-surface shadow-xs", className)} {...props} />;
 }
 
 type BadgeTone = "neutral" | "primary" | "good" | "warn" | "bad" | "spark";
@@ -143,7 +143,7 @@ export function PageHeader({
     <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {eyebrow ? <div className="mb-2 flex items-center gap-2 text-sm text-ink-3">{eyebrow}</div> : null}
-        <h1 className="font-display text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
+        <h1 className="text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
           {title}
         </h1>
         {description ? <p className="mt-2 max-w-2xl text-ink-2 text-pretty">{description}</p> : null}
@@ -157,14 +157,23 @@ export function StatTile({
   label,
   value,
   hint,
+  icon: Icon,
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
+  icon?: LucideIcon;
 }) {
   return (
     <Card className="p-4">
-      <div className="text-sm text-ink-2">{label}</div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm text-ink-2">{label}</div>
+        {Icon ? (
+          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface-2 text-ink-2">
+            <Icon aria-hidden className="size-4" />
+          </span>
+        ) : null}
+      </div>
       <div className="mt-1 text-2xl font-semibold tracking-tight">{value}</div>
       {hint ? <div className="mt-1 text-xs text-ink-3">{hint}</div> : null}
     </Card>

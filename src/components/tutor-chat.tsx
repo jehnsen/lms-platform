@@ -95,13 +95,6 @@ export function TutorChat({
     if (element) element.scrollTop = element.scrollHeight;
   }, [messages]);
 
-  useEffect(() => {
-    const runs = activeRun;
-    return () => {
-      runs.current += 1;
-    };
-  }, []);
-
   return (
     <div className={cn("flex min-h-0 flex-col", className)}>
       <div ref={scroller} className="relative min-h-0 flex-1 overflow-y-auto px-4 py-4" aria-live="polite">

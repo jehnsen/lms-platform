@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { CircleCheck, CirclePlay, FileText, ListChecks } from "lucide-react";
+import { CircleCheck, FileText, ListChecks, Play } from "lucide-react";
+import { Thumbnail } from "@/components/course-art";
 import { Badge } from "@/components/ui";
 import { getQuiz } from "@/lib/data/quizzes";
 import { bestAttempt } from "@/lib/progress";
 import { useLearner } from "@/lib/store";
 import type { Course } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+const TILE = "h-13.5 w-24 shrink-0 rounded-md";
 
 /** Module-by-module outline of a course with the learner's progress. */
 export function Curriculum({
@@ -43,26 +46,42 @@ export function Curriculum({
               {module.lessons.map((lesson) => {
                 const complete = state.completedLessons.includes(lesson.id);
                 const current = lesson.id === currentLessonId;
-                const TypeIcon = lesson.type === "video" ? CirclePlay : FileText;
+                const isVideo = lesson.type === "video";
                 return (
                   <li key={lesson.id}>
                     <Link
                       href={`/courses/${course.id}/learn/${lesson.id}`}
                       aria-current={current ? "page" : undefined}
                       className={cn(
-                        "flex items-start gap-3 rounded-lg px-2 py-2 text-sm transition-colors",
+                        "group flex items-center gap-3 rounded-lg p-2 text-sm transition-colors",
                         current ? "bg-primary-soft" : "hover:bg-surface-2",
                       )}
                     >
-                      {complete ? (
-                        <CircleCheck aria-label="Completed" className="mt-0.5 size-4 shrink-0 text-good" />
-                      ) : (
-                        <TypeIcon aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3" />
-                      )}
-                      <span className={cn("flex-1", current && "font-medium")}>{lesson.title}</span>
-                      <span className="shrink-0 text-xs text-ink-3 tabular-nums">
-                        {lesson.type === "video" ? "Video" : "Reading"} · {lesson.minutes} min
+                      <Thumbnail src={lesson.thumbnail} accent={course.accent} sizes="96px" className={TILE}>
+                        {isVideo ? (
+                          <span className="absolute inset-0 grid place-items-center bg-black/25 transition-colors group-hover:bg-black/40">
+                            <span className="grid size-6 place-items-center rounded-full bg-white/95 text-neutral-950">
+                              <Play aria-hidden className="size-3 translate-x-px fill-current" />
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="absolute bottom-1 left-1 grid size-5 place-items-center rounded bg-black/70 text-white">
+                            <FileText aria-hidden className="size-3" />
+                          </span>
+                        )}
+                        <span className="absolute right-1 bottom-1 rounded bg-black/75 px-1 text-[10px] leading-4 font-medium text-white tabular-nums">
+                          {lesson.minutes} min
+                        </span>
+                      </Thumbnail>
+                      <span className="min-w-0 flex-1">
+                        <span className={cn("line-clamp-2", current && "font-medium")}>{lesson.title}</span>
+                        <span className="mt-0.5 block text-xs text-ink-3">
+                          {isVideo ? "Video" : "Reading"}
+                        </span>
                       </span>
+                      {complete ? (
+                        <CircleCheck aria-label="Completed" className="size-4 shrink-0 text-good" />
+                      ) : null}
                     </Link>
                   </li>
                 );
@@ -71,23 +90,22 @@ export function Curriculum({
                 <li>
                   <Link
                     href={`/quizzes/${quiz.id}`}
-                    className="flex items-start gap-3 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-surface-2"
+                    className="flex items-center gap-3 rounded-lg p-2 text-sm transition-colors hover:bg-surface-2"
                   >
-                    {best ? (
-                      <CircleCheck aria-label="Submitted" className="mt-0.5 size-4 shrink-0 text-good" />
-                    ) : (
-                      <ListChecks aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3" />
-                    )}
-                    <span className="flex-1">Module quiz</span>
+                    <span className={cn(TILE, "grid place-items-center bg-surface-2 text-ink-2")}>
+                      <ListChecks aria-hidden className="size-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block">Module quiz</span>
+                      <span className="mt-0.5 block text-xs text-ink-3">
+                        Graded · {quiz.questions.length} questions
+                      </span>
+                    </span>
                     {best ? (
                       <Badge tone={best.percent >= quiz.passMark ? "good" : "warn"}>
                         Best {best.percent}%
                       </Badge>
-                    ) : (
-                      <span className="shrink-0 text-xs text-ink-3">
-                        Graded · {quiz.questions.length} questions
-                      </span>
-                    )}
+                    ) : null}
                   </Link>
                 </li>
               ) : null}

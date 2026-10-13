@@ -1,46 +1,76 @@
-import { Brain, CodeXml, Coins, Dna, type LucideIcon } from "lucide-react";
-import type { Course, CourseIcon } from "@/lib/types";
+import Image from "next/image";
+import type { ReactNode } from "react";
+import type { Course } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const ICONS: Record<CourseIcon, LucideIcon> = {
-  brain: Brain,
-  code: CodeXml,
-  dna: Dna,
-  coins: Coins,
-};
-
 /**
- * Generated cover art: the course colour with its subject glyph. "banner" adds
- * an oversized glyph bleeding off the corner; "thumb" is a small square tile.
+ * A decorative photo that fills its box. Size the box with `className`
+ * (e.g. "aspect-video") and describe its rendered width with `sizes`.
  */
-export function CourseCover({
-  course,
-  variant = "banner",
+export function Thumbnail({
+  src,
+  accent,
+  sizes,
+  eager,
   className,
+  imageClassName,
+  children,
 }: {
-  course: Course;
-  variant?: "banner" | "thumb";
+  src: string;
+  /** Background shown while the photo loads. */
+  accent?: string;
+  sizes: string;
+  /** Load immediately; use for the main image above the fold. */
+  eager?: boolean;
   className?: string;
+  imageClassName?: string;
+  children?: ReactNode;
 }) {
-  const Icon = ICONS[course.icon];
   return (
     <div
-      aria-hidden
-      className={cn(
-        "relative overflow-hidden",
-        variant === "thumb" && "grid size-12 shrink-0 place-items-center rounded-lg",
-        className,
-      )}
-      style={{ backgroundColor: course.cover.bg, color: course.cover.fg }}
+      className={cn("relative overflow-hidden bg-surface-2", className)}
+      style={accent ? { backgroundColor: accent } : undefined}
     >
-      {variant === "banner" ? (
-        <>
-          <Icon strokeWidth={1} className="absolute -right-6 -bottom-8 size-40 opacity-25" />
-          <Icon strokeWidth={1.5} className="absolute top-4 left-4 size-7" />
-        </>
-      ) : (
-        <Icon strokeWidth={1.5} className="size-6" />
-      )}
+      <Image
+        src={src}
+        alt=""
+        fill
+        sizes={sizes}
+        loading={eager ? "eager" : undefined}
+        fetchPriority={eager ? "high" : undefined}
+        className={cn("object-cover", imageClassName)}
+      />
+      {children}
     </div>
+  );
+}
+
+export function CourseCover({
+  course,
+  sizes,
+  eager,
+  className,
+  imageClassName,
+  children,
+}: {
+  course: Course;
+  sizes: string;
+  /** Load immediately; use for the main image above the fold. */
+  eager?: boolean;
+  className?: string;
+  imageClassName?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <Thumbnail
+      src={course.thumbnail}
+      accent={course.accent}
+      sizes={sizes}
+      eager={eager}
+      className={className}
+      imageClassName={imageClassName}
+    >
+      {children}
+    </Thumbnail>
   );
 }

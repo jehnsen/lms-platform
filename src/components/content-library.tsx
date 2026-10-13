@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   AudioLines,
   Captions,
@@ -90,33 +90,26 @@ export function ContentLibrary() {
   const [notice, setNotice] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
 
-  const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
   const objectUrls = useRef(new Set<string>());
   const uploadCount = useRef(0);
 
-  useEffect(() => {
-    const pendingTimers = timers.current;
-    const urls = objectUrls.current;
-    return () => {
-      pendingTimers.forEach((timer) => clearTimeout(timer));
-      urls.forEach((url) => URL.revokeObjectURL(url));
-    };
+  // This page stays mounted (hidden) after navigating away, so simulated
+  // uploads are left to finish. Only the preview is closed, to stop its media.
+  useLayoutEffect(() => {
+    return () => setPreviewId(null);
   }, []);
 
   const patch = (id: string, changes: Partial<LibraryItem>) =>
     setItems((previous) => previous.map((item) => (item.id === id ? { ...item, ...changes } : item)));
 
-  const later = (callback: () => void, ms: number) => {
-    const timer = setTimeout(() => {
-      timers.current.delete(timer);
-      callback();
-    }, ms);
-    timers.current.add(timer);
-  };
-
   const track = (url: string) => {
     objectUrls.current.add(url);
     return url;
+  };
+
+  const release = (url: string | undefined) => {
+    if (!url || !objectUrls.current.delete(url)) return;
+    URL.revokeObjectURL(url);
   };
 
   /** Stand-in for a real upload: advances a progress bar, then a short "processing" phase. */
@@ -124,11 +117,11 @@ export function ContentLibrary() {
     const next = Math.min(100, progress + 9);
     if (next < 100) {
       patch(id, { progress: next });
-      later(() => simulateUpload(id, next), 150);
+      setTimeout(() => simulateUpload(id, next), 150);
       return;
     }
     patch(id, { progress: 100, status: "processing" });
-    later(() => patch(id, { status: "ready", progress: undefined }), 900);
+    setTimeout(() => patch(id, { status: "ready", progress: undefined }), 900);
   };
 
   const attachCaptions = async (id: string, file: File) => {
@@ -138,7 +131,7 @@ export function ContentLibrary() {
 
   const autoCaption = (id: string) => {
     patch(id, { captions: "generating" });
-    later(() => patch(id, { captions: "ready", captionsUrl: track(vttUrl(DEMO_CAPTIONS)), demoCaptions: true }), 2200);
+    setTimeout(() => patch(id, { captions: "ready", captionsUrl: track(vttUrl(DEMO_CAPTIONS)), demoCaptions: true }), 2200);
   };
 
   const addFiles = (files: File[]) => {
@@ -180,7 +173,7 @@ export function ContentLibrary() {
 
     if (added.length > 0) {
       setItems((previous) => [...added, ...previous]);
-      added.forEach((item) => later(() => simulateUpload(item.id), 150));
+      added.forEach((item) => setTimeout(() => simulateUpload(item.id), 150));
     }
 
     // Pair caption files with media: same file name first, otherwise the newest video.
@@ -204,6 +197,8 @@ export function ContentLibrary() {
 
   const remove = (item: LibraryItem) => {
     if (previewId === item.id) setPreviewId(null);
+    release(item.url);
+    release(item.captionsUrl);
     setItems((previous) => previous.filter((other) => other.id !== item.id));
   };
 

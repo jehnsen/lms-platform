@@ -163,38 +163,63 @@ export function ScoreTrendChart({ points, passMark }: { points: TrendPoint[]; pa
   );
 }
 
-export interface Bucket {
+export interface Column {
   label: string;
-  count: number;
+  value: number;
+  /** How the value reads in the tooltip, e.g. "45 min". */
+  valueLabel: string;
   detail?: string;
 }
 
-/** Column chart of how many learners fall into each score band. */
-export function DistributionChart({ buckets, unit }: { buckets: Bucket[]; unit: string }) {
-  const max = Math.max(1, ...buckets.map((bucket) => bucket.count));
+/** Single-series column chart with a tooltip on hover or keyboard focus. */
+export function ColumnChart({
+  columns,
+  ariaLabel,
+  showValues = true,
+  className = "h-40",
+}: {
+  columns: Column[];
+  ariaLabel: string;
+  /** Print each value on its column. Leave off when the tooltip is enough. */
+  showValues?: boolean;
+  className?: string;
+}) {
+  const max = Math.max(1, ...columns.map((column) => column.value));
   return (
-    <div role="img" aria-label={`Distribution of ${unit} by score band: ${buckets.map((bucket) => `${bucket.label}: ${bucket.count}`).join(", ")}`}>
-      <div className="flex h-40 items-end gap-2 border-b border-chart-axis">
-        {buckets.map((bucket) => (
-          <div key={bucket.label} tabIndex={0} className="group relative flex h-full flex-1 flex-col items-center justify-end outline-none">
-            <span className="mb-1 text-xs font-medium tabular-nums">{bucket.count}</span>
+    <div
+      role="img"
+      aria-label={`${ariaLabel}: ${columns.map((column) => `${column.label} ${column.valueLabel}`).join(", ")}`}
+    >
+      <div className={cn("flex items-end gap-2 border-b border-chart-axis", className)}>
+        {columns.map((column) => (
+          <div
+            key={column.label}
+            tabIndex={0}
+            className="group relative flex h-full flex-1 flex-col items-center justify-end outline-none"
+          >
+            {showValues ? (
+              <span className="mb-1 text-xs font-medium tabular-nums">{column.value}</span>
+            ) : null}
             <div
-              className="w-6 rounded-t bg-chart transition-opacity group-hover:opacity-80 group-focus-visible:opacity-80"
-              style={{ height: `${(bucket.count / max) * 78}%`, minHeight: bucket.count > 0 ? 2 : 0 }}
+              className="w-full max-w-6 rounded-t bg-chart transition-opacity group-hover:opacity-80 group-focus-visible:opacity-80"
+              style={{
+                height: `${(column.value / max) * (showValues ? 78 : 100)}%`,
+                minHeight: column.value > 0 ? 2 : 0,
+              }}
             />
             <div className="pointer-events-none absolute bottom-full left-1/2 z-10 hidden w-max max-w-48 -translate-x-1/2 translate-y-6 rounded-lg border border-line bg-surface px-3 py-2 text-xs shadow-md group-hover:block group-focus-visible:block">
               <div className="font-semibold">
-                {bucket.count} {unit} · {bucket.label}
+                {column.valueLabel} · {column.label}
               </div>
-              {bucket.detail ? <div className="mt-0.5 text-ink-2">{bucket.detail}</div> : null}
+              {column.detail ? <div className="mt-0.5 text-ink-2">{column.detail}</div> : null}
             </div>
           </div>
         ))}
       </div>
       <div className="mt-1.5 flex gap-2">
-        {buckets.map((bucket) => (
-          <div key={bucket.label} className="flex-1 text-center text-[11px] text-ink-3 tabular-nums">
-            {bucket.label}
+        {columns.map((column) => (
+          <div key={column.label} className="flex-1 text-center text-[11px] text-ink-3 tabular-nums">
+            {column.label}
           </div>
         ))}
       </div>

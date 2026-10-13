@@ -58,6 +58,7 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
               key={lesson.id}
               ref={playerRef}
               src={SAMPLE_VIDEOS[lesson.video]}
+              poster={lesson.thumbnail}
               title={lesson.title}
               transcript={transcript}
               checkpoints={lesson.checkpoints ?? []}
@@ -75,7 +76,7 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
                 Lesson {index + 1} of {total} · {lesson.type === "video" ? "Video" : "Reading"} ·{" "}
                 {lesson.minutes} min
               </p>
-              <h1 className="mt-1 font-display text-2xl leading-tight font-semibold tracking-tight text-balance sm:text-3xl">
+              <h1 className="mt-1 text-2xl leading-tight font-semibold tracking-tight text-balance sm:text-3xl">
                 {lesson.title}
               </h1>
             </div>

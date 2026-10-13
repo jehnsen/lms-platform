@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type Ref } from "react";
 import {
   Captions,
   CaptionsOff,
@@ -28,6 +28,7 @@ const RATES = [1, 1.25, 1.5, 2, 0.75];
 
 export function LessonPlayer({
   src,
+  poster,
   title,
   transcript,
   checkpoints,
@@ -39,6 +40,7 @@ export function LessonPlayer({
   ref,
 }: {
   src: string;
+  poster?: string;
   title: string;
   transcript: string[];
   checkpoints: Checkpoint[];
@@ -73,6 +75,13 @@ export function LessonPlayer({
     const onChange = () => setFullscreen(document.fullscreenElement === frameRef.current);
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  // Next.js hides pages instead of unmounting them on navigation, and a hidden
+  // video keeps playing. Pause on the way out; the position is kept.
+  useLayoutEffect(() => {
+    const video = videoRef.current;
+    return () => video?.pause();
   }, []);
 
   useImperativeHandle(ref, () => ({
@@ -182,6 +191,7 @@ export function LessonPlayer({
         <video
           ref={videoRef}
           src={src}
+          poster={poster}
           playsInline
           preload="metadata"
           aria-label={title}
@@ -196,7 +206,8 @@ export function LessonPlayer({
           onError={() => setFailed(true)}
           className={cn(
             "col-start-1 row-start-1 w-full self-center bg-black",
-            fullscreen ? "h-full object-contain" : "aspect-video",
+            // The poster photo should fill the frame; the video itself is never cropped.
+            fullscreen ? "h-full object-contain" : current === 0 && !playing ? "aspect-video object-cover" : "aspect-video",
           )}
         />
 

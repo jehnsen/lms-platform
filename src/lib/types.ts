@@ -20,6 +20,8 @@ export interface Lesson {
   minutes: number;
   summary: string;
   keyPoints: string[];
+  /** Photo shown as the video poster and in lesson lists. */
+  thumbnail: string;
   /** Video lessons: which sample clip to play and its caption lines. */
   video?: VideoKey;
   transcript?: string[];
@@ -35,8 +37,6 @@ export interface CourseModule {
   quizId?: string;
 }
 
-export type CourseIcon = "brain" | "code" | "dna" | "coins";
-
 export interface Course {
   id: string;
   title: string;
@@ -45,8 +45,9 @@ export interface Course {
   subject: string;
   level: Level;
   instructor: string;
-  icon: CourseIcon;
-  cover: { bg: string; fg: string };
+  thumbnail: string;
+  /** Shown behind the thumbnail while it loads. */
+  accent: string;
   learners: number;
   rating: number;
   modules: CourseModule[];

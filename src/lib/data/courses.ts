@@ -14,6 +14,7 @@ export const SAMPLE_VIDEOS: Record<VideoKey, string> = {
 export const courses: Course[] = [
   {
     id: "ml-foundations",
+    thumbnail: "/thumbnails/course-ml-foundations.jpg",
     title: "Machine Learning Foundations",
     tagline: "Understand how machines learn from data — no PhD required.",
     description:
@@ -21,8 +22,7 @@ export const courses: Course[] = [
     subject: "Computer Science",
     level: "Beginner",
     instructor: "Dr. Amara Okafor",
-    icon: "brain",
-    cover: { bg: "#17346b", fg: "#cde2fb" },
+    accent: "#17346b",
     learners: 12840,
     rating: 4.8,
     modules: [
@@ -33,6 +33,7 @@ export const courses: Course[] = [
         lessons: [
           {
             id: "ml-learning-from-data",
+            thumbnail: "/thumbnails/ml-learning-from-data.jpg",
             title: "Learning from data",
             type: "video",
             video: "sintel",
@@ -88,6 +89,7 @@ export const courses: Course[] = [
           },
           {
             id: "ml-supervised-unsupervised",
+            thumbnail: "/thumbnails/ml-supervised-unsupervised.jpg",
             title: "Supervised vs. unsupervised learning",
             type: "video",
             video: "bunny",
@@ -122,6 +124,7 @@ export const courses: Course[] = [
           },
           {
             id: "ml-short-history",
+            thumbnail: "/thumbnails/ml-short-history.jpg",
             title: "A short history of machine learning",
             type: "reading",
             minutes: 6,
@@ -148,6 +151,7 @@ export const courses: Course[] = [
         lessons: [
           {
             id: "ml-gradient-descent",
+            thumbnail: "/thumbnails/ml-gradient-descent.jpg",
             title: "How models learn: loss and gradient descent",
             type: "video",
             video: "sintel",
@@ -202,6 +206,7 @@ export const courses: Course[] = [
           },
           {
             id: "ml-overfitting",
+            thumbnail: "/thumbnails/ml-overfitting.jpg",
             title: "Overfitting and generalization",
             type: "video",
             video: "bunny",
@@ -242,6 +247,7 @@ export const courses: Course[] = [
         lessons: [
           {
             id: "ml-train-val-test",
+            thumbnail: "/thumbnails/ml-train-val-test.jpg",
             title: "Train, validation and test sets",
             type: "video",
             video: "sintel",
@@ -280,6 +286,7 @@ export const courses: Course[] = [
           },
           {
             id: "ml-choosing-metric",
+            thumbnail: "/thumbnails/ml-choosing-metric.jpg",
             title: "Choosing the right metric",
             type: "reading",
             minutes: 7,
@@ -303,6 +310,7 @@ export const courses: Course[] = [
   },
   {
     id: "web-dev",
+    thumbnail: "/thumbnails/course-web-dev.jpg",
     title: "Web Development Fundamentals",
     tagline: "Build your first real web pages with HTML and CSS.",
     description:
@@ -310,8 +318,7 @@ export const courses: Course[] = [
     subject: "Technology",
     level: "Beginner",
     instructor: "Marco Reyes",
-    icon: "code",
-    cover: { bg: "#7a2e12", fg: "#fde0d2" },
+    accent: "#7a2e12",
     learners: 20415,
     rating: 4.7,
     modules: [
@@ -322,6 +329,7 @@ export const courses: Course[] = [
         lessons: [
           {
             id: "web-how-web-works",
+            thumbnail: "/thumbnails/web-how-web-works.jpg",
             title: "How the web works",
             type: "video",
             video: "bunny",
@@ -355,6 +363,7 @@ export const courses: Course[] = [
           },
           {
             id: "web-semantic-html",
+            thumbnail: "/thumbnails/web-semantic-html.jpg",
             title: "Semantic HTML",
             type: "video",
             video: "sintel",
@@ -396,6 +405,7 @@ export const courses: Course[] = [
         lessons: [
           {
             id: "web-box-model",
+            thumbnail: "/thumbnails/web-box-model.jpg",
             title: "The box model",
             type: "video",
             video: "bunny",
@@ -428,6 +438,7 @@ export const courses: Course[] = [
           },
           {
             id: "web-flexbox",
+            thumbnail: "/thumbnails/web-flexbox.jpg",
             title: "Flexbox in ten minutes",
             type: "video",
             video: "sintel",
@@ -463,6 +474,7 @@ export const courses: Course[] = [
           },
           {
             id: "web-specificity",
+            thumbnail: "/thumbnails/web-specificity.jpg",
             title: "CSS specificity cheat sheet",
             type: "reading",
             minutes: 5,
@@ -485,6 +497,7 @@ export const courses: Course[] = [
   },
   {
     id: "cell-biology",
+    thumbnail: "/thumbnails/course-cell-biology.jpg",
     title: "Biology: Cells and Genetics",
     tagline: "Explore the machinery of life, from membranes to DNA.",
     description:
@@ -492,8 +505,7 @@ export const courses: Course[] = [
     subject: "Science",
     level: "Intermediate",
     instructor: "Dr. Lena Park",
-    icon: "dna",
-    cover: { bg: "#0f4d3a", fg: "#c9f0e0" },
+    accent: "#0f4d3a",
     learners: 8630,
     rating: 4.9,
     modules: [
@@ -504,6 +516,7 @@ export const courses: Course[] = [
         lessons: [
           {
             id: "bio-organelles",
+            thumbnail: "/thumbnails/bio-organelles.jpg",
             title: "Cell structure and organelles",
             type: "video",
             video: "sintel",
@@ -537,6 +550,7 @@ export const courses: Course[] = [
           },
           {
             id: "bio-membranes",
+            thumbnail: "/thumbnails/bio-membranes.jpg",
             title: "Membranes and transport",
             type: "video",
             video: "bunny",
@@ -576,6 +590,7 @@ export const courses: Course[] = [
         lessons: [
           {
             id: "bio-dna",
+            thumbnail: "/thumbnails/bio-dna.jpg",
             title: "DNA: the code of life",
             type: "video",
             video: "sintel",
@@ -608,6 +623,7 @@ export const courses: Course[] = [
           },
           {
             id: "bio-mitosis",
+            thumbnail: "/thumbnails/bio-mitosis.jpg",
             title: "Mitosis step by step",
             type: "video",
             video: "bunny",
@@ -640,6 +656,7 @@ export const courses: Course[] = [
           },
           {
             id: "bio-mendel",
+            thumbnail: "/thumbnails/bio-mendel.jpg",
             title: "Mendel and inheritance",
             type: "reading",
             minutes: 8,
@@ -663,6 +680,7 @@ export const courses: Course[] = [
   },
   {
     id: "money-skills",
+    thumbnail: "/thumbnails/course-money-skills.jpg",
     title: "Money Skills: Personal Finance",
     tagline: "Budget, save and understand interest before your first paycheck.",
     description:
@@ -670,8 +688,7 @@ export const courses: Course[] = [
     subject: "Life Skills",
     level: "Beginner",
     instructor: "Sofia Mendes",
-    icon: "coins",
-    cover: { bg: "#5a4300", fg: "#fbe7b0" },
+    accent: "#5a4300",
     learners: 15270,
     rating: 4.6,
     modules: [
@@ -682,6 +699,7 @@ export const courses: Course[] = [
         lessons: [
           {
             id: "fin-needs-wants",
+            thumbnail: "/thumbnails/fin-needs-wants.jpg",
             title: "Needs, wants and the 50/30/20 rule",
             type: "video",
             video: "bunny",
@@ -714,6 +732,7 @@ export const courses: Course[] = [
           },
           {
             id: "fin-first-budget",
+            thumbnail: "/thumbnails/fin-first-budget.jpg",
             title: "Building your first budget",
             type: "reading",
             minutes: 6,
@@ -738,6 +757,7 @@ export const courses: Course[] = [
         lessons: [
           {
             id: "fin-compound-interest",
+            thumbnail: "/thumbnails/fin-compound-interest.jpg",
             title: "Compound interest explained",
             type: "video",
             video: "sintel",
@@ -777,6 +797,7 @@ export const courses: Course[] = [
           },
           {
             id: "fin-saving-investing",
+            thumbnail: "/thumbnails/fin-saving-investing.jpg",
             title: "Saving vs. investing",
             type: "video",
             video: "bunny",

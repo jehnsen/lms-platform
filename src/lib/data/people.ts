@@ -116,3 +116,16 @@ export const materials: Material[] = [
     uploadedAt: "2026-10-07",
   },
 ];
+
+/** Mock study time for the dashboard. Replace with real activity tracking. */
+export const weeklyActivity = [
+  { day: "Mon", minutes: 35 },
+  { day: "Tue", minutes: 20 },
+  { day: "Wed", minutes: 10 },
+  { day: "Thu", minutes: 45 },
+  { day: "Fri", minutes: 30 },
+  { day: "Sat", minutes: 15 },
+  { day: "Sun", minutes: 0 },
+];
+
+export const studyStreakDays = 6;

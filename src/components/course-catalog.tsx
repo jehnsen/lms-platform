@@ -48,15 +48,24 @@ export function CourseCatalog() {
             <li key={course.id}>
               <Link
                 href={`/courses/${course.id}`}
-                className="group flex h-full flex-col overflow-hidden rounded-xl border border-line bg-surface transition-colors hover:border-line-strong"
+                className="group flex h-full flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-xs transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-md"
               >
-                <CourseCover course={course} className="h-32" />
+                <CourseCover
+                  course={course}
+                  sizes="(min-width: 1280px) 24rem, (min-width: 640px) 50vw, 100vw"
+                  className="aspect-video"
+                  imageClassName="transition-transform duration-300 group-hover:scale-105"
+                >
+                  <span className="absolute right-2 bottom-2 rounded bg-black/75 px-1.5 py-0.5 text-xs font-medium text-white tabular-nums">
+                    {courseLessons(course).length} lessons · {formatMinutes(courseMinutes(course))}
+                  </span>
+                </CourseCover>
                 <div className="flex flex-1 flex-col p-4">
                   <div className="flex flex-wrap gap-1.5">
                     <Badge>{course.subject}</Badge>
                     <Badge>{course.level}</Badge>
                   </div>
-                  <h2 className="mt-3 font-display text-xl leading-snug font-semibold tracking-tight text-balance group-hover:underline">
+                  <h2 className="mt-3 text-xl leading-snug font-semibold tracking-tight text-balance group-hover:underline">
                     {course.title}
                   </h2>
                   <p className="mt-1.5 flex-1 text-sm text-ink-2 text-pretty">{course.tagline}</p>
@@ -75,9 +84,7 @@ export function CourseCatalog() {
                         <span className="text-xs text-ink-2 tabular-nums">{progress.percent}% complete</span>
                       </div>
                     ) : (
-                      <span className="text-xs text-ink-3">
-                        {courseLessons(course).length} lessons · {formatMinutes(courseMinutes(course))}
-                      </span>
+                      <span className="text-xs font-medium text-primary-ink">Start course</span>
                     )}
                   </div>
                 </div>

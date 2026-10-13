@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   BookmarkCheck,
   BookmarkPlus,
@@ -53,13 +53,6 @@ export function LessonPlanGenerator() {
   // Bumped to abandon a generation that is still "running".
   const activeRun = useRef(0);
   const resultRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const runs = activeRun;
-    return () => {
-      runs.current += 1;
-    };
-  }, []);
 
   const update = <Key extends keyof LessonPlanInput>(key: Key, value: LessonPlanInput[Key]) =>
     setInput((previous) => ({ ...previous, [key]: value }));
@@ -362,7 +355,7 @@ function PlanView({ plan, actions }: { plan: LessonPlan; actions: React.ReactNod
           <AiBadge>AI draft — review before teaching</AiBadge>
           <div className="flex flex-wrap gap-2">{actions}</div>
         </div>
-        <h2 className="mt-3 font-display text-2xl leading-tight font-semibold tracking-tight text-balance">
+        <h2 className="mt-3 text-2xl leading-tight font-semibold tracking-tight text-balance">
           {plan.title}
         </h2>
         <p className="mt-2 max-w-[65ch] text-ink-2 text-pretty">{plan.overview}</p>
