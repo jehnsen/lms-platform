@@ -4,18 +4,33 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronRight, ListChecks, Sparkles } from "lucide-react";
 import { Curriculum } from "@/components/curriculum";
+import { ForbiddenView } from "@/components/forbidden-view";
 import { LessonPlayer, type LessonPlayerHandle } from "@/components/lesson-player";
 import { TutorChat, type TutorChatHandle } from "@/components/tutor-chat";
-import { Button, ButtonLink, PageContainer } from "@/components/ui";
+import { Badge, Button, ButtonLink, PageContainer } from "@/components/ui";
+import { useCanViewCourse } from "@/lib/api/courses";
+import {
+  recordCheckpoint,
+  setLessonComplete,
+  useCanTrackProgress,
+  useMyProgress,
+} from "@/lib/api/progress";
+import { useActor } from "@/lib/api/session";
 import { SAMPLE_VIDEOS, findLesson } from "@/lib/data/courses";
-import { learner, useLearner } from "@/lib/store";
+import { can } from "@/lib/domain/permissions";
 import { cn } from "@/lib/utils";
 
 type SidePanel = "tutor" | "content";
 type LessonTab = "overview" | "transcript";
 
 export function LessonWorkspace({ courseId, lessonId }: { courseId: string; lessonId: string }) {
-  const state = useLearner();
+  const state = useMyProgress();
+  const actor = useActor();
+  // Staff preview lessons without recording progress; the tutor is a learner tool.
+  const tracking = useCanTrackProgress();
+  const hasTutor = can(actor, "view", { type: "tutor" });
+  const allowed = useCanViewCourse(courseId);
+  const [previewAnswers, setPreviewAnswers] = useState<Record<string, boolean>>({});
   const playerRef = useRef<LessonPlayerHandle>(null);
   const tutorRef = useRef<TutorChatHandle>(null);
   const [panel, setPanel] = useState<SidePanel>("tutor");
@@ -24,6 +39,7 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
 
   const location = findLesson(courseId, lessonId);
   if (!location) return null;
+  if (allowed === false) return <ForbiddenView resource={`course:${courseId}`} what="this course" />;
   const { course, module: courseModule, lesson, index, total, previous, next } = location;
 
   const complete = state.completedLessons.includes(lesson.id);
@@ -31,6 +47,14 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
   const isLastInModule = courseModule.lessons[courseModule.lessons.length - 1].id === lesson.id;
   const activeLine =
     transcript.length > 0 ? Math.min(transcript.length - 1, Math.floor(fraction * transcript.length)) : -1;
+
+  const sidePanel: SidePanel = hasTutor ? panel : "content";
+
+  const answerCheckpoint = (checkpointId: string, correct: boolean) => {
+    if (tracking) void recordCheckpoint(checkpointId, correct);
+    // In preview the answer is kept only for this visit, so the video can continue.
+    else setPreviewAnswers((previous) => ({ ...previous, [checkpointId]: correct }));
+  };
 
   const askTutor = (question: string) => {
     setPanel("tutor");
@@ -62,11 +86,11 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
               title={lesson.title}
               transcript={transcript}
               checkpoints={lesson.checkpoints ?? []}
-              answered={state.checkpoints}
-              onCheckpointAnswered={learner.recordCheckpoint}
+              answered={tracking ? state.checkpoints : previewAnswers}
+              onCheckpointAnswered={answerCheckpoint}
               onProgress={setFraction}
-              onEnded={() => learner.setLessonComplete(lesson.id, true)}
-              onAskTutor={askTutor}
+              onEnded={tracking ? () => void setLessonComplete(lesson.id, true) : undefined}
+              onAskTutor={hasTutor ? askTutor : undefined}
             />
           ) : null}
 
@@ -80,14 +104,18 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
                 {lesson.title}
               </h1>
             </div>
-            <Button
-              variant={complete ? "secondary" : "primary"}
-              aria-pressed={complete}
-              onClick={() => learner.setLessonComplete(lesson.id, !complete)}
-            >
-              <Check aria-hidden className="size-4" />
-              {complete ? "Completed" : "Mark as complete"}
-            </Button>
+            {tracking ? (
+              <Button
+                variant={complete ? "secondary" : "primary"}
+                aria-pressed={complete}
+                onClick={() => void setLessonComplete(lesson.id, !complete)}
+              >
+                <Check aria-hidden className="size-4" />
+                {complete ? "Completed" : "Mark as complete"}
+              </Button>
+            ) : (
+              <Badge className="h-8 px-3">Preview · progress isn&apos;t recorded</Badge>
+            )}
           </div>
 
           {lesson.type === "video" ? (
@@ -167,7 +195,7 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
               <span />
             )}
             <div className="flex flex-wrap gap-2">
-              {isLastInModule && courseModule.quizId ? (
+              {tracking && isLastInModule && courseModule.quizId ? (
                 <ButtonLink variant={next ? "secondary" : "primary"} href={`/quizzes/${courseModule.quizId}`}>
                   <ListChecks aria-hidden className="size-4" />
                   Take the module quiz
@@ -189,33 +217,37 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
 
         <aside className="flex h-[34rem] flex-col overflow-hidden rounded-xl border border-line bg-surface xl:sticky xl:top-6 xl:h-[calc(100dvh-3rem)]">
           <div role="tablist" aria-label="Lesson tools" className="flex shrink-0 border-b border-line">
-            <SideTab active={panel === "tutor"} onClick={() => setPanel("tutor")} controls="side-panel-tutor">
-              <Sparkles aria-hidden className="size-4 text-spark" />
-              AI tutor
-            </SideTab>
-            <SideTab active={panel === "content"} onClick={() => setPanel("content")} controls="side-panel-content">
+            {hasTutor ? (
+              <SideTab active={sidePanel === "tutor"} onClick={() => setPanel("tutor")} controls="side-panel-tutor">
+                <Sparkles aria-hidden className="size-4 text-spark" />
+                AI tutor
+              </SideTab>
+            ) : null}
+            <SideTab active={sidePanel === "content"} onClick={() => setPanel("content")} controls="side-panel-content">
               Course content
             </SideTab>
           </div>
           {/* Both panels stay mounted so the conversation survives switching tabs. */}
-          <div id="side-panel-tutor" role="tabpanel" className={cn("min-h-0 flex-1", panel === "tutor" ? "flex" : "hidden")}>
-            <TutorChat
-              key={lesson.id}
-              ref={tutorRef}
-              className="flex-1"
-              context={{
-                courseTitle: course.title,
-                lessonTitle: lesson.title,
-                summary: lesson.summary,
-                keyPoints: lesson.keyPoints,
-                practice: lesson.checkpoints,
-              }}
-            />
-          </div>
+          {hasTutor ? (
+            <div id="side-panel-tutor" role="tabpanel" className={cn("min-h-0 flex-1", sidePanel === "tutor" ? "flex" : "hidden")}>
+              <TutorChat
+                key={lesson.id}
+                ref={tutorRef}
+                className="flex-1"
+                context={{
+                  courseTitle: course.title,
+                  lessonTitle: lesson.title,
+                  summary: lesson.summary,
+                  keyPoints: lesson.keyPoints,
+                  practice: lesson.checkpoints,
+                }}
+              />
+            </div>
+          ) : null}
           <div
             id="side-panel-content"
             role="tabpanel"
-            className={cn("min-h-0 flex-1 overflow-y-auto p-3", panel !== "content" && "hidden")}
+            className={cn("min-h-0 flex-1 overflow-y-auto p-3", sidePanel !== "content" && "hidden")}
           >
             <Curriculum course={course} currentLessonId={lesson.id} />
           </div>

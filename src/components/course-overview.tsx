@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { Captions, ChevronRight, ListChecks, Play, Sparkles, Star, TimerReset } from "lucide-react";
 import { CourseCover } from "@/components/course-art";
+import { ForbiddenView } from "@/components/forbidden-view";
 import { Curriculum } from "@/components/curriculum";
 import { Badge, ButtonLink, Card, Meter, PageContainer } from "@/components/ui";
+import { useCanViewCourse, useCourseRoster } from "@/lib/api/courses";
+import { useCanTrackProgress, useMyProgress } from "@/lib/api/progress";
 import { courseLessons, courseMinutes, getCourse } from "@/lib/data/courses";
 import { letterGrade } from "@/lib/grading";
 import { courseGrade, courseProgress, nextLesson } from "@/lib/progress";
-import { useLearner } from "@/lib/store";
 import { formatMinutes } from "@/lib/utils";
 
 const FEATURES = [
@@ -19,9 +21,14 @@ const FEATURES = [
 ];
 
 export function CourseOverview({ courseId }: { courseId: string }) {
-  const state = useLearner();
+  const state = useMyProgress();
+  const tracking = useCanTrackProgress();
+  const allowed = useCanViewCourse(courseId);
+  const roster = useCourseRoster(courseId);
   const course = getCourse(courseId);
   if (!course) return null;
+  // A learner who is not enrolled, or faculty who do not teach it (FR-1.1).
+  if (allowed === false) return <ForbiddenView resource={`course:${courseId}`} what="this course" />;
 
   const progress = courseProgress(course, state);
   const upNext = nextLesson(course, state);
@@ -72,7 +79,7 @@ export function CourseOverview({ courseId }: { courseId: string }) {
         <div className="flex flex-col gap-3">
           <Link
             href={`/courses/${course.id}/learn/${upNext.id}`}
-            aria-label={`${finished ? "Review" : progress.done > 0 ? "Continue" : "Start"}: ${upNext.title}`}
+            aria-label={`${!tracking ? "Preview" : finished ? "Review" : progress.done > 0 ? "Continue" : "Start"}: ${upNext.title}`}
             className="group block overflow-hidden rounded-lg"
           >
             <CourseCover course={course} eager sizes="(min-width: 1024px) 22rem, 100vw" className="aspect-video">
@@ -83,24 +90,44 @@ export function CourseOverview({ courseId }: { courseId: string }) {
               </span>
             </CourseCover>
           </Link>
-          <div className="flex items-baseline justify-between text-sm">
-            <span className="text-ink-2">Your progress</span>
-            <span className="font-medium tabular-nums">
-              {progress.done}/{progress.total} lessons
-            </span>
-          </div>
-          <Meter value={progress.percent} label="Course progress" />
-          <div className="flex items-baseline justify-between text-sm">
-            <span className="text-ink-2">Course grade</span>
-            <span className="font-medium tabular-nums">
-              {grade === null ? "Not graded yet" : `${grade}% · ${letterGrade(grade)}`}
-            </span>
-          </div>
-          <ButtonLink href={`/courses/${course.id}/learn/${upNext.id}`} className="mt-1">
-            <Play aria-hidden className="size-4 fill-current" />
-            {finished ? "Review course" : progress.done > 0 ? "Continue" : "Start course"}
-          </ButtonLink>
-          {!finished ? <p className="text-xs text-ink-3">Up next: {upNext.title}</p> : null}
+          {tracking ? (
+            <>
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-ink-2">Your progress</span>
+                <span className="font-medium tabular-nums">
+                  {progress.done}/{progress.total} lessons
+                </span>
+              </div>
+              <Meter value={progress.percent} label="Course progress" />
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-ink-2">Course grade</span>
+                <span className="font-medium tabular-nums">
+                  {grade === null ? "Not graded yet" : `${grade}% · ${letterGrade(grade)}`}
+                </span>
+              </div>
+              <ButtonLink href={`/courses/${course.id}/learn/${upNext.id}`} className="mt-1">
+                <Play aria-hidden className="size-4 fill-current" />
+                {finished ? "Review course" : progress.done > 0 ? "Continue" : "Start course"}
+              </ButtonLink>
+              {!finished ? <p className="text-xs text-ink-3">Up next: {upNext.title}</p> : null}
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-ink-2">
+                {roster
+                  ? `${roster.students.length} learners in ${roster.sections.length} sections.`
+                  : "You are viewing this course as staff."}{" "}
+                Progress isn&apos;t recorded while you preview.
+              </p>
+              <ButtonLink href={`/courses/${course.id}/learn/${upNext.id}`} className="mt-1">
+                <Play aria-hidden className="size-4 fill-current" />
+                Preview course
+              </ButtonLink>
+              <ButtonLink href="/gradebook" variant="secondary">
+                Open gradebook
+              </ButtonLink>
+            </>
+          )}
         </div>
       </Card>
 

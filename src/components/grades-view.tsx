@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import { ScoreTrendChart, type TrendPoint } from "@/components/charts";
-import { Badge, Button, ButtonLink, Card, PageContainer, PageHeader } from "@/components/ui";
-import { courseLessons, courses } from "@/lib/data/courses";
+import {
+  Badge,
+  Button,
+  ButtonLink,
+  Card,
+  PageContainer,
+  PageHeader,
+  PageSkeleton,
+} from "@/components/ui";
+import { resetMyProgress, selectViewedChild, useViewedLearner } from "@/lib/api/progress";
+import { courseLessons } from "@/lib/data/courses";
 import { getQuiz, quizzes, quizzesForCourse } from "@/lib/data/quizzes";
 import { letterGrade } from "@/lib/grading";
 import {
@@ -13,14 +22,29 @@ import {
   courseGrade,
   overallGrade,
 } from "@/lib/progress";
-import { learner, useLearner } from "@/lib/store";
 import { formatDate } from "@/lib/utils";
 
 export function GradesView() {
-  const state = useLearner();
-  const overall = overallGrade(state);
+  // The student themselves, or the child a parent is viewing (US-05).
+  const viewed = useViewedLearner();
+  if (viewed === undefined) return <PageSkeleton />;
+  if (!viewed) {
+    return (
+      <PageContainer>
+        <PageHeader
+          title="Grades"
+          description="No student is linked to your account yet. Ask the school office to link your child."
+        />
+      </PageContainer>
+    );
+  }
+
+  const { learner, progress: state, courses, readOnly, children } = viewed;
+  const firstName = learner.name.split(" ")[0];
+  const learnerQuizzes = quizzes.filter((quiz) => courses.some((course) => course.id === quiz.courseId));
+  const overall = overallGrade(state, courses);
   const checkpoints = checkpointStats(state);
-  const gradedCount = quizzes.filter((quiz) => bestAttempt(quiz.id, state.attempts)).length;
+  const gradedCount = learnerQuizzes.filter((quiz) => bestAttempt(quiz.id, state.attempts)).length;
   const lessonTotal = courses.reduce((sum, course) => sum + courseLessons(course).length, 0);
 
   const trend: TrendPoint[] = [...state.attempts]
@@ -35,8 +59,33 @@ export function GradesView() {
   return (
     <PageContainer>
       <PageHeader
-        title="My grades"
-        description="Quizzes are graded the moment you submit. Your best attempt on each quiz counts towards the course grade."
+        title={readOnly ? `${firstName}'s grades` : "My grades"}
+        description={
+          readOnly
+            ? `Scores appear here as soon as a quiz is graded. You can see ${firstName}'s results but not change them.`
+            : "Quizzes are graded the moment you submit. Your best attempt on each quiz counts towards the course grade."
+        }
+        actions={
+          readOnly && children.length > 1 ? (
+            <>
+              <label htmlFor="viewed-child" className="text-sm text-ink-2">
+                Student
+              </label>
+              <select
+                id="viewed-child"
+                value={learner.id}
+                onChange={(event) => void selectViewedChild(event.target.value)}
+                className="h-10 rounded-lg border border-line-strong bg-surface px-3 text-sm"
+              >
+                {children.map((child) => (
+                  <option key={child.id} value={child.id}>
+                    {child.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : undefined
+        }
       />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
@@ -51,12 +100,14 @@ export function GradesView() {
             </div>
             <p className="mt-2 text-sm text-ink-3">
               {overall === null
-                ? "Take a quiz to see your average."
+                ? readOnly
+                  ? "No quizzes graded yet."
+                  : "Take a quiz to see your average."
                 : `Across ${gradedCount} graded ${gradedCount === 1 ? "quiz" : "quizzes"}.`}
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3 text-sm">
-            <MiniStat label="Quizzes graded" value={`${gradedCount}/${quizzes.length}`} />
+            <MiniStat label="Quizzes graded" value={`${gradedCount}/${learnerQuizzes.length}`} />
             <MiniStat
               label="Checkpoints right"
               value={checkpoints.percent === null ? "—" : `${checkpoints.percent}%`}
@@ -67,7 +118,7 @@ export function GradesView() {
 
         <Card className="p-5">
           <h2 className="font-semibold">Quiz scores over time</h2>
-          <p className="mb-3 text-sm text-ink-3">Every attempt, in the order you submitted them.</p>
+          <p className="mb-3 text-sm text-ink-3">Every attempt, in the order it was submitted.</p>
           {trend.length > 0 ? (
             <ScoreTrendChart points={trend} passMark={70} />
           ) : (
@@ -85,9 +136,13 @@ export function GradesView() {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
                 <div>
                   <h2 className="font-semibold">
-                    <Link href={`/courses/${course.id}`} className="hover:underline">
-                      {course.title}
-                    </Link>
+                    {readOnly ? (
+                      course.title
+                    ) : (
+                      <Link href={`/courses/${course.id}`} className="hover:underline">
+                        {course.title}
+                      </Link>
+                    )}
                   </h2>
                   <p className="text-sm text-ink-3">{course.instructor}</p>
                 </div>
@@ -111,9 +166,11 @@ export function GradesView() {
                       <th scope="col" className="w-20 px-3 py-2.5 text-right font-medium">Weight</th>
                       <th scope="col" className="w-24 px-3 py-2.5 text-right font-medium">Attempts</th>
                       <th scope="col" className="w-44 px-3 py-2.5 text-right font-medium">Best score</th>
-                      <th scope="col" className="w-28 px-5 py-2.5 font-medium">
-                        <span className="sr-only">Action</span>
-                      </th>
+                      {readOnly ? null : (
+                        <th scope="col" className="w-28 px-5 py-2.5 font-medium">
+                          <span className="sr-only">Action</span>
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -138,11 +195,13 @@ export function GradesView() {
                               <span className="text-ink-3">Not taken</span>
                             )}
                           </td>
-                          <td className="px-5 py-3 text-right">
-                            <ButtonLink variant={best ? "ghost" : "secondary"} size="sm" href={`/quizzes/${quiz.id}`}>
-                              {best ? "Retake" : "Start"}
-                            </ButtonLink>
-                          </td>
+                          {readOnly ? null : (
+                            <td className="px-5 py-3 text-right">
+                              <ButtonLink variant={best ? "ghost" : "secondary"} size="sm" href={`/quizzes/${quiz.id}`}>
+                                {best ? "Retake" : "Start"}
+                              </ButtonLink>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -156,9 +215,11 @@ export function GradesView() {
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3 text-sm text-ink-3">
         <p>Progress is stored in this browser only while the app runs on mock data.</p>
-        <Button variant="ghost" size="sm" onClick={learner.reset}>
-          Reset demo progress
-        </Button>
+        {readOnly ? null : (
+          <Button variant="ghost" size="sm" onClick={() => void resetMyProgress()}>
+            Reset demo progress
+          </Button>
+        )}
       </div>
     </PageContainer>
   );

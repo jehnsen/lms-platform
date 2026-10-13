@@ -4,19 +4,17 @@ import { useState } from "react";
 import { ArrowDownUp, Download, Search, TriangleAlert } from "lucide-react";
 import { ColumnChart, type Column } from "@/components/charts";
 import { Badge, Button, Card, PageContainer, PageHeader, StatTile } from "@/components/ui";
-import { courses } from "@/lib/data/courses";
-import { currentUser, students } from "@/lib/data/people";
+import { useCourses } from "@/lib/api/courses";
+import { logGradebookExport, useGradebook } from "@/lib/api/grades";
 import { quizzesForCourse } from "@/lib/data/quizzes";
 import { letterGrade } from "@/lib/grading";
 import { bestAttempt, weightedGrade } from "@/lib/progress";
-import { useLearner } from "@/lib/store";
 import type { Quiz } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 interface Row {
   id: string;
   name: string;
-  isYou: boolean;
+  section: string;
   scores: Array<number | null>;
   overall: number | null;
   missing: number;
@@ -32,12 +30,12 @@ const BANDS: Array<{ label: string; min: number; max: number }> = [
 
 const PASS_MARK = 70;
 
-function buildRow(id: string, name: string, isYou: boolean, quizzes: Quiz[], scoreFor: (quiz: Quiz) => number | null): Row {
+function buildRow(id: string, name: string, section: string, quizzes: Quiz[], scoreFor: (quiz: Quiz) => number | null): Row {
   const scores = quizzes.map(scoreFor);
   return {
     id,
     name,
-    isYou,
+    section,
     scores,
     overall: weightedGrade(quizzes.map((quiz, index) => ({ weight: quiz.weight, percent: scores[index] }))),
     missing: scores.filter((score) => score === null).length,
@@ -57,21 +55,38 @@ function downloadCsv(filename: string, rows: string[][]) {
 }
 
 export function GradebookView() {
-  const state = useLearner();
-  const [courseId, setCourseId] = useState(courses[0].id);
+  const courses = useCourses();
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [sectionId, setSectionId] = useState("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"name" | "overall">("name");
 
-  const course = courses.find((item) => item.id === courseId) ?? courses[0];
-  const quizzes = quizzesForCourse(course.id);
+  const course = courses.find((item) => item.id === selectedCourseId) ?? courses[0];
+  // Every enrolled learner with their real attempts; null if this role may not see the course.
+  const entries = useGradebook(course?.id ?? "");
 
-  const rows: Row[] = [
-    // The signed-in learner's row is live: it reflects quizzes taken in this browser.
-    buildRow(currentUser.id, currentUser.name, true, quizzes, (quiz) => bestAttempt(quiz.id, state.attempts)?.percent ?? null),
-    ...students.map((student) =>
-      buildRow(student.id, student.name, false, quizzes, (quiz) => student.scores[quiz.id] ?? null),
-    ),
-  ];
+  if (!course || !entries) {
+    return (
+      <PageContainer>
+        <PageHeader title="Gradebook" description="No courses are assigned to you yet." />
+      </PageContainer>
+    );
+  }
+
+  const quizzes = quizzesForCourse(course.id);
+  const sections = [...new Map(entries.flatMap((entry) => (entry.section ? [[entry.section.id, entry.section]] : []))).values()];
+
+  const rows: Row[] = entries
+    .filter((entry) => sectionId === "all" || entry.section?.id === sectionId)
+    .map((entry) =>
+      buildRow(
+        entry.student.id,
+        entry.student.name,
+        entry.section?.name ?? "—",
+        quizzes,
+        (quiz) => bestAttempt(quiz.id, entry.progress.attempts)?.percent ?? null,
+      ),
+    );
 
   const graded = rows.filter((row): row is Row & { overall: number } => row.overall !== null);
   const classAverage = graded.length
@@ -99,16 +114,20 @@ export function GradebookView() {
       sort === "name" ? a.name.localeCompare(b.name) : (b.overall ?? -1) - (a.overall ?? -1),
     );
 
-  const exportCsv = () =>
+  const exportCsv = async () => {
+    // Authorized and written to the audit log before the file is produced.
+    await logGradebookExport(course.id, rows.length);
     downloadCsv(`${course.id}-gradebook.csv`, [
-      ["Student", ...quizzes.map((quiz) => quiz.title), "Overall", "Grade"],
+      ["Student", "Section", ...quizzes.map((quiz) => quiz.title), "Overall", "Grade"],
       ...rows.map((row) => [
         row.name,
+        row.section,
         ...row.scores.map((score) => (score === null ? "" : String(score))),
         row.overall === null ? "" : String(row.overall),
         row.overall === null ? "" : letterGrade(row.overall),
       ]),
     ]);
+  };
 
   return (
     <PageContainer>
@@ -122,8 +141,11 @@ export function GradebookView() {
             </label>
             <select
               id="gradebook-course"
-              value={courseId}
-              onChange={(event) => setCourseId(event.target.value)}
+              value={course.id}
+              onChange={(event) => {
+                setSelectedCourseId(event.target.value);
+                setSectionId("all");
+              }}
               className="h-10 rounded-lg border border-line-strong bg-surface px-3 text-sm"
             >
               {courses.map((item) => (
@@ -132,7 +154,23 @@ export function GradebookView() {
                 </option>
               ))}
             </select>
-            <Button variant="secondary" onClick={exportCsv}>
+            <label className="sr-only" htmlFor="gradebook-section">
+              Section
+            </label>
+            <select
+              id="gradebook-section"
+              value={sectionId}
+              onChange={(event) => setSectionId(event.target.value)}
+              className="h-10 rounded-lg border border-line-strong bg-surface px-3 text-sm"
+            >
+              <option value="all">All sections</option>
+              {sections.map((section) => (
+                <option key={section.id} value={section.id}>
+                  {section.name}
+                </option>
+              ))}
+            </select>
+            <Button variant="secondary" onClick={() => void exportCsv()}>
               <Download aria-hidden className="size-4" />
               Export CSV
             </Button>
@@ -219,6 +257,7 @@ export function GradebookView() {
             <thead>
               <tr className="text-left text-xs text-ink-3">
                 <th scope="col" className="px-4 py-2.5 font-medium">Learner</th>
+                <th scope="col" className="px-3 py-2.5 font-medium">Section</th>
                 {quizzes.map((quiz, index) => (
                   <th key={quiz.id} scope="col" title={quiz.title} className="px-3 py-2.5 text-right font-medium whitespace-nowrap">
                     Quiz {index + 1} <span className="font-normal">· {quiz.weight}%</span>
@@ -230,11 +269,11 @@ export function GradebookView() {
             </thead>
             <tbody>
               {visible.map((row) => (
-                <tr key={row.id} className={cn("border-t border-line", row.isYou && "bg-primary-soft/40")}>
+                <tr key={row.id} className="border-t border-line">
                   <th scope="row" className="px-4 py-2.5 text-left font-medium whitespace-nowrap">
                     {row.name}
-                    {row.isYou ? <Badge tone="primary" className="ml-2">You · live</Badge> : null}
                   </th>
+                  <td className="px-3 py-2.5 whitespace-nowrap text-ink-2">{row.section}</td>
                   {row.scores.map((score, index) => (
                     <td key={quizzes[index].id} className="px-3 py-2.5 text-right tabular-nums">
                       <ScoreCell score={score} passMark={quizzes[index].passMark} />
@@ -250,7 +289,7 @@ export function GradebookView() {
               ))}
               {visible.length === 0 ? (
                 <tr className="border-t border-line">
-                  <td colSpan={quizzes.length + 3} className="px-4 py-8 text-center text-ink-2">
+                  <td colSpan={quizzes.length + 4} className="px-4 py-8 text-center text-ink-2">
                     No learners match “{query}”.
                   </td>
                 </tr>

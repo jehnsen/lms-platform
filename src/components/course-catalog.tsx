@@ -5,27 +5,34 @@ import { useState } from "react";
 import { Star } from "lucide-react";
 import { CourseCover } from "@/components/course-art";
 import { Badge, Meter, PageContainer, PageHeader } from "@/components/ui";
-import { courseLessons, courseMinutes, courses } from "@/lib/data/courses";
+import { useCourses } from "@/lib/api/courses";
+import { useCanTrackProgress, useMyProgress } from "@/lib/api/progress";
+import { courseLessons, courseMinutes } from "@/lib/data/courses";
 import { courseProgress } from "@/lib/progress";
-import { useLearner } from "@/lib/store";
 import { cn, formatMinutes } from "@/lib/utils";
 
-const SUBJECTS = ["All", ...Array.from(new Set(courses.map((course) => course.subject)))];
-
 export function CourseCatalog() {
-  const state = useLearner();
+  const courses = useCourses();
+  const state = useMyProgress();
+  // Faculty and admins open courses to preview them; only learners have progress.
+  const tracking = useCanTrackProgress();
   const [subject, setSubject] = useState("All");
+  const subjects = ["All", ...Array.from(new Set(courses.map((course) => course.subject)))];
   const visible = courses.filter((course) => subject === "All" || course.subject === subject);
 
   return (
     <PageContainer>
       <PageHeader
         title="Courses"
-        description="Short captioned videos with questions along the way, auto-graded quizzes, and an AI tutor in every lesson."
+        description={
+          tracking
+            ? "Short captioned videos with questions along the way, auto-graded quizzes, and an AI tutor in every lesson."
+            : "Open a course to preview it the way learners see it."
+        }
       />
 
       <div className="mb-6 flex flex-wrap gap-1" role="group" aria-label="Filter by subject">
-        {SUBJECTS.map((option) => (
+        {subjects.map((option) => (
           <button
             key={option}
             type="button"
@@ -78,7 +85,9 @@ export function CourseCatalog() {
                     </span>
                   </div>
                   <div className="mt-3 border-t border-line pt-3">
-                    {progress.done > 0 ? (
+                    {!tracking ? (
+                      <span className="text-xs font-medium text-primary-ink">Preview course</span>
+                    ) : progress.done > 0 ? (
                       <div className="flex items-center gap-3">
                         <Meter value={progress.percent} label={`${course.title} progress`} className="flex-1" />
                         <span className="text-xs text-ink-2 tabular-nums">{progress.percent}% complete</span>
@@ -93,6 +102,11 @@ export function CourseCatalog() {
           );
         })}
       </ul>
+      {courses.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-line-strong px-6 py-12 text-center text-ink-2">
+          No courses are assigned to you yet.
+        </p>
+      ) : null}
     </PageContainer>
   );
 }

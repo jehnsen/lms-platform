@@ -11,6 +11,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, Meter, PageContainer } from "@/components/ui";
+import { ForbiddenView } from "@/components/forbidden-view";
+import { recordAttempt, useMyProgress } from "@/lib/api/progress";
+import { useActor } from "@/lib/api/session";
+import { now } from "@/lib/clock";
 import { getCourse } from "@/lib/data/courses";
 import { getQuiz, quizPoints } from "@/lib/data/quizzes";
 import {
@@ -20,8 +24,8 @@ import {
   type QuestionStatus,
   type QuizResult,
 } from "@/lib/grading";
+import { can } from "@/lib/domain/permissions";
 import { attemptsFor, bestAttempt } from "@/lib/progress";
-import { learner, useLearner } from "@/lib/store";
 import type { Answer, AnswerSheet, Question } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -31,7 +35,8 @@ const CHOICE_CLASS =
   "flex cursor-pointer items-start gap-3 rounded-lg border border-line px-3.5 py-3 text-sm transition-colors hover:border-line-strong has-checked:border-primary has-checked:bg-primary-soft";
 
 export function QuizRunner({ quizId }: { quizId: string }) {
-  const state = useLearner();
+  const state = useMyProgress();
+  const actor = useActor();
   const [phase, setPhase] = useState<Phase>("intro");
   const [answers, setAnswers] = useState<AnswerSheet>({});
   const [index, setIndex] = useState(0);
@@ -40,6 +45,10 @@ export function QuizRunner({ quizId }: { quizId: string }) {
 
   const quiz = getQuiz(quizId);
   if (!quiz) return null;
+  // Only learners enrolled in the quiz's course may take it (FR-1.1).
+  if (actor && !can(actor, "submit", { type: "quiz", courseId: quiz.courseId })) {
+    return <ForbiddenView resource={`quiz:${quiz.id}`} what="this quiz" />;
+  }
   const course = getCourse(quiz.courseId);
   const attempts = attemptsFor(quiz.id, state.attempts);
   const best = bestAttempt(quiz.id, state.attempts);
@@ -55,15 +64,18 @@ export function QuizRunner({ quizId }: { quizId: string }) {
 
   const submit = () => {
     const graded = gradeQuiz(quiz, answers);
-    const submittedAt = new Date();
-    learner.recordAttempt({
-      id: `attempt-${submittedAt.getTime()}`,
-      quizId: quiz.id,
-      earned: graded.earned,
-      possible: graded.possible,
-      percent: graded.percent,
-      submittedAt: submittedAt.toISOString(),
-    });
+    const submittedAt = now();
+    void recordAttempt(
+      {
+        id: `attempt-${submittedAt.getTime()}`,
+        quizId: quiz.id,
+        earned: graded.earned,
+        possible: graded.possible,
+        percent: graded.percent,
+        submittedAt: submittedAt.toISOString(),
+      },
+      quiz.courseId,
+    );
     setResult(graded);
     setPhase("result");
   };

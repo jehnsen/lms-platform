@@ -1,5 +1,129 @@
 export type Level = "Beginner" | "Intermediate" | "Advanced";
 
+// ---------------------------------------------------------------------------
+// People, access and school structure (BR-01 to BR-04)
+// ---------------------------------------------------------------------------
+
+/** The four roles of BR-01. Coordinators and IT staff are open questions, not roles. */
+export type Role = "student" | "faculty" | "admin" | "parent";
+
+/** FR-1.7: only active accounts can sign in. */
+export type AccountStatus = "active" | "inactive" | "archived";
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  status: AccountStatus;
+  /** Parents only: the students this account is linked to (US-05). */
+  childIds?: string[];
+  /** Identifier in the Student Information System, when imported from it (FR-1.5). */
+  sisId?: string;
+}
+
+export interface Term {
+  id: string;
+  name: string;
+  /** ISO dates (YYYY-MM-DD), inclusive. */
+  startsOn: string;
+  endsOn: string;
+  status: "upcoming" | "active" | "archived";
+}
+
+/** A class group taking a course in a term. Faculty teach sections; students enrol in them. */
+export interface Section {
+  id: string;
+  courseId: string;
+  termId: string;
+  name: string;
+  facultyIds: string[];
+}
+
+/** A student's place in a section. Created by CSV or SIS import, never by hand (out of scope). */
+export interface Enrollment {
+  userId: string;
+  sectionId: string;
+}
+
+/** FR-1.2 and NFR-3: who did what, and whether it was allowed. */
+export interface AuditEvent {
+  id: string;
+  at: string;
+  actorId: string | null;
+  actorRole: Role | null;
+  /** Dotted verb, e.g. "auth.sign-in", "access.denied", "progress.reset". */
+  action: string;
+  /** What was acted on, e.g. "route:/gradebook" or "grades:u-s03". */
+  resource: string;
+  outcome: "allowed" | "denied";
+  detail?: string;
+}
+
+export type NotificationChannel = "in-app" | "email" | "push";
+
+export type NotificationCategory =
+  | "grades"
+  | "deadlines"
+  | "announcements"
+  | "attendance"
+  | "messages"
+  | "system";
+
+export interface Notification {
+  id: string;
+  userId: string;
+  category: NotificationCategory;
+  title: string;
+  body: string;
+  href?: string;
+  createdAt: string;
+  readAt?: string;
+  /** FR-6.7: mandatory alerts cannot be switched off. */
+  mandatory?: boolean;
+}
+
+/** FR-6.7: which channels a user wants for one category. */
+export interface NotificationPref {
+  userId: string;
+  category: NotificationCategory;
+  channels: Record<NotificationChannel, boolean>;
+}
+
+// ---------------------------------------------------------------------------
+// Grading policy (BR-14)
+// ---------------------------------------------------------------------------
+
+/** FR-4.1: a weighted group of grade items. A course's weights must total 100. */
+export interface GradeCategory {
+  id: string;
+  courseId: string;
+  name: string;
+  weight: number;
+}
+
+export type GradingScaleKind = "percentage" | "letter" | "gpa";
+
+export interface GradingScaleBand {
+  /** Lowest percentage that earns this band. */
+  min: number;
+  label: string;
+  /** Grade points, for GPA scales. */
+  points?: number;
+}
+
+/** FR-4.2: how a percentage is reported. Bands are school policy, so they are data. */
+export interface GradingScale {
+  id: string;
+  name: string;
+  kind: GradingScaleKind;
+  bands: GradingScaleBand[];
+}
+
+// ---------------------------------------------------------------------------
+// Courses and content
+// ---------------------------------------------------------------------------
+
 export type VideoKey = "sintel" | "bunny";
 
 /** A question that pauses the video mid-lesson (Coursera-style in-video quiz). */
@@ -45,6 +169,11 @@ export interface Course {
   subject: string;
   level: Level;
   instructor: string;
+  /** Short catalogue code, e.g. "CS-101" (FR-2.1). */
+  code: string;
+  termId: string;
+  /** Archived courses are read-only; their grades stay viewable (FR-1.8). */
+  status: "active" | "archived";
   thumbnail: string;
   /** Shown behind the thumbnail while it loads. */
   accent: string;
@@ -116,6 +245,14 @@ export interface QuizAttempt {
   submittedAt: string;
 }
 
+/** Everything one learner has done. Stored per user by the progress service. */
+export interface LearnerProgress {
+  completedLessons: string[];
+  attempts: QuizAttempt[];
+  /** In-video checkpoint id -> whether the first answer was correct. */
+  checkpoints: Record<string, boolean>;
+}
+
 export interface PlanSegment {
   label: string;
   minutes: number;
@@ -171,11 +308,4 @@ export interface Material {
   durationLabel?: string;
   captions: "ready" | "generating" | "none";
   uploadedAt: string;
-}
-
-export interface Student {
-  id: string;
-  name: string;
-  /** Percent per quiz id; null when not submitted. */
-  scores: Record<string, number | null>;
 }

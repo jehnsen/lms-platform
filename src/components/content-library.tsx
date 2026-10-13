@@ -13,8 +13,10 @@ import {
   X,
 } from "lucide-react";
 import { AiBadge, Badge, Button, Card, Meter, PageContainer, PageHeader, buttonClass } from "@/components/ui";
+import { useActor } from "@/lib/api/session";
 import { SAMPLE_VIDEOS, courses, getCourse } from "@/lib/data/courses";
 import { materials } from "@/lib/data/people";
+import { can } from "@/lib/domain/permissions";
 import type { Material } from "@/lib/types";
 import { cn, formatBytes, formatClock, formatDate } from "@/lib/utils";
 
@@ -89,6 +91,8 @@ export function ContentLibrary() {
   const [dragging, setDragging] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
+  // Faculty manage the library; admins can look but not change it (FR-1.1).
+  const canEdit = can(useActor(), "create", { type: "content-library" });
 
   const objectUrls = useRef(new Set<string>());
   const uploadCount = useRef(0);
@@ -214,73 +218,75 @@ export function ContentLibrary() {
         description="Upload videos, audio and documents for your courses. Add captions so every learner can follow along."
       />
 
-      <Card className="p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-semibold">Upload study materials</h2>
-          <div className="flex items-center gap-2 text-sm">
-            <label htmlFor="upload-course" className="text-ink-2">
-              Add to
-            </label>
-            <select
-              id="upload-course"
-              value={courseId}
-              onChange={(event) => setCourseId(event.target.value)}
-              className="h-9 rounded-lg border border-line-strong bg-surface px-2 text-sm"
-            >
-              {courses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.title}
-                </option>
-              ))}
-            </select>
+      {canEdit ? (
+        <Card className="p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-semibold">Upload study materials</h2>
+            <div className="flex items-center gap-2 text-sm">
+              <label htmlFor="upload-course" className="text-ink-2">
+                Add to
+              </label>
+              <select
+                id="upload-course"
+                value={courseId}
+                onChange={(event) => setCourseId(event.target.value)}
+                className="h-9 rounded-lg border border-line-strong bg-surface px-2 text-sm"
+              >
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.title}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
 
-        <label
-          onDragOver={(event) => {
-            event.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setDragging(false);
-            addFiles(Array.from(event.dataTransfer.files));
-          }}
-          className={cn(
-            "relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors focus-within:border-primary",
-            dragging ? "border-primary bg-primary-soft" : "border-line-strong hover:border-primary",
-          )}
-        >
-          <UploadCloud aria-hidden className="size-8 text-ink-3" />
-          <span className="font-medium">Drop files here or browse</span>
-          <span className="max-w-md text-sm text-ink-2">
-            Video, audio, PDF or slides. Include a <code className="font-mono text-xs">.vtt</code> or{" "}
-            <code className="font-mono text-xs">.srt</code> file with the same name to attach captions
-            automatically.
-          </span>
-          <input
-            type="file"
-            multiple
-            accept="video/*,audio/*,.pdf,.ppt,.pptx,.doc,.docx,.txt,.md,.vtt,.srt"
-            className="sr-only"
-            onChange={(event) => {
-              addFiles(Array.from(event.target.files ?? []));
-              event.target.value = "";
+          <label
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragging(true);
             }}
-          />
-        </label>
+            onDragLeave={() => setDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragging(false);
+              addFiles(Array.from(event.dataTransfer.files));
+            }}
+            className={cn(
+              "relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors focus-within:border-primary",
+              dragging ? "border-primary bg-primary-soft" : "border-line-strong hover:border-primary",
+            )}
+          >
+            <UploadCloud aria-hidden className="size-8 text-ink-3" />
+            <span className="font-medium">Drop files here or browse</span>
+            <span className="max-w-md text-sm text-ink-2">
+              Video, audio, PDF or slides. Include a <code className="font-mono text-xs">.vtt</code> or{" "}
+              <code className="font-mono text-xs">.srt</code> file with the same name to attach captions
+              automatically.
+            </span>
+            <input
+              type="file"
+              multiple
+              accept="video/*,audio/*,.pdf,.ppt,.pptx,.doc,.docx,.txt,.md,.vtt,.srt"
+              className="sr-only"
+              onChange={(event) => {
+                addFiles(Array.from(event.target.files ?? []));
+                event.target.value = "";
+              }}
+            />
+          </label>
 
-        {notice ? (
-          <p role="status" className="mt-3 rounded-lg bg-warn-soft px-3 py-2 text-sm text-warn">
-            {notice}
+          {notice ? (
+            <p role="status" className="mt-3 rounded-lg bg-warn-soft px-3 py-2 text-sm text-warn">
+              {notice}
+            </p>
+          ) : null}
+          <p className="mt-3 text-xs text-ink-3">
+            Demo mode: files stay in this browser tab and uploads are simulated — nothing is sent to a
+            server.
           </p>
-        ) : null}
-        <p className="mt-3 text-xs text-ink-3">
-          Demo mode: files stay in this browser tab and uploads are simulated — nothing is sent to a
-          server.
-        </p>
-      </Card>
+        </Card>
+      ) : null}
 
       <div className="mt-8 mb-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1" role="group" aria-label="Filter by type">
@@ -339,7 +345,12 @@ export function ContentLibrary() {
 
                 <div className="flex flex-wrap items-center gap-2 md:justify-end">
                   {item.kind !== "document" ? (
-                    <CaptionControls item={item} onAttach={attachCaptions} onAutoCaption={autoCaption} />
+                    <CaptionControls
+                      item={item}
+                      canEdit={canEdit}
+                      onAttach={attachCaptions}
+                      onAutoCaption={autoCaption}
+                    />
                   ) : null}
                   <Button
                     variant="secondary"
@@ -349,14 +360,16 @@ export function ContentLibrary() {
                   >
                     Preview
                   </Button>
-                  <button
-                    type="button"
-                    onClick={() => remove(item)}
-                    aria-label={`Remove ${item.title}`}
-                    className="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-surface-2 hover:text-bad"
-                  >
-                    <Trash2 aria-hidden className="size-4" />
-                  </button>
+                  {canEdit ? (
+                    <button
+                      type="button"
+                      onClick={() => remove(item)}
+                      aria-label={`Remove ${item.title}`}
+                      className="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-surface-2 hover:text-bad"
+                    >
+                      <Trash2 aria-hidden className="size-4" />
+                    </button>
+                  ) : null}
                 </div>
               </li>
             );
@@ -374,10 +387,12 @@ export function ContentLibrary() {
 
 function CaptionControls({
   item,
+  canEdit,
   onAttach,
   onAutoCaption,
 }: {
   item: LibraryItem;
+  canEdit: boolean;
   onAttach: (id: string, file: File) => void;
   onAutoCaption: (id: string) => void;
 }) {
@@ -397,6 +412,7 @@ function CaptionControls({
       </Badge>
     );
   }
+  if (!canEdit) return <Badge tone="warn">No captions</Badge>;
   return (
     <>
       <Badge tone="warn">No captions</Badge>

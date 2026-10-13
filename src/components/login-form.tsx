@@ -1,52 +1,64 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { ArrowRight, Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui";
-import { currentUser } from "@/lib/data/people";
+import { SignInError, demoEmailFor, signIn, signInAsDemo } from "@/lib/api/session";
+import { ROLES, ROLE_LABELS } from "@/lib/domain/permissions";
+import { reloadTo } from "@/lib/navigation";
+import type { Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-type Role = "learner" | "instructor";
-
-const ROLES: Array<{ value: Role; label: string; destination: string }> = [
-  { value: "learner", label: "Learner", destination: "/" },
-  { value: "instructor", label: "Instructor", destination: "/gradebook" },
-];
 
 const INPUT_CLASS =
   "h-11 w-full rounded-lg border border-line-strong bg-surface pr-3 pl-10 text-sm outline-none transition-colors placeholder:text-ink-3 focus:border-primary focus:ring-3 focus:ring-primary-soft aria-invalid:border-bad";
 
-function wait(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+/** Where to go after signing in: the page that was asked for, if it is a local path. */
+function destination() {
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
 }
 
 /**
- * Mock sign-in. There is no auth backend yet: any well-formed email and a
- * password of six or more characters is accepted. Replace `signIn` with a
- * real request and keep the form as is.
+ * Sign-in form over the mock auth service (`src/lib/api/session.ts`).
+ * Accounts are the seeded users; the role picker fills in the demo account
+ * for each role. Every role lands on its own home page (US-02).
  */
 export function LoginForm() {
-  const router = useRouter();
-  const [role, setRole] = useState<Role>("learner");
-  const [email, setEmail] = useState(currentUser.email);
+  const [role, setRole] = useState<Role>("student");
+  const [email, setEmail] = useState(() => demoEmailFor("student"));
   const [password, setPassword] = useState("learn-demo");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const [verifying, setVerifying] = useState(false);
-  // Pages stay mounted after navigating away, so "pending" must end with the
-  // navigation rather than be left set.
-  const [navigating, startNavigation] = useTransition();
-  const pending = verifying || navigating;
+  const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
+  const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const signIn = async () => {
-    setVerifying(true);
+  const chooseRole = (next: Role) => {
+    setRole(next);
+    setEmail(demoEmailFor(next));
+    setErrors({});
+  };
+
+  const enter = () => reloadTo(destination());
+
+  const signInWithPassword = async () => {
+    setPending(true);
     setNotice(null);
-    await wait(900);
-    startNavigation(() => router.push(ROLES.find((option) => option.value === role)?.destination ?? "/"));
-    setVerifying(false);
+    try {
+      await signIn(email, password);
+      enter();
+    } catch (error) {
+      setErrors({
+        form: error instanceof SignInError ? error.message : "Something went wrong. Try again.",
+      });
+      setPending(false);
+    }
+  };
+
+  /** MOCK: stands in for the school identity provider (FR-1.3) until Phase 1. */
+  const signInWithSso = () => {
+    setPending(true);
+    reloadTo(destination(), () => signInAsDemo(role));
   };
 
   const submit = () => {
@@ -58,7 +70,7 @@ export function LoginForm() {
       nextErrors.password = "Your password must be at least 6 characters.";
     }
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length === 0) void signIn();
+    if (Object.keys(nextErrors).length === 0) void signInWithPassword();
   };
 
   return (
@@ -66,27 +78,26 @@ export function LoginForm() {
       <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
       <p className="mt-2 text-ink-2">Sign in to pick up where you left off.</p>
 
-      <div
-        role="radiogroup"
-        aria-label="Sign in as"
-        className="mt-8 grid grid-cols-2 gap-1 rounded-xl bg-surface-2 p-1"
-      >
-        {ROLES.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={role === option.value}
-            onClick={() => setRole(option.value)}
-            className={cn(
-              "h-9 rounded-lg text-sm font-medium transition-colors",
-              role === option.value ? "bg-surface text-ink shadow-xs" : "text-ink-2 hover:text-ink",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <fieldset className="mt-8">
+        <legend className="mb-1.5 text-sm font-medium">Demo account</legend>
+        <div className="grid grid-cols-4 gap-1 rounded-xl bg-surface-2 p-1">
+          {ROLES.map((option) => (
+            <label
+              key={option}
+              className="relative flex h-9 cursor-pointer items-center justify-center rounded-lg text-sm font-medium text-ink-2 transition-colors hover:text-ink has-checked:bg-surface has-checked:text-ink has-checked:shadow-xs has-focus-visible:outline-2 has-focus-visible:outline-primary"
+            >
+              <input
+                type="radio"
+                name="demo-role"
+                className="sr-only"
+                checked={role === option}
+                onChange={() => chooseRole(option)}
+              />
+              {ROLE_LABELS[option]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <form
         noValidate
@@ -173,6 +184,12 @@ export function LoginForm() {
           Keep me signed in on this device
         </label>
 
+        {errors.form ? (
+          <p role="alert" className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad">
+            {errors.form}
+          </p>
+        ) : null}
+
         <Button type="submit" size="lg" disabled={pending} className="mt-1 w-full">
           {pending ? <LoaderCircle aria-hidden className="size-4 animate-spin" /> : null}
           {pending ? "Signing in…" : "Sign in"}
@@ -186,7 +203,7 @@ export function LoginForm() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <Button variant="secondary" size="lg" disabled={pending} onClick={() => void signIn()} className="w-full">
+      <Button variant="secondary" size="lg" disabled={pending} onClick={signInWithSso} className="w-full">
         Continue with school account (SSO)
       </Button>
 
@@ -202,7 +219,7 @@ export function LoginForm() {
       </p>
 
       <p role="status" className={cn("mt-4 rounded-lg px-3 py-2 text-center text-xs", notice ? "bg-warn-soft text-warn" : "bg-surface-2 text-ink-3")}>
-        {notice ?? "Demo: the account is pre-filled. Any email and a 6+ character password will work."}
+        {notice ?? "Demo: pick a role to fill in its account. Any password of 6 or more characters works."}
       </p>
     </div>
   );

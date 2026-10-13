@@ -14,6 +14,9 @@ export const SAMPLE_VIDEOS: Record<VideoKey, string> = {
 export const courses: Course[] = [
   {
     id: "ml-foundations",
+    code: "CS-110",
+    termId: "term-2026-1",
+    status: "active",
     thumbnail: "/thumbnails/course-ml-foundations.jpg",
     title: "Machine Learning Foundations",
     tagline: "Understand how machines learn from data — no PhD required.",
@@ -310,6 +313,9 @@ export const courses: Course[] = [
   },
   {
     id: "web-dev",
+    code: "IT-101",
+    termId: "term-2026-1",
+    status: "active",
     thumbnail: "/thumbnails/course-web-dev.jpg",
     title: "Web Development Fundamentals",
     tagline: "Build your first real web pages with HTML and CSS.",
@@ -497,6 +503,9 @@ export const courses: Course[] = [
   },
   {
     id: "cell-biology",
+    code: "BIO-201",
+    termId: "term-2026-1",
+    status: "active",
     thumbnail: "/thumbnails/course-cell-biology.jpg",
     title: "Biology: Cells and Genetics",
     tagline: "Explore the machinery of life, from membranes to DNA.",
@@ -680,6 +689,9 @@ export const courses: Course[] = [
   },
   {
     id: "money-skills",
+    code: "LS-105",
+    termId: "term-2026-1",
+    status: "active",
     thumbnail: "/thumbnails/course-money-skills.jpg",
     title: "Money Skills: Personal Finance",
     tagline: "Budget, save and understand interest before your first paycheck.",

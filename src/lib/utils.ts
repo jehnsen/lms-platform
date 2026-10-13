@@ -47,3 +47,26 @@ export function dateParts(iso: string) {
   const [month, day] = formatDate(iso).split(" ");
   return { month, day };
 }
+
+/** "Dr. Amara Okafor" -> "AO". Titles are skipped. */
+export function initialsOf(name: string) {
+  const words = name.split(/\s+/).filter((word) => word && !word.endsWith("."));
+  const first = words[0]?.[0] ?? "";
+  const last = words.length > 1 ? words[words.length - 1][0] : "";
+  return `${first}${last}`.toUpperCase();
+}
+
+/** "Dr. Amara Okafor" -> "Amara". Titles are skipped. */
+export function firstNameOf(name: string) {
+  return name.split(/\s+/).find((word) => word && !word.endsWith(".")) ?? name;
+}
+
+/** Date and time in the viewer's own time zone. Only for content rendered in the browser. */
+export function formatDateTime(iso: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}

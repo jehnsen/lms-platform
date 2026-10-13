@@ -59,7 +59,7 @@ export function ScoreTrendChart({ points, passMark }: { points: TrendPoint[]; pa
         <svg
           width={width}
           height={TREND_HEIGHT}
-          role="img"
+          role="group"
           aria-label={`Quiz scores over time. Latest score ${points[last].percent} percent.`}
           onPointerMove={(event) => setHover(nearest(event.clientX, event.currentTarget))}
           onPointerLeave={() => setHover(null)}
@@ -112,6 +112,7 @@ export function ScoreTrendChart({ points, passMark }: { points: TrendPoint[]; pa
                 stroke="var(--surface)"
                 strokeWidth={2}
                 tabIndex={0}
+                role="img"
                 aria-label={`${point.title}, ${point.dateLabel}: ${point.percent}%`}
                 onFocus={() => setHover(index)}
                 onBlur={() => setHover(null)}

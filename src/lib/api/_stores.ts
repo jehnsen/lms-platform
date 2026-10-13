@@ -1,0 +1,96 @@
+"use client";
+
+/**
+ * Every mock repository, in one place so services can share them without
+ * importing each other. Each one stands in for a backend table.
+ */
+import {
+  DEMO_USER_IDS,
+  seedEnrollments,
+  seedNotifications,
+  seedProgress,
+  seedSections,
+  seedTerms,
+  seedUsers,
+} from "@/lib/data/directory";
+import type {
+  AuditEvent,
+  Enrollment,
+  LearnerProgress,
+  LessonPlan,
+  Notification,
+  Section,
+  Term,
+  User,
+} from "@/lib/types";
+import { createRepository } from "./_repository";
+
+/** Progress saved by the single-user prototype, before accounts existed. */
+const LEGACY_LEARNER_KEY = "lumen-lms:learner:v1";
+
+function readLegacyLearner(): (Partial<LearnerProgress> & { savedPlans?: LessonPlan[] }) | undefined {
+  try {
+    const raw = window.localStorage.getItem(LEGACY_LEARNER_KEY);
+    return raw ? JSON.parse(raw) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export const usersRepo = createRepository<User[]>("users", 1, seedUsers);
+export const termsRepo = createRepository<Term[]>("terms", 1, seedTerms);
+export const sectionsRepo = createRepository<Section[]>("sections", 1, seedSections);
+export const enrollmentsRepo = createRepository<Enrollment[]>("enrollments", 1, seedEnrollments);
+
+/** Learner progress keyed by user id. */
+export const progressRepo = createRepository<Record<string, LearnerProgress>>(
+  "progress",
+  1,
+  seedProgress,
+  () => {
+    const legacy = readLegacyLearner();
+    if (!legacy) return undefined;
+    const seed = seedProgress[DEMO_USER_IDS.student];
+    return {
+      ...seedProgress,
+      [DEMO_USER_IDS.student]: {
+        completedLessons: legacy.completedLessons ?? seed.completedLessons,
+        attempts: legacy.attempts ?? seed.attempts,
+        checkpoints: legacy.checkpoints ?? seed.checkpoints,
+      },
+    };
+  },
+);
+
+const NO_PLANS: Record<string, LessonPlan[]> = {};
+
+/** Saved lesson plans keyed by the faculty member who owns them. */
+export const lessonPlansRepo = createRepository<Record<string, LessonPlan[]>>(
+  "lesson-plans",
+  1,
+  NO_PLANS,
+  () => {
+    const plans = readLegacyLearner()?.savedPlans;
+    return plans?.length ? { [DEMO_USER_IDS.faculty]: plans } : undefined;
+  },
+);
+
+export const notificationsRepo = createRepository<Notification[]>(
+  "notifications",
+  1,
+  seedNotifications,
+);
+
+const NO_EVENTS: AuditEvent[] = [];
+
+/** Newest first. A real audit store must be append-only and tamper-evident (NFR-3). */
+export const auditRepo = createRepository<AuditEvent[]>("audit", 1, NO_EVENTS);
+
+const NO_SELECTION: Record<string, string> = {};
+
+/** Which linked child a parent is currently looking at, keyed by parent id. */
+export const viewedChildRepo = createRepository<Record<string, string>>(
+  "viewed-child",
+  1,
+  NO_SELECTION,
+);

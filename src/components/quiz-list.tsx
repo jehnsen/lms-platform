@@ -3,16 +3,21 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Badge, Card, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
+import { useCourses } from "@/lib/api/courses";
+import { useMyProgress } from "@/lib/api/progress";
 import { getCourse } from "@/lib/data/courses";
 import { quizzes } from "@/lib/data/quizzes";
 import { attemptsFor, bestAttempt } from "@/lib/progress";
-import { useLearner } from "@/lib/store";
 import type { Quiz } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
 export function QuizList() {
-  const state = useLearner();
-  const byDue = [...quizzes].sort((a, b) => a.due.localeCompare(b.due));
+  const state = useMyProgress();
+  // Only quizzes in the learner's own courses.
+  const courseIds = useCourses().map((course) => course.id);
+  const byDue = quizzes
+    .filter((quiz) => courseIds.includes(quiz.courseId))
+    .sort((a, b) => a.due.localeCompare(b.due));
   const todo = byDue.filter((quiz) => attemptsFor(quiz.id, state.attempts).length === 0);
   const done = byDue.filter((quiz) => attemptsFor(quiz.id, state.attempts).length > 0);
 

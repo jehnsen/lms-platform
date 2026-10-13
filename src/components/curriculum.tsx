@@ -4,9 +4,9 @@ import Link from "next/link";
 import { CircleCheck, FileText, ListChecks, Play } from "lucide-react";
 import { Thumbnail } from "@/components/course-art";
 import { Badge } from "@/components/ui";
+import { useCanTrackProgress, useMyProgress } from "@/lib/api/progress";
 import { getQuiz } from "@/lib/data/quizzes";
 import { bestAttempt } from "@/lib/progress";
-import { useLearner } from "@/lib/store";
 import type { Course } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +20,9 @@ export function Curriculum({
   course: Course;
   currentLessonId?: string;
 }) {
-  const state = useLearner();
+  const state = useMyProgress();
+  // Staff previewing a course have no progress and cannot take its quizzes.
+  const tracking = useCanTrackProgress();
 
   return (
     <ol className="flex flex-col gap-5">
@@ -39,7 +41,7 @@ export function Curriculum({
                 {module.title}
               </h3>
               <span className="shrink-0 text-xs text-ink-3 tabular-nums">
-                {done}/{module.lessons.length}
+                {tracking ? `${done}/${module.lessons.length}` : `${module.lessons.length} lessons`}
               </span>
             </div>
             <ul className="flex flex-col">
@@ -88,10 +90,7 @@ export function Curriculum({
               })}
               {quiz ? (
                 <li>
-                  <Link
-                    href={`/quizzes/${quiz.id}`}
-                    className="flex items-center gap-3 rounded-lg p-2 text-sm transition-colors hover:bg-surface-2"
-                  >
+                  <QuizRow href={tracking ? `/quizzes/${quiz.id}` : undefined}>
                     <span className={cn(TILE, "grid place-items-center bg-surface-2 text-ink-2")}>
                       <ListChecks aria-hidden className="size-5" />
                     </span>
@@ -106,7 +105,7 @@ export function Curriculum({
                         Best {best.percent}%
                       </Badge>
                     ) : null}
-                  </Link>
+                  </QuizRow>
                 </li>
               ) : null}
             </ul>
@@ -114,5 +113,17 @@ export function Curriculum({
         );
       })}
     </ol>
+  );
+}
+
+/** A link for learners; plain text for staff, who manage quizzes elsewhere. */
+function QuizRow({ href, children }: { href: string | undefined; children: React.ReactNode }) {
+  const className = "flex items-center gap-3 rounded-lg p-2 text-sm";
+  return href ? (
+    <Link href={href} className={cn(className, "transition-colors hover:bg-surface-2")}>
+      {children}
+    </Link>
+  ) : (
+    <div className={className}>{children}</div>
   );
 }

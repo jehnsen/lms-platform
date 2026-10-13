@@ -3,23 +3,31 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  ArrowUpRight,
   BookCheck,
   CircleCheckBig,
-  Clapperboard,
   ClipboardList,
   Flame,
   Play,
   Sparkles,
-  Table2,
   Target,
-  WandSparkles,
 } from "lucide-react";
 import { ColumnChart } from "@/components/charts";
 import { CourseCover, Thumbnail } from "@/components/course-art";
-import { Badge, ButtonLink, Card, Meter, PageContainer, SectionTitle, StatTile } from "@/components/ui";
-import { courses, getCourse } from "@/lib/data/courses";
-import { currentUser, studyStreakDays, weeklyActivity } from "@/lib/data/people";
+import {
+  Badge,
+  ButtonLink,
+  Card,
+  Meter,
+  PageContainer,
+  PageHeader,
+  SectionTitle,
+  StatTile,
+} from "@/components/ui";
+import { useCourses } from "@/lib/api/courses";
+import { useMyProgress } from "@/lib/api/progress";
+import { useActor } from "@/lib/api/session";
+import { getCourse } from "@/lib/data/courses";
+import { studyStreakDays, weeklyActivity } from "@/lib/data/people";
 import {
   activeCourses,
   checkpointStats,
@@ -28,42 +36,35 @@ import {
   overallGrade,
   pendingQuizzes,
 } from "@/lib/progress";
-import { useLearner } from "@/lib/store";
-import { dateParts, formatMinutes } from "@/lib/utils";
-
-const TEACH_LINKS = [
-  {
-    href: "/lesson-planner",
-    icon: WandSparkles,
-    title: "Generate a lesson plan",
-    detail: "Week-by-week plan with timings and assessments.",
-  },
-  {
-    href: "/content",
-    icon: Clapperboard,
-    title: "Upload video and captions",
-    detail: "Add study materials to a course.",
-  },
-  {
-    href: "/gradebook",
-    icon: Table2,
-    title: "Open the gradebook",
-    detail: "Auto-graded scores for the whole class.",
-  },
-];
+import { dateParts, firstNameOf, formatMinutes } from "@/lib/utils";
 
 const TUTOR_PROMPTS = ["Explain it more simply", "Give me an example", "Quiz me"];
 
+/** The student home page: where they left off, what is due, and how they are doing. */
 export function DashboardView() {
-  const state = useLearner();
-  const active = activeCourses(state);
+  const actor = useActor();
+  const courses = useCourses();
+  const state = useMyProgress();
+  const active = activeCourses(state, courses);
   const resume = active[0]?.course ?? courses[0];
+
+  if (!resume) {
+    return (
+      <PageContainer>
+        <PageHeader
+          title={`Welcome, ${actor ? firstNameOf(actor.name) : ""}`}
+          description="You are not enrolled in any courses yet. They will appear here once the school adds you to a section."
+        />
+      </PageContainer>
+    );
+  }
+
   const resumeProgress = courseProgress(resume, state);
   const resumeLesson = nextLesson(resume, state);
   const started = resumeProgress.done > 0;
-  const average = overallGrade(state);
+  const average = overallGrade(state, courses);
   const checkpoints = checkpointStats(state);
-  const pending = pendingQuizzes(state);
+  const pending = pendingQuizzes(state, courses);
 
   const weekMinutes = weeklyActivity.reduce((sum, entry) => sum + entry.minutes, 0);
   const busiest = weeklyActivity.reduce((best, entry) => (entry.minutes > best.minutes ? entry : best));
@@ -73,7 +74,7 @@ export function DashboardView() {
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
-            Welcome back, {currentUser.name.split(" ")[0]}
+            Welcome back, {actor ? firstNameOf(actor.name) : ""}
           </h1>
           <p className="mt-2 max-w-2xl text-ink-2 text-pretty">
             You have {pending.length} {pending.length === 1 ? "quiz" : "quizzes"} coming up and one
@@ -95,9 +96,11 @@ export function DashboardView() {
         <Card className="grid overflow-hidden md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:col-span-2">
           <Link
             href={`/courses/${resume.id}/learn/${resumeLesson.id}`}
-            aria-label={`${started ? "Resume" : "Start"} lesson: ${resumeLesson.title}`}
             className="group relative block"
           >
+            <span className="sr-only">
+              {started ? "Resume" : "Start"} lesson: {resumeLesson.title},
+            </span>
             <Thumbnail
               src={resumeLesson.thumbnail}
               accent={resume.accent}
@@ -318,28 +321,6 @@ export function DashboardView() {
           </Card>
         </div>
       </div>
-
-      <section className="mt-10">
-        <SectionTitle>Teaching tools</SectionTitle>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {TEACH_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="group flex items-start gap-3 rounded-xl border border-line bg-surface p-4 shadow-xs transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-md"
-            >
-              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary-ink">
-                <link.icon aria-hidden className="size-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium">{link.title}</span>
-                <span className="mt-0.5 block text-xs text-ink-3">{link.detail}</span>
-              </span>
-              <ArrowUpRight aria-hidden className="size-4 shrink-0 text-ink-3 transition-colors group-hover:text-ink" />
-            </Link>
-          ))}
-        </div>
-      </section>
     </PageContainer>
   );
 }

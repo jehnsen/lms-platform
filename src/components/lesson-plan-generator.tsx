@@ -12,12 +12,13 @@ import {
   Trash2,
 } from "lucide-react";
 import { AiBadge, Badge, Button, Card, PageContainer, PageHeader } from "@/components/ui";
+import { deleteLessonPlan, saveLessonPlan, useMyLessonPlans } from "@/lib/api/lesson-plans";
+import { now } from "@/lib/clock";
 import {
   GENERATION_STEPS,
   generateLessonPlan,
   lessonPlanToMarkdown,
 } from "@/lib/mock-ai/lesson-plan";
-import { learner, useLearner } from "@/lib/store";
 import type { LessonPlan, LessonPlanInput } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -45,7 +46,7 @@ function wait(ms: number) {
 }
 
 export function LessonPlanGenerator() {
-  const state = useLearner();
+  const savedPlans = useMyLessonPlans();
   const [input, setInput] = useState<LessonPlanInput>(DEFAULT_INPUT);
   const [plan, setPlan] = useState<LessonPlan | null>(null);
   const [step, setStep] = useState<number | null>(null);
@@ -58,7 +59,7 @@ export function LessonPlanGenerator() {
     setInput((previous) => ({ ...previous, [key]: value }));
 
   const generating = step !== null;
-  const saved = plan !== null && state.savedPlans.some((item) => item.id === plan.id);
+  const saved = plan !== null && savedPlans.some((item) => item.id === plan.id);
 
   const generate = async () => {
     if (!input.topic.trim()) return;
@@ -69,8 +70,8 @@ export function LessonPlanGenerator() {
       await wait(650);
       if (activeRun.current !== run) return;
     }
-    const now = new Date();
-    setPlan(generateLessonPlan(input, `plan-${now.getTime()}`, now.toISOString()));
+    const createdAt = now();
+    setPlan(generateLessonPlan(input, `plan-${createdAt.getTime()}`, createdAt.toISOString()));
     setStep(null);
     resultRef.current?.focus();
   };
@@ -218,11 +219,11 @@ export function LessonPlanGenerator() {
             </form>
           </Card>
 
-          {state.savedPlans.length > 0 ? (
+          {savedPlans.length > 0 ? (
             <Card className="p-5">
               <h2 className="text-sm font-semibold">Saved plans</h2>
               <ul className="mt-2 flex flex-col gap-1">
-                {state.savedPlans.map((savedPlan) => (
+                {savedPlans.map((savedPlan) => (
                   <li key={savedPlan.id} className="flex items-center gap-1">
                     <button
                       type="button"
@@ -239,7 +240,7 @@ export function LessonPlanGenerator() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => learner.deletePlan(savedPlan.id)}
+                      onClick={() => void deleteLessonPlan(savedPlan.id)}
                       aria-label={`Delete plan for ${savedPlan.input.topic}`}
                       className="grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-surface-2 hover:text-bad"
                     >
@@ -276,7 +277,7 @@ export function LessonPlanGenerator() {
               plan={plan}
               actions={
                 <>
-                  <Button variant={saved ? "secondary" : "primary"} size="sm" onClick={() => (saved ? learner.deletePlan(plan.id) : learner.savePlan(plan))} aria-pressed={saved}>
+                  <Button variant={saved ? "secondary" : "primary"} size="sm" onClick={() => (saved ? void deleteLessonPlan(plan.id) : void saveLessonPlan(plan))} aria-pressed={saved}>
                     {saved ? <BookmarkCheck aria-hidden className="size-4" /> : <BookmarkPlus aria-hidden className="size-4" />}
                     {saved ? "Saved" : "Save plan"}
                   </Button>
