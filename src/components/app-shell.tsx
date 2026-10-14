@@ -8,6 +8,7 @@ import {
   CalendarCheck,
   CalendarDays,
   CalendarRange,
+  ChartColumn,
   Clapperboard,
   ClipboardCheck,
   FileText,
@@ -88,6 +89,7 @@ const NAV: NavGroup[] = [
     heading: { faculty: "Teach", admin: "Oversight" },
     items: [
       { href: "/grading", label: "Grading queue", icon: PenLine },
+      { href: "/analytics", label: { faculty: "Class dashboard", admin: "School dashboard" }, icon: ChartColumn },
       { href: "/attendance", label: { faculty: "Attendance", admin: "Attendance" }, icon: CalendarCheck },
       { href: "/gradebook", label: "Gradebook", icon: Table2 },
       { href: "/reports", label: { faculty: "Progress reports", admin: "Progress reports" }, icon: FileText },

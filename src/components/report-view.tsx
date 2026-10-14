@@ -1,9 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Printer } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
 import { Badge, Button, Card, PageContainer, PageHeader, PageSkeleton } from "@/components/ui";
-import { logReportExport, reportRows, useProgressReport, useReportStudents, type ProgressReport } from "@/lib/api/reports";
+import { exportMeta } from "@/lib/api/analytics";
+import {
+  logReportExport,
+  progressReportDocument,
+  reportRows,
+  useProgressReport,
+  useReportStudents,
+  type ProgressReport,
+} from "@/lib/api/reports";
 import { useActor } from "@/lib/api/session";
 import { formatRate } from "@/lib/domain/attendance";
 import { downloadCsv } from "@/lib/download";
@@ -50,6 +58,15 @@ export function ReportView() {
     await logReportExport(report.student.id, report.term.id, "CSV");
     const name = report.student.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     downloadCsv(`progress-report-${name}-${report.term.id}.csv`, reportRows(report));
+  };
+
+  /** FR-7.4: the same report as a PDF or an Excel file. */
+  const exportFile = async (format: "PDF" | "Excel") => {
+    if (!report || !actor) return;
+    await logReportExport(report.student.id, report.term.id, format);
+    const document = progressReportDocument(report, exportMeta(actor.name));
+    const files = await import("@/lib/export-files");
+    await (format === "PDF" ? files.downloadPdf(document) : files.downloadExcel(document));
   };
 
   const print = async () => {
@@ -115,9 +132,17 @@ export function ReportView() {
                 <Printer aria-hidden className="size-4" />
                 Print
               </Button>
+              <Button variant="secondary" disabled={!report} onClick={() => void exportFile("PDF")}>
+                <FileText aria-hidden className="size-4" />
+                PDF
+              </Button>
+              <Button variant="secondary" disabled={!report} onClick={() => void exportFile("Excel")}>
+                <FileSpreadsheet aria-hidden className="size-4" />
+                Excel
+              </Button>
               <Button variant="secondary" disabled={!report} onClick={() => void download()}>
                 <Download aria-hidden className="size-4" />
-                Download CSV
+                CSV
               </Button>
             </>
           }

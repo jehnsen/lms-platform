@@ -42,6 +42,9 @@ export function AdminHome() {
             <ButtonLink href="/admin/terms" variant="secondary">
               Manage terms
             </ButtonLink>
+            <ButtonLink href="/analytics" variant="secondary">
+              School dashboard
+            </ButtonLink>
             <ButtonLink href="/admin/users">Manage users</ButtonLink>
           </>
         }

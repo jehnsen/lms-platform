@@ -55,6 +55,8 @@ const ROUTE_RULES: RouteRule[] = [
   { prefix: "/notifications", action: "view", resource: "notification" },
   { prefix: "/tutor", action: "view", resource: "tutor" },
   { prefix: "/gradebook", action: "view", resource: "gradebook" },
+  // Epic G: dashboards are for faculty (their classes) and admins (the school). Students and parents have none.
+  { prefix: "/analytics", action: "view", resource: "analytics" },
   { prefix: "/content", action: "view", resource: "content-library" },
   { prefix: "/lesson-planner", action: "view", resource: "lesson-plan" },
   // The admin area. The longest matching prefix decides, so "/admin" covers any page without its own rule.

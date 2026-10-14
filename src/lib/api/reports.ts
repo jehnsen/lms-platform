@@ -13,6 +13,7 @@ import { useMemo } from "react";
 import { mockSis } from "@/lib/adapters/sis";
 import { nowIso } from "@/lib/clock";
 import { courseForViewer } from "@/lib/domain/content-visibility";
+import type { ReportDocument } from "@/lib/domain/analytics";
 import { formatRate, type AttendanceSummary } from "@/lib/domain/attendance";
 import { termSummary, type CourseTotal, type TermSummary } from "@/lib/domain/gradebook";
 import { can, type Actor } from "@/lib/domain/permissions";
@@ -220,7 +221,42 @@ export function reportRows(report: ProgressReport): string[][] {
 }
 
 /** Records that a progress report was taken out of the app (NFR-3). Refused for a student the caller may not see. */
-export async function logReportExport(studentId: string, termId: string, format: "CSV" | "print"): Promise<void> {
+/**
+ * FR-4.4, FR-7.4: the progress report as a document for the PDF and Excel
+ * exports: the summary, then the report-card rows exactly as in the CSV.
+ */
+export function progressReportDocument(report: ProgressReport, meta: { generatedAt: string; generatedBy: string }): ReportDocument {
+  const [columns, ...rows] = reportRows(report);
+  const { summary } = report;
+  return {
+    title: `Progress report: ${report.student.name}`,
+    filters: [
+      `Term: ${report.term.name}`,
+      report.audience === "learner"
+        ? "Released grades only"
+        : report.unreleased > 0
+          ? `Includes ${report.unreleased} ${report.unreleased === 1 ? "mark" : "marks"} not yet released to the student`
+          : "Every mark released",
+    ],
+    ...meta,
+    tables: [
+      {
+        title: "Summary",
+        columns: ["Measure", "Value"],
+        rows: [
+          ["Student ID", report.student.sisId ?? ""],
+          ["Term average (%)", summary.average ?? ""],
+          ["GPA", summary.gpa === null ? "" : summary.gpa.toFixed(2)],
+          ["Courses graded", `${summary.graded} of ${summary.courses}`],
+          ["Attendance expected (%)", report.attendanceThreshold],
+        ],
+      },
+      { title: "Courses", columns, rows },
+    ],
+  };
+}
+
+export async function logReportExport(studentId: string, termId: string, format: "CSV" | "print" | "PDF" | "Excel"): Promise<void> {
   const actor = getActor();
   // Faculty hold this permission course by course, so name one of the report's courses they teach.
   const course = coursesTakenBy(studentId, readGradeData(), coursesRepo.get()).find(

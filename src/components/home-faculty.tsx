@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, CalendarCheck, Clapperboard, Table2, WandSparkles } from "lucide-react";
+import { ArrowUpRight, CalendarCheck, ChartColumn, Clapperboard, Table2, WandSparkles } from "lucide-react";
 import { CourseCover } from "@/components/course-art";
 import { ButtonLink, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
 import { useCourses } from "@/lib/api/courses";
@@ -12,6 +12,12 @@ import type { Course } from "@/lib/types";
 import { firstNameOf } from "@/lib/utils";
 
 const TEACH_LINKS = [
+  {
+    href: "/analytics",
+    icon: ChartColumn,
+    title: "Class dashboard",
+    detail: "Who is falling behind, and why.",
+  },
   {
     href: "/attendance",
     icon: CalendarCheck,
@@ -38,7 +44,7 @@ const TEACH_LINKS = [
   },
 ];
 
-/** Faculty home. The full class dashboard (US-26) replaces the summary cards in Phase 7. */
+/** Faculty home: a summary of each course. The class dashboard (US-26) is at `/analytics`. */
 export function FacultyHome() {
   const actor = useActor();
   const courses = useCourses();
@@ -70,7 +76,7 @@ export function FacultyHome() {
 
       <section className="mt-10">
         <SectionTitle>Teaching tools</SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {TEACH_LINKS.map((link) => (
             <Link
               key={link.href}

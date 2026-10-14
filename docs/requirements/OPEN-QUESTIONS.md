@@ -2,7 +2,7 @@
 
 Points the BRD and the BA deliverables leave open, or where the two disagree. Nothing here has been decided on the client's behalf: each row records the **default the app uses for now**, and every default is either configurable or isolated in one place so it can change without rework.
 
-**Last updated:** 2026-10-14, after Phase 6. New in Phase 6: Q-64 to Q-70; defaults recorded for Q-20 and Q-21, and Q-62 revised. **Q-18 (the SIS export format) is needed before go-live.**
+**Last updated:** 2026-10-14, after Phase 7. New in Phase 7: Q-71 to Q-73; a default recorded for Q-22. **Q-18 (the SIS export format) is needed before go-live.**
 
 Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row), `Deferred` (not needed until a later phase).
 
@@ -82,14 +82,10 @@ Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row
 | Q-68 | Which video conferencing service, how early may people join, who may see recordings and for how long are they kept? | FR-6.4, FR-6.5, US-24 | A mock service. The join button shows from 10 minutes before the start until the class ends. Recordings are linked for the students of the course, kept as long as the course. | Open |
 | Q-69 | What do new accounts receive by default, and should the school be able to edit the wording of each kind of notification (FR-6.6 says "configurable templates")? | FR-6.6, FR-6.7, US-25 | Every kind on every channel until the person changes it. One email layout for every kind, and the wording of each kind is fixed in the app. | Open |
 | Q-70 | Push notifications need the app installed or the browser's permission. Should the app ask for permission, and when? | FR-6.6, US-31 | Push is sent to a mock service and reaches no device. Asking for permission comes with the installable app in Phase 8. | Open |
-
-## Policies needed by later phases
-
-Each becomes a configurable setting with a default when its phase is built.
-
-| # | Question | Affects | Phase |
-| --- | --- | --- | --- |
-| Q-22 | At-risk rules and their thresholds. | FR-7.3 | 7 |
+| Q-22 | At-risk rules and their thresholds. | FR-7.3, US-27 | An admin setting. Each rule combines conditions that must all hold; a student is at risk in a course when any rule in use matches. Defaults: grade below 65% and attendance below 85%; grade below 50%; 3 or more pieces of work missing; no sign-in for 14 days (off). | Open |
+| Q-71 | What does "usage" mean for the school dashboard? | FR-7.2, US-27 | What the app already records over the last 7 days: who signed in, by role; quiz attempts; assignments handed in; forum posts; messages. No page views, time on task or video watching. | Open |
+| Q-72 | Should anyone be told when a student becomes at risk (the teacher, the coordinator, the parents), and should at-risk status be kept as history? | FR-7.3, US-27 | No notification and no history: at-risk status is worked out whenever a dashboard is shown. Attendance alerts (US-21) are separate and still sent. | Open |
+| Q-73 | What should the exported reports look like: the school's logo and layout, accessible (tagged) PDFs, names in non-Latin scripts? | FR-7.4, US-28, NFR-5 | A plain layout with the title, the filters, the date and who made it, then the tables. The PDF uses the standard fonts, so letters outside Western European alphabets print as "?", and it is not tagged for screen readers; the Excel file has one worksheet per table. | Open |
 
 ## Platform and scope
 

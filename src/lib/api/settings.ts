@@ -49,6 +49,7 @@ function describeChanges(before: SchoolSettings, after: SchoolSettings) {
   if (JSON.stringify(before.attendance) !== JSON.stringify(after.attendance)) changed.push("attendance policy");
   if (JSON.stringify(before.notifications) !== JSON.stringify(after.notifications)) changed.push("required notifications");
   if (JSON.stringify(before.messaging) !== JSON.stringify(after.messaging)) changed.push("messaging rules");
+  if (JSON.stringify(before.atRisk) !== JSON.stringify(after.atRisk)) changed.push("at-risk rules");
   return changed;
 }
 

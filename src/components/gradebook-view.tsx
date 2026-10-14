@@ -7,6 +7,7 @@ import { ColumnChart, type Column } from "@/components/charts";
 import { GradebookSetupDialog } from "@/components/gradebook-setup-dialog";
 import { SisExportDialog } from "@/components/sis-export-dialog";
 import { Badge, Button, Card, PageContainer, PageHeader, StatTile } from "@/components/ui";
+import { useClassView } from "@/lib/api/analytics";
 import { releaseGrades } from "@/lib/api/assignments";
 import { useCourses } from "@/lib/api/courses";
 import {
@@ -62,6 +63,8 @@ export function GradebookView() {
   const course = courses.find((item) => item.id === selectedCourseId) ?? courses[0];
   // Every enrolled learner with a score for each grade item; null if this role may not see the course.
   const book = useGradebook(course?.id ?? "");
+  // FR-7.3: who to follow up with comes from the school's at-risk rules, as on the class dashboard.
+  const insights = useClassView(course?.id, sectionId === "all" ? null : sectionId);
 
   if (!course || !book) {
     return (
@@ -82,9 +85,7 @@ export function GradebookView() {
   const classAverage = averageOf(rows.map((row) => row.total.percent));
   const applies = rows.flatMap((row) => row.scores.filter((score) => score.state !== "exempt" && score.state !== "upcoming"));
   const handedIn = applies.filter((score) => score.state !== "missing").length;
-  const needsAttention = rows.filter(
-    (row) => (row.total.percent !== null && row.total.percent < PASS_MARK) || row.total.counts.missing > 0,
-  );
+  const needsAttention = (insights?.rows ?? []).filter((row) => row.risks.length > 0);
 
   const bands: Column[] = BANDS.map((band) => {
     const inBand = graded.filter((row) => row.total.percent! >= band.min && row.total.percent! <= band.max);
@@ -189,7 +190,7 @@ export function GradebookView() {
             value={`${applies.length ? Math.round((handedIn / applies.length) * 100) : 0}%`}
             hint={`${handedIn} of ${applies.length} pieces of work due so far`}
           />
-          <StatTile label="Need attention" value={needsAttention.length} hint="Below 70% or missing work" />
+          <StatTile label="At risk" value={needsAttention.length} hint="By the school's at-risk rules" />
           <Card className="col-span-2 p-4 sm:col-span-3 lg:col-span-2 xl:col-span-3">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
               <TriangleAlert aria-hidden className="size-4 text-warn" />
@@ -200,17 +201,23 @@ export function GradebookView() {
             ) : (
               <ul className="mt-2 flex flex-col gap-1.5 text-sm">
                 {needsAttention.slice(0, 5).map((row) => (
-                  <li key={row.student.id} className="flex flex-wrap items-center justify-between gap-2">
-                    <span>{row.student.name}</span>
-                    <span className="flex gap-1.5">
-                      {row.total.percent !== null && row.total.percent < PASS_MARK ? (
-                        <Badge tone="bad">Total {row.total.percent}%</Badge>
-                      ) : null}
-                      {row.total.counts.missing > 0 ? <Badge tone="warn">{row.total.counts.missing} missing</Badge> : null}
+                  <li key={row.studentId} className="flex flex-wrap items-center justify-between gap-2">
+                    <span>{row.name}</span>
+                    <span className="flex flex-wrap gap-1.5">
+                      {row.risks.map((risk) => (
+                        <Badge key={risk.ruleId} tone="warn" title={risk.reasons.join("; ")}>
+                          {risk.name}
+                        </Badge>
+                      ))}
                     </span>
                   </li>
                 ))}
                 {needsAttention.length > 5 ? <li className="text-ink-3">and {needsAttention.length - 5} more</li> : null}
+                <li>
+                  <Link href="/analytics" className="text-sm font-medium text-primary-ink hover:underline">
+                    Why, and the whole class, on the class dashboard
+                  </Link>
+                </li>
               </ul>
             )}
           </Card>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { AtRiskFields } from "@/components/at-risk-fields";
 import { GradingScaleFields } from "@/components/grading-scale-fields";
 import { LatePolicyFields } from "@/components/late-policy-fields";
 import { Button, Card, PageContainer, PageHeader, fieldClass } from "@/components/ui";
@@ -82,6 +83,7 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
     },
     notifications: draft.notifications,
     messaging: draft.messaging,
+    atRisk: draft.atRisk,
   };
   const setAttendance = (changes: Partial<AttendancePolicy>) => {
     setSavedNote(false);
@@ -498,6 +500,23 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
                 ))}
               </div>
             </fieldset>
+          </fieldset>
+        </Card>
+
+        <Card className="p-5">
+          <fieldset className="min-w-0">
+            <legend className="text-lg font-semibold tracking-tight">At-risk students</legend>
+            <p className="mt-1 mb-4 text-sm text-ink-2">
+              The rules that put a student on the at-risk list of the school dashboard, the class dashboards and the
+              gradebook. A student is at risk in a course when any rule in use matches.
+            </p>
+            <AtRiskFields
+              rules={draft.atRisk.rules}
+              onChange={(rules) => {
+                setSavedNote(false);
+                setDraft((current) => ({ ...current, atRisk: { rules } }));
+              }}
+            />
           </fieldset>
         </Card>
 

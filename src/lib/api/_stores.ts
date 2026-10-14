@@ -76,7 +76,7 @@ function readLegacyLearner(): (Partial<LearnerProgress> & { savedPlans?: LessonP
   }
 }
 
-export const usersRepo = createRepository<User[]>("users", 1, seedUsers);
+export const usersRepo = createRepository<User[]>("users", 2, seedUsers);
 export const termsRepo = createRepository<Term[]>("terms", 2, seedTerms);
 export const sectionsRepo = createRepository<Section[]>("sections", 3, seedSections);
 
@@ -95,7 +95,7 @@ export const enrollmentsRepo = createRepository<Enrollment[]>("enrollments", 1, 
 /** Learner progress keyed by user id. */
 export const progressRepo = createRepository<Record<string, LearnerProgress>>(
   "progress",
-  2,
+  3,
   seedProgress,
   () => {
     const legacy = readLegacyLearner();
@@ -145,7 +145,7 @@ export const viewedChildRepo = createRepository<Record<string, string>>(
 );
 
 /** School-wide policy set by admins. One record, not a list. */
-export const settingsRepo = createRepository<SchoolSettings>("settings", 6, DEFAULT_SETTINGS);
+export const settingsRepo = createRepository<SchoolSettings>("settings", 7, DEFAULT_SETTINGS);
 
 const NO_PREFS: Record<string, NotificationPrefs> = {};
 

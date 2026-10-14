@@ -33,6 +33,7 @@ export type ResourceType =
   | "message"
   | "forum"
   | "live-session"
+  | "analytics"
   | "content-library"
   | "lesson-plan"
   | "tutor"
@@ -123,6 +124,8 @@ export const PERMISSIONS: Record<Role, Grants> = {
     message: OWN_MESSAGES,
     forum: { view: "course", create: "course", update: "course" },
     "live-session": { view: "course", create: "course", update: "course" },
+    // US-26: the class dashboard for the courses they teach, and its exports.
+    analytics: { view: "course", export: "course" },
     "content-library": { view: "any", create: "any", update: "any", delete: "any" },
     "lesson-plan": { view: "own", create: "own", delete: "own" },
     notification: OWN_NOTIFICATIONS,
@@ -150,6 +153,8 @@ export const PERMISSIONS: Record<Role, Grants> = {
     message: OWN_MESSAGES,
     forum: { view: "any", update: "any" },
     "live-session": { view: "any" },
+    // US-27, US-28: the school dashboard, drill-down to any class, and exports.
+    analytics: { view: "any", export: "any" },
     "content-library": { view: "any" },
     user: { view: "any", create: "any", update: "any", delete: "any" },
     term: { view: "any", update: "any" },

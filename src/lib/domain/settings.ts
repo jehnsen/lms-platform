@@ -3,6 +3,7 @@
  * a change must pass. Every default here is an open question in
  * docs/requirements/OPEN-QUESTIONS.md.
  */
+import { DEFAULT_AT_RISK_POLICY, atRiskProblems } from "@/lib/domain/analytics";
 import { DEFAULT_LATE_POLICY, latePolicyProblems } from "@/lib/domain/assignments";
 import { DEFAULT_ATTENDANCE_POLICY, attendancePolicyProblems } from "@/lib/domain/attendance";
 import { DEFAULT_MESSAGING_POLICY } from "@/lib/domain/messaging";
@@ -38,6 +39,8 @@ export const DEFAULT_SETTINGS: SchoolSettings = {
   notifications: DEFAULT_NOTIFICATION_POLICY,
   // Q-20: who may message whom.
   messaging: DEFAULT_MESSAGING_POLICY,
+  // Q-22: when a student counts as at risk.
+  atRisk: DEFAULT_AT_RISK_POLICY,
 };
 
 export const RETENTION_YEARS_RANGE = { min: 1, max: 99 } as const;
@@ -86,5 +89,6 @@ export function settingsProblems(settings: SchoolSettings): string[] {
   }
   problems.push(...attendancePolicyProblems(settings.attendance));
   problems.push(...notificationPolicyProblems(settings.notifications));
+  problems.push(...atRiskProblems(settings.atRisk));
   return problems;
 }

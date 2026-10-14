@@ -57,13 +57,23 @@ const CLASSMATES = [
   "Lucía Herrera",
 ];
 
-const demoStudent = user(DEMO_USER_IDS.student, "Mike Manabat", "student", { sisId: "S-1000" });
+/** A last sign-in this many days before the seeded "today", 14 October 2026, at 08:30 UTC (FR-7.1). */
+function signedIn(daysAgo: number) {
+  return new Date(Date.parse("2026-10-14T08:30:00.000Z") - daysAgo * 24 * 60 * 60 * 1000).toISOString();
+}
 
-const classmates = CLASSMATES.map((name, index) =>
-  user(`u-student-${String(index + 1).padStart(2, "0")}`, name, "student", {
+/** Days since each classmate last signed in. One has never signed in, and one not for over two weeks. */
+const CLASSMATE_LAST_SIGN_IN: Array<number | null> = [0, 1, 0, 9, 1, 2, 0, 3, null, 0, 1, 16];
+
+const demoStudent = user(DEMO_USER_IDS.student, "Mike Manabat", "student", { sisId: "S-1000", lastLoginAt: signedIn(1) });
+
+const classmates = CLASSMATES.map((name, index) => {
+  const daysAgo = CLASSMATE_LAST_SIGN_IN[index];
+  return user(`u-student-${String(index + 1).padStart(2, "0")}`, name, "student", {
     sisId: `S-${1001 + index}`,
-  }),
-);
+    ...(daysAgo === null ? {} : { lastLoginAt: signedIn(daysAgo) }),
+  });
+});
 
 /** Which faculty member teaches each seeded course. Names match `Course.instructor`. */
 const TEACHING: Array<{ courseId: string; facultyId: string; name: string }> = [
@@ -76,9 +86,9 @@ const TEACHING: Array<{ courseId: string; facultyId: string; name: string }> = [
 export const seedUsers: User[] = [
   demoStudent,
   ...classmates,
-  ...TEACHING.map((entry) => user(entry.facultyId, entry.name, "faculty")),
-  user(DEMO_USER_IDS.admin, "Priya Nair", "admin"),
-  user(DEMO_USER_IDS.parent, "Rosa Manabat", "parent", { childIds: [demoStudent.id] }),
+  ...TEACHING.map((entry, index) => user(entry.facultyId, entry.name, "faculty", { lastLoginAt: signedIn([0, 1, 4, 2][index]) })),
+  user(DEMO_USER_IDS.admin, "Priya Nair", "admin", { lastLoginAt: signedIn(0) }),
+  user(DEMO_USER_IDS.parent, "Rosa Manabat", "parent", { childIds: [demoStudent.id], lastLoginAt: signedIn(3) }),
   user("u-parent-tanaka", "Kenji Tanaka", "parent", { childIds: [classmates[0].id] }),
 ];
 
@@ -143,9 +153,16 @@ function seeded(seed: number) {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Classmates whose quiz scores are seeded low, by index. Devon Clarke also has
+ * low attendance in Machine Learning (`src/lib/data/attendance.ts`), so the
+ * default at-risk rules list him (FR-7.3).
+ */
+const WEAK_PERFORMERS: Record<number, number> = { 3: 46 };
+
 function classmateProgress(studentIndex: number, userId: string): LearnerProgress {
   const random = seeded(studentIndex * 97 + 13);
-  const ability = 52 + random() * 44;
+  const ability = WEAK_PERFORMERS[studentIndex] ?? 52 + random() * 44;
   const attempts: LearnerProgress["attempts"] = [];
   for (const quiz of quizzes) {
     const missed = random() < 0.12;

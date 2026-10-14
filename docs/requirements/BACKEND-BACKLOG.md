@@ -2,7 +2,7 @@
 
 Everything that must be real on a server before go-live. This phase of the project is frontend-first: each item below has a typed interface and a mock in the browser, and this file records what has to replace the mock.
 
-**Last updated:** 2026-10-14, after Phase 6. Items are added as each phase introduces a new mock.
+**Last updated:** 2026-10-14, after Phase 7. Items are added as each phase introduces a new mock.
 
 ## How the frontend is prepared for it
 
@@ -55,7 +55,7 @@ Replace each mock repository with database tables and API endpoints.
 | `api/courses.ts` | Courses with units and lessons, sections and schedules, enrollments, course visibility, rosters, templates, terms, term archive | `GET /courses`, `GET /courses/:id`, `POST /courses` (blank, from a template, or a copy with a date shift), `PUT /courses/:id`, `GET /courses/:id/roster`, `GET`, `POST` and `DELETE /course-templates`, `GET /terms`, `POST /terms/:id/archive`, `POST /terms/:id/reopen` |
 | `api/materials.ts` | Content library items, captions, and the files behind them | `GET /materials`, `POST /materials` (upload), `PATCH /materials/:id`, `DELETE /materials/:id`, `GET /courses/:id/lessons/:lessonId/file` |
 | `api/assignments.ts` | Assignments with rubrics and attachments, submissions with files, inline comments, grades and their release, similarity reports | `GET` and `POST /assignments`, `GET`, `PUT` and `DELETE /assignments/:id`, `GET` and `POST /assignments/:id/submissions`, `PUT /submissions/:id/grade`, `POST` and `DELETE /submissions/:id/comments`, `POST /assignments/:id/release`, `POST /submissions/:id/similarity`, file downloads |
-| `api/settings.ts` | School settings: password policy, retention period, upload size limits, default late rule, submission size limit, who sees similarity reports, grading scales and the default scale, attendance policy and coordinators, required notifications, messaging rules | `GET /settings`, `PUT /settings` |
+| `api/settings.ts` | School settings: password policy, retention period, upload size limits, default late rule, submission size limit, who sees similarity reports, grading scales and the default scale, attendance policy and coordinators, required notifications, messaging rules, at-risk rules | `GET /settings`, `PUT /settings` |
 | `api/progress.ts` | Completed lessons, checkpoint answers, and reading a learner's attempts | `GET /users/:id/progress`, `POST /lessons/:id/completion`, `POST /checkpoints/:id/answers` |
 | `api/quizzes.ts` | Quizzes and questions, the question bank, attempts in progress, handed-in attempts, the grading queue | `GET` and `POST /quizzes`, `GET`, `PUT` and `DELETE /quizzes/:id`, `POST /quizzes/:id/attempts`, `PATCH /attempts/:id`, `POST /attempts/:id/submit`, `GET /grading-queue`, `PUT /attempts/:id/marks/:questionId`, `GET`, `POST` and `DELETE /question-bank` |
 | `api/grades.ts` | Class gradebook with totals, each course's grading setup (categories, weights, scale, missing-work rule), held quiz scores, a learner's released grades | `GET /courses/:id/gradebook`, `GET` and `PUT /courses/:id/gradebook/setup`, `POST /quizzes/:id/grades/hold`, `POST /quizzes/:id/grades/release`, `GET /users/:id/grades`, `POST /courses/:id/gradebook/exports` |
@@ -66,6 +66,7 @@ Replace each mock repository with database tables and API endpoints.
 | `api/messages.ts` | Direct messages | `GET /messages/conversations`, `GET /messages/contacts`, `POST /messages`, `POST /sections/:id/messages`, `POST /messages/conversations/:userId/read` |
 | `api/forums.ts` | Forum threads and posts, reports and moderation | `GET` and `POST /courses/:id/forum/threads`, `GET /forum/threads/:id`, `POST /forum/threads/:id/posts`, `POST /forum/posts/:id/reports`, `PUT /forum/posts/:id/hidden`, `DELETE /forum/posts/:id/reports`, `PUT /forum/threads/:id/locked` |
 | `api/live.ts` | Live classes and their recordings | `GET` and `POST /courses/:id/live-sessions`, `POST /live-sessions/:id/join`, `POST /live-sessions/:id/end`, `DELETE /live-sessions/:id`, and the video service's webhook |
+| `api/analytics.ts` | Nothing of its own: class and school figures, at-risk lists and exports, computed from every other table | `GET /analytics/classes/:courseId?sectionId=`, `GET /analytics/school?termId=`, `POST /analytics/exports` (returns the file) |
 | `api/notifications.ts` | In-app notifications, each person's channel preferences, the delivery log | `GET /notifications`, `POST /notifications/:id/read`, `GET` and `PUT /me/notification-preferences`; sending is internal to the server |
 | `api/lesson-plans.ts` | Saved lesson plans | `GET/POST/DELETE /lesson-plans` |
 | `api/audit.ts` | Audit log reads | `GET /audit-events` |
@@ -121,6 +122,13 @@ Bulk import: the CSV file is parsed and validated in the browser (`previewUserIm
 - **Notification fan-out.** `notify()` runs in the browser of whoever caused the notification and calls the mock adapters directly. On the server it becomes a queue: one job per recipient and channel, with retries, bounce handling and per-kind templates (Q-69).
 - **Live classes.** The meeting is created by the browser through the mock adapter. The server creates it with the service's credentials, gives each person their own join address, and receives the end of the meeting and the recording by webhook.
 
+**Reporting (Epic G).** Everything the browser decides today must be decided by the server:
+
+- **The figures.** `useClassView()` and `useSchoolView()` compute every grade, attendance rate and at-risk match in the browser from the whole of every table. At school scale this belongs on the server: a job that refreshes the figures at least daily (US-26), or on request with caching, from the server's own records and clock.
+- **What a role may see.** A teacher's dashboard is limited by the views it is built from, in the browser. The API must return only the courses and students the caller may see.
+- **Exports.** `exportReport()` builds the file in the browser with `jspdf` and `exceljs` and writes the audit entry there. The server should produce the file from its own data, apply the same filters and permissions, and write the audit entry itself; a generated file should not be trusted to match the screen.
+- **Last sign-in.** Recorded by the browser at sign-in. The server records it.
+
 ### Scheduled jobs
 
 None of these can run in a browser. Each has a manual stand-in or a recorded setting today.
@@ -132,6 +140,7 @@ None of these can run in a browser. Each has a manual stand-in or a recorded set
 | Delete data when the retention period ends (US-04, Q-12) | The period is stored in settings; nothing is deleted. |
 | Check attendance against the threshold and send the alerts (FR-5.5) | Runs in the browser when attendance or the attendance policy is saved. |
 | End a live class whose time has run out and link its recording (FR-6.5) | `settleLiveClasses()` runs when a course page is opened. |
+| Refresh the dashboard figures and at-risk lists at least daily (US-26) | Worked out in the browser every time a dashboard is shown. |
 
 ## 4. Audit storage (FR-1.2, NFR-3)
 

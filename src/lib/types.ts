@@ -56,6 +56,31 @@ export interface SchoolSettings {
   notifications: NotificationPolicy;
   /** FR-6.2: the role rules for direct messages. */
   messaging: MessagingPolicy;
+  /** FR-7.3: when a student counts as at risk. */
+  atRisk: AtRiskPolicy;
+}
+
+/**
+ * FR-7.3: one at-risk rule. It matches a student in a course when every
+ * condition it sets holds, so "low grades plus low attendance" is one rule
+ * with two conditions. A student is at risk when any enabled rule matches.
+ */
+export interface AtRiskRule {
+  id: string;
+  name: string;
+  enabled: boolean;
+  /** The course total is below this percent. */
+  gradeBelow?: number;
+  /** Attendance in the course is below this percent. */
+  attendanceBelow?: number;
+  /** At least this many pieces of work are missing. */
+  missingAtLeast?: number;
+  /** No sign-in for at least this many days, or never. */
+  inactiveDays?: number;
+}
+
+export interface AtRiskPolicy {
+  rules: AtRiskRule[];
 }
 
 // ---------------------------------------------------------------------------
