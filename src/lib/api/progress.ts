@@ -20,7 +20,7 @@ import {
   usersRepo,
   viewedChildRepo,
 } from "./_stores";
-import { authorize, authorizeOwn, recordAudit, useActor } from "./session";
+import { authorize, authorizeOwn, getActor, recordAudit, useActor } from "./session";
 import { useLinkedChildren } from "./users";
 
 export const EMPTY_PROGRESS: LearnerProgress = { completedLessons: [], attempts: [], checkpoints: {} };
@@ -107,8 +107,9 @@ export async function getProgress(userId: string, courseId?: string): Promise<Le
   return progressRepo.get()[userId] ?? EMPTY_PROGRESS;
 }
 
-function updateMine(change: (progress: LearnerProgress) => LearnerProgress) {
-  const actor = authorizeOwn("update", "progress");
+/** Changes the signed-in learner's own progress. Refused in an archived course (FR-1.8). */
+function updateMine(courseId: string, change: (progress: LearnerProgress) => LearnerProgress) {
+  const actor = authorize("update", { type: "progress", ownerId: getActor()?.id, courseId });
   progressRepo.update((all) => {
     const current = all[actor.id] ?? EMPTY_PROGRESS;
     const next = change(current);
@@ -116,8 +117,8 @@ function updateMine(change: (progress: LearnerProgress) => LearnerProgress) {
   });
 }
 
-export async function setLessonComplete(lessonId: string, complete: boolean): Promise<void> {
-  updateMine((progress) => {
+export async function setLessonComplete(courseId: string, lessonId: string, complete: boolean): Promise<void> {
+  updateMine(courseId, (progress) => {
     if (progress.completedLessons.includes(lessonId) === complete) return progress;
     return {
       ...progress,
@@ -130,12 +131,12 @@ export async function setLessonComplete(lessonId: string, complete: boolean): Pr
 
 export async function recordAttempt(attempt: QuizAttempt, courseId: string): Promise<void> {
   authorize("submit", { type: "quiz", courseId });
-  updateMine((progress) => ({ ...progress, attempts: [...progress.attempts, attempt] }));
+  updateMine(courseId, (progress) => ({ ...progress, attempts: [...progress.attempts, attempt] }));
 }
 
 /** Only the first answer to a checkpoint counts towards participation. */
-export async function recordCheckpoint(checkpointId: string, correct: boolean): Promise<void> {
-  updateMine((progress) =>
+export async function recordCheckpoint(courseId: string, checkpointId: string, correct: boolean): Promise<void> {
+  updateMine(courseId, (progress) =>
     checkpointId in progress.checkpoints
       ? progress
       : { ...progress, checkpoints: { ...progress.checkpoints, [checkpointId]: correct } },

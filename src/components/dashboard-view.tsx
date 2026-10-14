@@ -45,8 +45,10 @@ export function DashboardView() {
   const actor = useActor();
   const courses = useCourses();
   const state = useMyProgress();
-  const active = activeCourses(state, courses);
-  const resume = active[0]?.course ?? courses[0];
+  // Archived courses are read-only (FR-1.8), so there is nothing in them to resume or to do.
+  const open = courses.filter((course) => course.status !== "archived");
+  const active = activeCourses(state, open);
+  const resume = active[0]?.course ?? open[0] ?? courses[0];
 
   if (!resume) {
     return (
@@ -64,7 +66,7 @@ export function DashboardView() {
   const started = resumeProgress.done > 0;
   const average = overallGrade(state, courses);
   const checkpoints = checkpointStats(state);
-  const pending = pendingQuizzes(state, courses);
+  const pending = pendingQuizzes(state, open);
 
   const weekMinutes = weeklyActivity.reduce((sum, entry) => sum + entry.minutes, 0);
   const busiest = weeklyActivity.reduce((best, entry) => (entry.minutes > best.minutes ? entry : best));

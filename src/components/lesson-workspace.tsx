@@ -8,7 +8,7 @@ import { ForbiddenView } from "@/components/forbidden-view";
 import { LessonPlayer, type LessonPlayerHandle } from "@/components/lesson-player";
 import { TutorChat, type TutorChatHandle } from "@/components/tutor-chat";
 import { Badge, Button, ButtonLink, PageContainer } from "@/components/ui";
-import { useCanViewCourse } from "@/lib/api/courses";
+import { useCanViewCourse, useCourseReadOnly } from "@/lib/api/courses";
 import {
   recordCheckpoint,
   setLessonComplete,
@@ -28,6 +28,9 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
   const actor = useActor();
   // Staff preview lessons without recording progress; the tutor is a learner tool.
   const tracking = useCanTrackProgress();
+  // FR-1.8: a learner can still open an archived course, but nothing new is recorded.
+  const readOnly = useCourseReadOnly(courseId);
+  const recording = tracking && !readOnly;
   const hasTutor = can(actor, "view", { type: "tutor" });
   const allowed = useCanViewCourse(courseId);
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, boolean>>({});
@@ -51,8 +54,8 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
   const sidePanel: SidePanel = hasTutor ? panel : "content";
 
   const answerCheckpoint = (checkpointId: string, correct: boolean) => {
-    if (tracking) void recordCheckpoint(checkpointId, correct);
-    // In preview the answer is kept only for this visit, so the video can continue.
+    if (recording) void recordCheckpoint(courseId, checkpointId, correct);
+    // Otherwise the answer is kept only for this visit, so the video can continue.
     else setPreviewAnswers((previous) => ({ ...previous, [checkpointId]: correct }));
   };
 
@@ -86,10 +89,16 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
               title={lesson.title}
               transcript={transcript}
               checkpoints={lesson.checkpoints ?? []}
-              answered={tracking ? state.checkpoints : previewAnswers}
+              answered={
+                recording
+                  ? state.checkpoints
+                  : tracking
+                    ? { ...state.checkpoints, ...previewAnswers }
+                    : previewAnswers
+              }
               onCheckpointAnswered={answerCheckpoint}
               onProgress={setFraction}
-              onEnded={tracking ? () => void setLessonComplete(lesson.id, true) : undefined}
+              onEnded={recording ? () => void setLessonComplete(courseId, lesson.id, true) : undefined}
               onAskTutor={hasTutor ? askTutor : undefined}
             />
           ) : null}
@@ -104,15 +113,19 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
                 {lesson.title}
               </h1>
             </div>
-            {tracking ? (
+            {recording ? (
               <Button
                 variant={complete ? "secondary" : "primary"}
                 aria-pressed={complete}
-                onClick={() => void setLessonComplete(lesson.id, !complete)}
+                onClick={() => void setLessonComplete(courseId, lesson.id, !complete)}
               >
                 <Check aria-hidden className="size-4" />
                 {complete ? "Completed" : "Mark as complete"}
               </Button>
+            ) : readOnly ? (
+              <Badge className="h-8 px-3">
+                {tracking && complete ? "Completed · " : null}Archived course · read-only
+              </Badge>
             ) : (
               <Badge className="h-8 px-3">Preview · progress isn&apos;t recorded</Badge>
             )}
@@ -198,7 +211,7 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
               {tracking && isLastInModule && courseModule.quizId ? (
                 <ButtonLink variant={next ? "secondary" : "primary"} href={`/quizzes/${courseModule.quizId}`}>
                   <ListChecks aria-hidden className="size-4" />
-                  Take the module quiz
+                  {readOnly ? "See the module quiz" : "Take the module quiz"}
                 </ButtonLink>
               ) : null}
               {next ? (

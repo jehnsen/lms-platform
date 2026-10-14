@@ -9,7 +9,9 @@
  * `authorize()`, so it does not change.
  */
 import { useMemo, useSyncExternalStore } from "react";
+import { IdentityProviderError, createMockIdentityProvider } from "@/lib/adapters/identity-provider";
 import { nowIso } from "@/lib/clock";
+import { courses as courseCatalogue } from "@/lib/data/courses";
 import { DEMO_USER_IDS } from "@/lib/data/directory";
 import {
   can,
@@ -24,9 +26,11 @@ import {
   encodeSession,
   type Session,
 } from "@/lib/domain/session-cookie";
-import type { AuditEvent, Enrollment, Role, Section, User } from "@/lib/types";
+import { archivedCourseIds } from "@/lib/domain/terms";
+import type { AuditEvent, Enrollment, Role, Section, Term, User } from "@/lib/types";
+import { checkCredential } from "./_credentials";
 import { useRepository } from "./_repository";
-import { auditRepo, enrollmentsRepo, sectionsRepo, usersRepo } from "./_stores";
+import { auditRepo, enrollmentsRepo, sectionsRepo, termsRepo, usersRepo } from "./_stores";
 
 /** The signed-in user, with the relationships permission scopes need. */
 export interface CurrentUser extends Actor {
@@ -87,6 +91,7 @@ function buildActor(
   users: User[],
   sections: Section[],
   enrollments: Enrollment[],
+  terms: Term[],
 ): CurrentUser | null {
   if (!session) return null;
   const user = users.find((candidate) => candidate.id === session.userId);
@@ -114,6 +119,8 @@ function buildActor(
     status: user.status,
     childIds: user.childIds ?? [],
     courseIds,
+    // FR-1.8: courses of an archived term can be read but not changed.
+    readOnlyCourseIds: archivedCourseIds(courseCatalogue, terms),
   };
 }
 
@@ -123,15 +130,22 @@ export function useActor(): CurrentUser | null | undefined {
   const users = useRepository(usersRepo);
   const sections = useRepository(sectionsRepo);
   const enrollments = useRepository(enrollmentsRepo);
+  const terms = useRepository(termsRepo);
   return useMemo(
-    () => (session === undefined ? undefined : buildActor(session, users, sections, enrollments)),
-    [session, users, sections, enrollments],
+    () => (session === undefined ? undefined : buildActor(session, users, sections, enrollments, terms)),
+    [session, users, sections, enrollments, terms],
   );
 }
 
 /** The signed-in user, for service functions (outside React). */
 export function getActor(): CurrentUser | null {
-  return buildActor(getSession(), usersRepo.get(), sectionsRepo.get(), enrollmentsRepo.get());
+  return buildActor(
+    getSession(),
+    usersRepo.get(),
+    sectionsRepo.get(),
+    enrollmentsRepo.get(),
+    termsRepo.get(),
+  );
 }
 
 // --- Audit (FR-1.2) ---------------------------------------------------------
@@ -169,8 +183,12 @@ export function recordDenied(resource: string, detail?: string) {
 }
 
 export class PermissionDeniedError extends Error {
-  constructor(action: Action, resource: Resource) {
-    super(`You don't have permission to ${action} this ${resource.type.replace("-", " ")}.`);
+  constructor(action: Action, resource: Resource, archived = false) {
+    super(
+      archived
+        ? "This course is archived. It can be viewed but not changed."
+        : `You don't have permission to ${action} this ${resource.type.replace("-", " ")}.`,
+    );
     this.name = "PermissionDeniedError";
   }
 }
@@ -187,7 +205,8 @@ export function authorize(action: Action, resource: Resource): CurrentUser {
   if (!actor || !can(actor, action, resource)) {
     const target = resource.ownerId ?? resource.courseId ?? "*";
     recordDenied(`${resource.type}:${target}`, `Attempted to ${action}`);
-    throw new PermissionDeniedError(action, resource);
+    const archived = resource.courseId !== undefined && actor?.readOnlyCourseIds.includes(resource.courseId);
+    throw new PermissionDeniedError(action, resource, archived && action !== "view" && action !== "export");
   }
   return actor;
 }
@@ -200,35 +219,49 @@ export function authorizeOwn(action: Action, type: ResourceType): CurrentUser {
 // --- Sign in and out --------------------------------------------------------
 
 export class SignInError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    /** True when the sign-in has to start again from the email and password. */
+    public readonly restart = false,
+  ) {
     super(message);
     this.name = "SignInError";
   }
 }
 
-const MIN_PASSWORD_LENGTH = 6;
+/** What a sign-in attempt leads to: a session, or a second step for admins (FR-1.4). */
+export type SignInResult = { status: "signed-in" } | { status: "mfa-required"; method: string };
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
+function findByEmail(email: string) {
+  const wanted = email.trim().toLowerCase();
+  return usersRepo.get().find((candidate) => candidate.email.toLowerCase() === wanted);
+}
+
 function startSession(user: User, method: string) {
+  const at = nowIso();
+  usersRepo.update((users) =>
+    users.map((candidate) => (candidate.id === user.id ? { ...candidate, lastLoginAt: at } : candidate)),
+  );
   writeSession({ userId: user.id, role: user.role });
   recordAudit({ action: "auth.sign-in", resource: `user:${user.id}`, outcome: "allowed", detail: method });
 }
 
-/**
- * MOCK: any password of six or more characters is accepted for an existing
- * account. Replace with a request to the auth service.
- */
-export async function signIn(email: string, password: string): Promise<void> {
-  await wait(700);
-  const user = usersRepo
-    .get()
-    .find((candidate) => candidate.email.toLowerCase() === email.trim().toLowerCase());
-  if (!user || password.length < MIN_PASSWORD_LENGTH) {
-    throw new SignInError("That email and password don't match an account.");
-  }
+// MOCK multi-factor step. A real service sends or derives a one-time code and
+// checks it on the server; here one fixed code is accepted.
+export const MFA_DEMO_CODE = "246810";
+const MFA_METHOD = "authenticator app";
+const MFA_VALID_MS = 5 * 60 * 1000;
+const MFA_ATTEMPTS = 5;
+
+let pendingMfa: { userId: string; method: string; expiresAt: number; attemptsLeft: number } | null = null;
+
+/** The password or the identity provider vouched for this user: finish, or ask for the second step. */
+function completeSignIn(user: User, method: string): SignInResult {
+  // FR-1.7, US-02: only active accounts can sign in.
   if (user.status !== "active") {
     recordAudit(
       { action: "auth.sign-in", resource: `user:${user.id}`, outcome: "denied", detail: `Account is ${user.status}` },
@@ -238,10 +271,94 @@ export async function signIn(email: string, password: string): Promise<void> {
       "This account has been deactivated. Contact your school administrator to restore access.",
     );
   }
-  startSession(user, "password");
+  // FR-1.4: admins always pass a second factor (Q-08 covers the method).
+  if (user.role === "admin") {
+    pendingMfa = { userId: user.id, method, expiresAt: Date.now() + MFA_VALID_MS, attemptsLeft: MFA_ATTEMPTS };
+    return { status: "mfa-required", method: MFA_METHOD };
+  }
+  startSession(user, method);
+  return { status: "signed-in" };
 }
 
-/** Demo shortcut: sign in as the seeded account for a role. */
+/**
+ * MOCK local account sign-in (FR-1.4). An account an admin has set a password
+ * for accepts only that password; any other account accepts any password of
+ * six or more characters. Replace with a request to the auth service.
+ */
+export async function signIn(email: string, password: string): Promise<SignInResult> {
+  await wait(700);
+  const user = findByEmail(email);
+  if (!user || !checkCredential(user.id, password)) {
+    throw new SignInError("That email and password don't match an account.");
+  }
+  return completeSignIn(user, "password");
+}
+
+/** MOCK: the school directory knows students, faculty and admins, not parents (Q-07). */
+const identityProvider = createMockIdentityProvider({
+  hasAccount: (email) => {
+    const user = findByEmail(email);
+    return user !== undefined && user.role !== "parent";
+  },
+});
+
+/** FR-1.3, US-02: sign in with the school account. The provider says who it is; the LMS decides what they may do. */
+export async function signInWithSso(loginHint: string): Promise<SignInResult> {
+  let email: string;
+  try {
+    email = (await identityProvider.authenticate(loginHint)).email;
+  } catch (error) {
+    if (error instanceof IdentityProviderError) throw new SignInError(error.message);
+    throw error;
+  }
+  const user = findByEmail(email);
+  if (!user) {
+    throw new SignInError("Your school account isn't set up in the LMS yet. Contact your school administrator.");
+  }
+  return completeSignIn(user, `SSO (${identityProvider.protocol.toUpperCase()})`);
+}
+
+/** Second step for admins. MOCK: the code is `MFA_DEMO_CODE`. */
+export async function verifyMfa(code: string): Promise<void> {
+  await wait(500);
+  const pending = pendingMfa;
+  if (!pending || Date.now() > pending.expiresAt) {
+    pendingMfa = null;
+    throw new SignInError("That code has expired. Sign in again.", true);
+  }
+  const user = usersRepo.get().find((candidate) => candidate.id === pending.userId);
+  if (!user || user.status !== "active") {
+    pendingMfa = null;
+    throw new SignInError("This account can no longer sign in.", true);
+  }
+  if (code.replace(/\s/g, "") !== MFA_DEMO_CODE) {
+    pending.attemptsLeft -= 1;
+    recordAudit(
+      { action: "auth.mfa", resource: `user:${user.id}`, outcome: "denied", detail: "Incorrect code" },
+      null,
+    );
+    if (pending.attemptsLeft <= 0) {
+      pendingMfa = null;
+      throw new SignInError("Too many incorrect codes. Sign in again.", true);
+    }
+    throw new SignInError(
+      `That code isn't right. ${pending.attemptsLeft} ${pending.attemptsLeft === 1 ? "try" : "tries"} left.`,
+    );
+  }
+  pendingMfa = null;
+  startSession(user, `${pending.method} + MFA`);
+}
+
+/** Abandons a sign-in that is waiting for its second step. */
+export function cancelMfa() {
+  pendingMfa = null;
+}
+
+/**
+ * Demo shortcut for the "view as" switcher in the app shell: become the seeded
+ * account for a role without signing in. It skips the second step on purpose
+ * and goes away with the mock.
+ */
 export function signInAsDemo(role: Role) {
   const user = usersRepo.get().find((candidate) => candidate.id === DEMO_USER_IDS[role]);
   if (user) startSession(user, "demo role switcher");

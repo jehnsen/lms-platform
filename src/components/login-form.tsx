@@ -1,9 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, LoaderCircle, Lock, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui";
-import { SignInError, demoEmailFor, signIn, signInAsDemo } from "@/lib/api/session";
+import {
+  MFA_DEMO_CODE,
+  SignInError,
+  cancelMfa,
+  demoEmailFor,
+  signIn,
+  signInWithSso,
+  verifyMfa,
+  type SignInResult,
+} from "@/lib/api/session";
 import { ROLES, ROLE_LABELS } from "@/lib/domain/permissions";
 import { reloadTo } from "@/lib/navigation";
 import type { Role } from "@/lib/types";
@@ -18,10 +27,13 @@ function destination() {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /**
- * Sign-in form over the mock auth service (`src/lib/api/session.ts`).
- * Accounts are the seeded users; the role picker fills in the demo account
- * for each role. Every role lands on its own home page (US-02).
+ * Sign-in form over the mock auth service (`src/lib/api/session.ts`): the
+ * school account through SSO (FR-1.3) or a local account with a password
+ * (FR-1.4), then a second step for admins. The role picker only fills in the
+ * demo account for each role. Every role lands on its own home page (US-02).
  */
 export function LoginForm() {
   const [role, setRole] = useState<Role>("student");
@@ -32,6 +44,9 @@ export function LoginForm() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // Set while an admin's sign-in waits for its second step (FR-1.4).
+  const [mfaMethod, setMfaMethod] = useState<string | null>(null);
+  const [code, setCode] = useState("");
 
   const chooseRole = (next: Role) => {
     setRole(next);
@@ -41,13 +56,23 @@ export function LoginForm() {
 
   const enter = () => reloadTo(destination());
 
-  const signInWithPassword = async () => {
+  /** Runs one sign-in step and moves on: into the app, or to the second step. */
+  const attempt = async (step: () => Promise<SignInResult | void>) => {
     setPending(true);
     setNotice(null);
+    setErrors({});
     try {
-      await signIn(email, password);
-      enter();
+      const result = await step();
+      if (result?.status === "mfa-required") {
+        setMfaMethod(result.method);
+        setCode("");
+        setPending(false);
+      } else {
+        // Stays pending while the app loads.
+        enter();
+      }
     } catch (error) {
+      if (error instanceof SignInError && error.restart) setMfaMethod(null);
       setErrors({
         form: error instanceof SignInError ? error.message : "Something went wrong. Try again.",
       });
@@ -55,23 +80,90 @@ export function LoginForm() {
     }
   };
 
-  /** MOCK: stands in for the school identity provider (FR-1.3) until Phase 1. */
-  const signInWithSso = () => {
-    setPending(true);
-    reloadTo(destination(), () => signInAsDemo(role));
-  };
+  const emailProblem = () =>
+    EMAIL_PATTERN.test(email.trim()) ? undefined : "Enter a valid email address, like name@school.edu.";
 
   const submit = () => {
-    const nextErrors: typeof errors = {};
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      nextErrors.email = "Enter a valid email address, like name@school.edu.";
-    }
-    if (password.length < 6) {
-      nextErrors.password = "Your password must be at least 6 characters.";
-    }
+    const nextErrors: typeof errors = { email: emailProblem() };
+    if (password.length === 0) nextErrors.password = "Enter your password.";
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length === 0) void signInWithPassword();
+    if (!nextErrors.email && !nextErrors.password) void attempt(() => signIn(email, password));
   };
+
+  const continueWithSso = () => {
+    const problem = emailProblem();
+    setErrors({ email: problem });
+    if (!problem) void attempt(() => signInWithSso(email));
+  };
+
+  const backToSignIn = () => {
+    cancelMfa();
+    setMfaMethod(null);
+    setCode("");
+    setErrors({});
+  };
+
+  if (mfaMethod) {
+    return (
+      <div className="w-full max-w-sm">
+        <span className="grid size-12 place-items-center rounded-full bg-primary-soft text-primary-ink">
+          <ShieldCheck aria-hidden className="size-6" />
+        </span>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Confirm it&apos;s you</h1>
+        <p className="mt-2 text-ink-2">
+          Administrator accounts need a second step. Enter the 6-digit code from your {mfaMethod}.
+        </p>
+
+        <form
+          noValidate
+          className="mt-8 flex flex-col gap-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (code.trim().length === 0) setErrors({ form: "Enter the 6-digit code." });
+            else void attempt(() => verifyMfa(code));
+          }}
+        >
+          <div>
+            <label htmlFor="login-code" className="mb-1.5 block text-sm font-medium">
+              Verification code
+            </label>
+            <input
+              id="login-code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              maxLength={7}
+              value={code}
+              onChange={(event) => setCode(event.target.value.replace(/[^\d\s]/g, ""))}
+              aria-invalid={errors.form ? true : undefined}
+              aria-describedby={errors.form ? "login-code-error" : undefined}
+              className="h-12 w-full rounded-lg border border-line-strong bg-surface px-3 text-center font-mono text-lg tracking-[0.3em] aria-invalid:border-bad"
+            />
+          </div>
+
+          {errors.form ? (
+            <p id="login-code-error" role="alert" className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad">
+              {errors.form}
+            </p>
+          ) : null}
+
+          <Button type="submit" size="lg" disabled={pending} className="mt-1 w-full">
+            {pending ? <LoaderCircle aria-hidden className="size-4 animate-spin" /> : null}
+            {pending ? "Checking…" : "Verify and sign in"}
+          </Button>
+          <Button variant="ghost" disabled={pending} onClick={backToSignIn} className="w-full">
+            <ArrowLeft aria-hidden className="size-4" />
+            Back to sign in
+          </Button>
+        </form>
+
+        <p role="status" className="mt-6 rounded-lg bg-surface-2 px-3 py-2 text-center text-xs text-ink-3">
+          Demo: the code is {MFA_DEMO_CODE}. No real code is sent.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-sm">
@@ -203,7 +295,7 @@ export function LoginForm() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <Button variant="secondary" size="lg" disabled={pending} onClick={signInWithSso} className="w-full">
+      <Button variant="secondary" size="lg" disabled={pending} onClick={continueWithSso} className="w-full">
         Continue with school account (SSO)
       </Button>
 
@@ -219,7 +311,8 @@ export function LoginForm() {
       </p>
 
       <p role="status" className={cn("mt-4 rounded-lg px-3 py-2 text-center text-xs", notice ? "bg-warn-soft text-warn" : "bg-surface-2 text-ink-3")}>
-        {notice ?? "Demo: pick a role to fill in its account. Any password of 6 or more characters works."}
+        {notice ??
+          "Demo: pick a role to fill in its account. Any password of 6 or more characters works, unless an admin has set one for the account."}
       </p>
     </div>
   );

@@ -6,7 +6,7 @@ import { CourseCover } from "@/components/course-art";
 import { ForbiddenView } from "@/components/forbidden-view";
 import { Curriculum } from "@/components/curriculum";
 import { Badge, ButtonLink, Card, Meter, PageContainer } from "@/components/ui";
-import { useCanViewCourse, useCourseRoster } from "@/lib/api/courses";
+import { useCanViewCourse, useCourseReadOnly, useCourseRoster } from "@/lib/api/courses";
 import { useCanTrackProgress, useMyProgress } from "@/lib/api/progress";
 import { courseLessons, courseMinutes, getCourse } from "@/lib/data/courses";
 import { letterGrade } from "@/lib/grading";
@@ -25,6 +25,7 @@ export function CourseOverview({ courseId }: { courseId: string }) {
   const tracking = useCanTrackProgress();
   const allowed = useCanViewCourse(courseId);
   const roster = useCourseRoster(courseId);
+  const archived = useCourseReadOnly(courseId);
   const course = getCourse(courseId);
   if (!course) return null;
   // A learner who is not enrolled, or faculty who do not teach it (FR-1.1).
@@ -33,7 +34,8 @@ export function CourseOverview({ courseId }: { courseId: string }) {
   const progress = courseProgress(course, state);
   const upNext = nextLesson(course, state);
   const grade = courseGrade(course, state);
-  const finished = progress.done === progress.total;
+  // An archived course can only be looked back on (FR-1.8).
+  const finished = progress.done === progress.total || archived;
 
   return (
     <PageContainer>
@@ -50,6 +52,7 @@ export function CourseOverview({ courseId }: { courseId: string }) {
           <div className="flex flex-wrap gap-1.5">
             <Badge>{course.subject}</Badge>
             <Badge>{course.level}</Badge>
+            {archived ? <Badge tone="warn">Archived · read-only</Badge> : null}
           </div>
           <h1 className="mt-3 text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
             {course.title}
@@ -117,7 +120,9 @@ export function CourseOverview({ courseId }: { courseId: string }) {
                 {roster
                   ? `${roster.students.length} learners in ${roster.sections.length} sections.`
                   : "You are viewing this course as staff."}{" "}
-                Progress isn&apos;t recorded while you preview.
+                {archived
+                  ? "This course is archived: it can be viewed but not changed."
+                  : "Progress isn't recorded while you preview."}
               </p>
               <ButtonLink href={`/courses/${course.id}/learn/${upNext.id}`} className="mt-1">
                 <Play aria-hidden className="size-4 fill-current" />

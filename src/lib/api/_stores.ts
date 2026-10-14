@@ -13,12 +13,14 @@ import {
   seedTerms,
   seedUsers,
 } from "@/lib/data/directory";
+import { DEFAULT_SETTINGS } from "@/lib/domain/settings";
 import type {
   AuditEvent,
   Enrollment,
   LearnerProgress,
   LessonPlan,
   Notification,
+  SchoolSettings,
   Section,
   Term,
   User,
@@ -38,8 +40,8 @@ function readLegacyLearner(): (Partial<LearnerProgress> & { savedPlans?: LessonP
 }
 
 export const usersRepo = createRepository<User[]>("users", 1, seedUsers);
-export const termsRepo = createRepository<Term[]>("terms", 1, seedTerms);
-export const sectionsRepo = createRepository<Section[]>("sections", 1, seedSections);
+export const termsRepo = createRepository<Term[]>("terms", 2, seedTerms);
+export const sectionsRepo = createRepository<Section[]>("sections", 2, seedSections);
 export const enrollmentsRepo = createRepository<Enrollment[]>("enrollments", 1, seedEnrollments);
 
 /** Learner progress keyed by user id. */
@@ -94,3 +96,39 @@ export const viewedChildRepo = createRepository<Record<string, string>>(
   1,
   NO_SELECTION,
 );
+
+/** School-wide policy set by admins. One record, not a list. */
+export const settingsRepo = createRepository<SchoolSettings>("settings", 1, DEFAULT_SETTINGS);
+
+export interface MockCredential {
+  digest: string;
+  setAt: string;
+}
+
+const NO_CREDENTIALS: Record<string, MockCredential> = {};
+
+/**
+ * MOCK passwords for local accounts, keyed by user id. An account with no
+ * entry still accepts the shared demo password rule. The backend stores
+ * salted, slow hashes and never sends them to a browser.
+ */
+export const credentialsRepo = createRepository<Record<string, MockCredential>>(
+  "credentials",
+  1,
+  NO_CREDENTIALS,
+);
+
+export interface SisSyncState {
+  lastRunAt: string | null;
+  created: number;
+  skipped: number;
+  failed: number;
+}
+
+/** The outcome of the latest manual SIS sync (FR-1.6). */
+export const sisSyncRepo = createRepository<SisSyncState>("sis-sync", 1, {
+  lastRunAt: null,
+  created: 0,
+  skipped: 0,
+  failed: 0,
+});

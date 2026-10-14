@@ -20,6 +20,24 @@ export interface User {
   childIds?: string[];
   /** Identifier in the Student Information System, when imported from it (FR-1.5). */
   sisId?: string;
+  /** When the account last signed in. Written by the session service. */
+  lastLoginAt?: string;
+}
+
+/** FR-1.4: what a new local-account password must contain. School policy, so it is data. */
+export interface PasswordPolicy {
+  minLength: number;
+  requireUppercase: boolean;
+  requireLowercase: boolean;
+  requireDigit: boolean;
+  requireSymbol: boolean;
+}
+
+/** School-wide policy an admin can change. Later phases add their own settings here. */
+export interface SchoolSettings {
+  passwordPolicy: PasswordPolicy;
+  /** US-04: years an archived account's data is kept. `null` keeps it indefinitely. */
+  retentionYears: number | null;
 }
 
 export interface Term {
@@ -37,6 +55,8 @@ export interface Section {
   courseId: string;
   termId: string;
   name: string;
+  /** Short code used in CSV imports and the SIS feed, e.g. "CS-110-A" (FR-1.5). */
+  code: string;
   facultyIds: string[];
 }
 

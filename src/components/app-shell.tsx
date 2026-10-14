@@ -5,14 +5,18 @@ import { usePathname } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
 import {
   BookOpen,
+  CalendarRange,
   Clapperboard,
   GraduationCap,
   LayoutDashboard,
   ListChecks,
   LogOut,
   Menu,
+  ScrollText,
+  Settings,
   Sparkles,
   Table2,
+  Users,
   WandSparkles,
   X,
   type LucideIcon,
@@ -65,6 +69,15 @@ const NAV: NavGroup[] = [
       { href: "/gradebook", label: "Gradebook", icon: Table2 },
       { href: "/content", label: "Content library", icon: Clapperboard },
       { href: "/lesson-planner", label: "Lesson planner", icon: WandSparkles },
+    ],
+  },
+  {
+    heading: "Administration",
+    items: [
+      { href: "/admin/users", label: "Users", icon: Users },
+      { href: "/admin/terms", label: "Terms", icon: CalendarRange },
+      { href: "/admin/settings", label: "Settings", icon: Settings },
+      { href: "/admin/audit", label: "Audit log", icon: ScrollText },
     ],
   },
 ];

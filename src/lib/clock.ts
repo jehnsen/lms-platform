@@ -9,3 +9,8 @@ export function now() {
 export function nowIso() {
   return now().toISOString();
 }
+
+/** Today's date as YYYY-MM-DD, in UTC like every date-only value in the app. */
+export function todayIso() {
+  return nowIso().slice(0, 10);
+}

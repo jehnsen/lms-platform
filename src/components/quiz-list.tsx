@@ -14,11 +14,14 @@ import { formatDate } from "@/lib/utils";
 export function QuizList() {
   const state = useMyProgress();
   // Only quizzes in the learner's own courses.
-  const courseIds = useCourses().map((course) => course.id);
+  const courses = useCourses();
+  const courseIds = courses.map((course) => course.id);
+  // FR-1.8: quizzes of an archived course are closed; past results stay listed.
+  const closed = (quiz: Quiz) => courses.find((course) => course.id === quiz.courseId)?.status === "archived";
   const byDue = quizzes
     .filter((quiz) => courseIds.includes(quiz.courseId))
     .sort((a, b) => a.due.localeCompare(b.due));
-  const todo = byDue.filter((quiz) => attemptsFor(quiz.id, state.attempts).length === 0);
+  const todo = byDue.filter((quiz) => attemptsFor(quiz.id, state.attempts).length === 0 && !closed(quiz));
   const done = byDue.filter((quiz) => attemptsFor(quiz.id, state.attempts).length > 0);
 
   const row = (quiz: Quiz) => {
@@ -44,7 +47,7 @@ export function QuizList() {
             <Badge>{quiz.weight}% of grade</Badge>
           )}
           <span className="flex items-center gap-1 text-sm font-medium text-primary-ink">
-            {best ? "Retake" : "Start"}
+            {closed(quiz) ? "View" : best ? "Retake" : "Start"}
             <ArrowRight aria-hidden className="size-4" />
           </span>
         </Link>

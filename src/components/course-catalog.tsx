@@ -71,6 +71,7 @@ export function CourseCatalog() {
                   <div className="flex flex-wrap gap-1.5">
                     <Badge>{course.subject}</Badge>
                     <Badge>{course.level}</Badge>
+                    {course.status === "archived" ? <Badge tone="warn">Archived</Badge> : null}
                   </div>
                   <h2 className="mt-3 text-xl leading-snug font-semibold tracking-tight text-balance group-hover:underline">
                     {course.title}
@@ -87,6 +88,10 @@ export function CourseCatalog() {
                   <div className="mt-3 border-t border-line pt-3">
                     {!tracking ? (
                       <span className="text-xs font-medium text-primary-ink">Preview course</span>
+                    ) : course.status === "archived" ? (
+                      <span className="text-xs text-ink-2 tabular-nums">
+                        {progress.percent}% complete · read-only
+                      </span>
                     ) : progress.done > 0 ? (
                       <div className="flex items-center gap-3">
                         <Meter value={progress.percent} label={`${course.title} progress`} className="flex-1" />

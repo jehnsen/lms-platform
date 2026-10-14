@@ -27,6 +27,11 @@ const ROUTE_RULES: RouteRule[] = [
   { prefix: "/gradebook", action: "view", resource: "gradebook" },
   { prefix: "/content", action: "view", resource: "content-library" },
   { prefix: "/lesson-planner", action: "view", resource: "lesson-plan" },
+  // The admin area. The longest matching prefix decides, so "/admin" covers any page without its own rule.
+  { prefix: "/admin", action: "view", resource: "user" },
+  { prefix: "/admin/terms", action: "update", resource: "term" },
+  { prefix: "/admin/settings", action: "view", resource: "settings" },
+  { prefix: "/admin/audit", action: "view", resource: "audit-log" },
 ];
 
 /** Reachable without a session. */

@@ -21,6 +21,8 @@ export type ResourceType =
   | "lesson-plan"
   | "tutor"
   | "user"
+  | "term"
+  | "settings"
   | "audit-log"
   | "notification";
 
@@ -48,6 +50,8 @@ export interface Actor {
   childIds: string[];
   /** Courses the actor is enrolled in (students) or teaches (faculty). */
   courseIds: string[];
+  /** Archived courses. Nobody may change anything in them (FR-1.8). */
+  readOnlyCourseIds: string[];
 }
 
 type Grants = Partial<Record<ResourceType, Partial<Record<Action, Scope>>>>;
@@ -82,6 +86,8 @@ export const PERMISSIONS: Record<Role, Grants> = {
     gradebook: { view: "any", export: "any" },
     "content-library": { view: "any" },
     user: { view: "any", create: "any", update: "any", delete: "any" },
+    term: { view: "any", update: "any" },
+    settings: { view: "any", update: "any" },
     "audit-log": { view: "any" },
     notification: OWN_NOTIFICATIONS,
   },
@@ -98,13 +104,24 @@ export function scopeFor(role: Role, action: Action, type: ResourceType): Scope 
   return PERMISSIONS[role][type]?.[action];
 }
 
+const READ_ACTIONS: Action[] = ["view", "export"];
+
 /**
  * May this actor do this to this resource? Inactive and archived accounts may
  * do nothing (FR-1.7). A scoped grant needs the matching field on the
- * resource: without `ownerId` or `courseId` the answer is no.
+ * resource: without `ownerId` or `courseId` the answer is no. In an archived
+ * course every role may still look and export, but nothing can be changed
+ * (FR-1.8).
  */
 export function can(actor: Actor | null | undefined, action: Action, resource: Resource): boolean {
   if (!actor || actor.status !== "active") return false;
+  if (
+    resource.courseId !== undefined &&
+    !READ_ACTIONS.includes(action) &&
+    actor.readOnlyCourseIds.includes(resource.courseId)
+  ) {
+    return false;
+  }
   const scope = scopeFor(actor.role, action, resource.type);
   switch (scope) {
     case undefined:

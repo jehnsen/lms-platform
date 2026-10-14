@@ -2,21 +2,29 @@
 
 Everything that must be real on a server before go-live. This phase of the project is frontend-first: each item below has a typed interface and a mock in the browser, and this file records what has to replace the mock.
 
-**Last updated:** 2026-10-13, after Phase 0. Items are added as each phase introduces a new mock.
+**Last updated:** 2026-10-14, after Phase 1. Items are added as each phase introduces a new mock.
 
 ## How the frontend is prepared for it
 
 - **`src/lib/api/`** is the seam. Components never touch storage; they call hooks and async functions in these modules. Replacing a module's body with HTTP calls is the whole integration for that domain.
 - **`src/lib/domain/`** holds rules with no React or storage in them (permissions, route access, grading). The backend can share them or mirror them, and their unit tests describe the expected behaviour.
 - **`src/lib/api/_repository.ts`** is the mock database: one JSON value per "table" in `localStorage`. It goes away entirely.
+- **`src/lib/adapters/`** holds one typed interface per outside system, each with a mock. The real implementations live on the server; the browser never holds their credentials.
+
+| Adapter | Interface | Mock today | Used by |
+| --- | --- | --- | --- |
+| School identity provider | `IdentityProvider` in `adapters/identity-provider.ts` | `createMockIdentityProvider`: asserts the email it is given if the directory has it. | `signInWithSso()` |
+| Student Information System | `SisAdapter` in `adapters/sis.ts` | `mockSis`: a fixed roster of seven records. | `syncFromSis()` |
 
 ## 1. Authentication and sessions (BR-02, FR-1.3, FR-1.4, FR-1.7)
 
 | Needed | Mock today | Replace |
 | --- | --- | --- |
-| SSO with the school identity provider (SAML 2.0 or OIDC) | The SSO button signs in the demo account for the chosen role. | `signInAsDemo` in `src/lib/api/session.ts` |
-| Local accounts with hashed passwords and a password policy | Any password of 6+ characters is accepted for an existing email. | `signIn` in `src/lib/api/session.ts` |
-| Multi-factor authentication for admins | None yet (Phase 1 adds a mock step). | — |
+| SSO with the school identity provider (SAML 2.0 or OIDC) | A mock provider asserts the email typed into the form; no redirect and no token. | `signInWithSso` in `src/lib/api/session.ts` and the mock in `src/lib/adapters/identity-provider.ts`. The server must validate the ID token or SAML assertion itself. |
+| Local accounts with hashed passwords and a password policy | A password set by an admin is kept in `localStorage` as a weak digest, not a real password hash; accounts without one accept any password of 6+ characters. The policy is checked in the browser. | `signIn` in `src/lib/api/session.ts`, `src/lib/api/_credentials.ts`, `setUserPassword` in `src/lib/api/users.ts`. Store Argon2id or bcrypt hashes; enforce `src/lib/domain/password-policy.ts` on the server. |
+| Self-service password change and reset | None. Only an admin can set a password. | New endpoints and an email flow. |
+| Multi-factor authentication for admins | One fixed demo code, checked in the browser, with 5 tries and a 5-minute expiry held in memory. | `verifyMfa` in `src/lib/api/session.ts`. Real enrolment, TOTP or another method (Q-08), recovery codes, server-side rate limiting. |
+| Lock-out and rate limiting on sign-in | None. | Server-side. |
 | A session the browser cannot forge | An unsigned cookie written by the browser: `lms_session = { userId, role }`. | `src/lib/domain/session-cookie.ts`; issue an encrypted, HttpOnly, Secure cookie from the server |
 | Session expiry and sign-out everywhere | Fixed 7-day cookie. | Server-side sessions |
 | Blocking sign-in for inactive and archived accounts | Checked in the browser against the mock users table. | Server check at sign-in and on every request |
@@ -39,8 +47,9 @@ Replace each mock repository with database tables and API endpoints.
 | Service module | Holds | Endpoints it will need |
 | --- | --- | --- |
 | `api/session.ts` | Session, current user | `POST /auth/sign-in`, `POST /auth/sign-out`, `GET /me` |
-| `api/users.ts` | Users, parent–child links | `GET /users`, `GET /me/children` |
-| `api/courses.ts` | Terms, sections, enrollments, course visibility, rosters | `GET /courses`, `GET /courses/:id/roster`, `GET /terms` |
+| `api/users.ts` | Users, roles, statuses, parent–child links, passwords, bulk import | `GET /users`, `GET /me/children`, `PATCH /users/:id`, `PUT /users/:id/password`, `PUT` and `DELETE /users/:id/children/:studentId`, `POST /users/imports` (dry run and commit) |
+| `api/courses.ts` | Terms, sections, enrollments, course visibility, rosters, term archive | `GET /courses`, `GET /courses/:id/roster`, `GET /terms`, `POST /terms/:id/archive`, `POST /terms/:id/reopen` |
+| `api/settings.ts` | School settings: password policy, retention period | `GET /settings`, `PUT /settings` |
 | `api/progress.ts` | Completed lessons, quiz attempts, checkpoint answers | `GET /users/:id/progress`, `POST /lessons/:id/completion`, `POST /quizzes/:id/attempts`, `POST /checkpoints/:id/answers` |
 | `api/grades.ts` | Class gradebook | `GET /courses/:id/gradebook`, `POST /courses/:id/gradebook/exports` |
 | `api/notifications.ts` | In-app notifications | `GET /notifications`, `POST /notifications/:id/read` |
@@ -55,12 +64,24 @@ Still read directly from static seed files, to be moved behind the service layer
 
 Quiz grading currently runs in the browser (`src/lib/grading.ts`), which means the answers are shipped to the client. The server must grade attempts and never send answer keys.
 
+Bulk import: the CSV file is parsed and validated in the browser (`previewUserImport`). The server must parse the uploaded file and run the rules in `src/lib/domain/user-import.ts` itself, inside one transaction, and enforce unique email and SIS ID with database constraints.
+
+### Scheduled jobs
+
+None of these can run in a browser. Each has a manual stand-in or a recorded setting today.
+
+| Job | Stand-in today |
+| --- | --- |
+| Archive a term on its end date (US-04) | An admin presses "Archive term"; a term past its end date is flagged. |
+| Scheduled SIS sync (FR-1.6) | An admin presses "Sync from SIS". |
+| Delete data when the retention period ends (US-04, Q-12) | The period is stored in settings; nothing is deleted. |
+
 ## 4. Audit storage (FR-1.2, NFR-3)
 
 | Needed | Mock today |
 | --- | --- |
 | Append-only, tamper-evident storage written by the server | A list in `localStorage` that the user can edit or clear, capped at 500 events. |
-| Events for every denied request and every sensitive action | Written by the browser for sign-in, sign-out, denied access, gradebook export and demo reset. |
+| Events for every denied request and every sensitive action | Written by the browser for sign-in, sign-out, failed second-step codes, denied access, role and status changes, parent–child links, password sets, imports, SIS syncs, term archive and reopen, settings changes, gradebook export and demo reset. |
 | Retention period and export for review | None. See Q-11 in `OPEN-QUESTIONS.md`. |
 
 ## 5. Notification delivery (BR-22, FR-6.6)
@@ -73,11 +94,12 @@ Quiz grading currently runs in the browser (`src/lib/grading.ts`), which means t
 
 ## 6. Integrations (BR-12, BR-21, BR-26, BR-27)
 
-Not started. Each gets an adapter interface and a mock in the phase shown.
+Each gets an adapter interface and a mock in the phase shown.
 
 | Integration | Phase |
 | --- | --- |
-| Student Information System: users, enrollments, grade export | 1, 4, 8 |
+| Student Information System: roster import (mock built in Phase 1: `src/lib/adapters/sis.ts`). Still to come: updating and deactivating existing users (Q-25), grade export, connection test | 1, 4, 8 |
+| School identity provider (mock built in Phase 1: `src/lib/adapters/identity-provider.ts`) | 1 |
 | Plagiarism service | 3a |
 | Video conferencing: live sessions and recordings | 6 |
 | School email system | 6, 8 |

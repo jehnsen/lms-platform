@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, Meter, PageContainer } from "@/components/ui";
 import { ForbiddenView } from "@/components/forbidden-view";
+import { useCourseReadOnly } from "@/lib/api/courses";
 import { recordAttempt, useMyProgress } from "@/lib/api/progress";
 import { useActor } from "@/lib/api/session";
 import { now } from "@/lib/clock";
@@ -44,9 +45,12 @@ export function QuizRunner({ quizId }: { quizId: string }) {
   const [confirming, setConfirming] = useState(false);
 
   const quiz = getQuiz(quizId);
+  // FR-1.8: in an archived course the quiz and past results can be seen, but not retaken.
+  const archived = useCourseReadOnly(quiz?.courseId);
   if (!quiz) return null;
   // Only learners enrolled in the quiz's course may take it (FR-1.1).
-  if (actor && !can(actor, "submit", { type: "quiz", courseId: quiz.courseId })) {
+  const enrolled = can(actor, archived ? "view" : "submit", { type: "quiz", courseId: quiz.courseId });
+  if (actor && !enrolled) {
     return <ForbiddenView resource={`quiz:${quiz.id}`} what="this quiz" />;
   }
   const course = getCourse(quiz.courseId);
@@ -108,10 +112,17 @@ export function QuizRunner({ quizId }: { quizId: string }) {
             <Fact label="Time" value={`About ${quiz.minutes} min`} />
             <Fact label="To pass" value={`${quiz.passMark}%`} />
           </dl>
-          <p className="mt-5 text-sm text-ink-2">
-            Graded automatically as soon as you submit. Worth {quiz.weight}% of the course grade ·
-            due {formatDate(quiz.due)}. You can retake it; your best score counts.
-          </p>
+          {archived ? (
+            <p className="mt-5 rounded-lg bg-surface-2 p-4 text-sm text-ink-2">
+              This course was archived at the end of term, so the quiz is closed. Worth {quiz.weight}%
+              of the course grade; your best score counts.
+            </p>
+          ) : (
+            <p className="mt-5 text-sm text-ink-2">
+              Graded automatically as soon as you submit. Worth {quiz.weight}% of the course grade ·
+              due {formatDate(quiz.due)}. You can retake it; your best score counts.
+            </p>
+          )}
 
           {attempts.length > 0 ? (
             <div className="mt-5 rounded-lg bg-surface-2 p-4">
@@ -132,12 +143,18 @@ export function QuizRunner({ quizId }: { quizId: string }) {
             </div>
           ) : null}
 
-          <div className="mt-6">
-            <Button size="lg" onClick={start}>
-              {attempts.length > 0 ? "Retake quiz" : "Start quiz"}
-              <ArrowRight aria-hidden className="size-4" />
-            </Button>
-          </div>
+          {archived ? (
+            attempts.length === 0 ? (
+              <p className="mt-5 text-sm text-ink-2">You did not take this quiz.</p>
+            ) : null
+          ) : (
+            <div className="mt-6">
+              <Button size="lg" onClick={start}>
+                {attempts.length > 0 ? "Retake quiz" : "Start quiz"}
+                <ArrowRight aria-hidden className="size-4" />
+              </Button>
+            </div>
+          )}
         </Card>
       ) : null}
 

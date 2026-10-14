@@ -7,6 +7,7 @@ import { Badge, Button, Card, PageContainer, PageHeader, StatTile } from "@/comp
 import { useCourses } from "@/lib/api/courses";
 import { logGradebookExport, useGradebook } from "@/lib/api/grades";
 import { quizzesForCourse } from "@/lib/data/quizzes";
+import { downloadCsv } from "@/lib/download";
 import { letterGrade } from "@/lib/grading";
 import { bestAttempt, weightedGrade } from "@/lib/progress";
 import type { Quiz } from "@/lib/types";
@@ -40,18 +41,6 @@ function buildRow(id: string, name: string, section: string, quizzes: Quiz[], sc
     overall: weightedGrade(quizzes.map((quiz, index) => ({ weight: quiz.weight, percent: scores[index] }))),
     missing: scores.filter((score) => score === null).length,
   };
-}
-
-function downloadCsv(filename: string, rows: string[][]) {
-  const csv = rows
-    .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","))
-    .join("\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 export function GradebookView() {
@@ -132,6 +121,8 @@ export function GradebookView() {
   return (
     <PageContainer>
       <PageHeader
+        // FR-1.8: an archived course keeps its grades, viewable and exportable.
+        eyebrow={course.status === "archived" ? <Badge tone="warn">Archived term · read-only</Badge> : undefined}
         title="Gradebook"
         description="Scores arrive here automatically when learners submit a quiz. No manual marking."
         actions={

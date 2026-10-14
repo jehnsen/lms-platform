@@ -86,6 +86,13 @@ export const seedTerms: Term[] = [
     endsOn: "2026-12-18",
     status: "active",
   },
+  {
+    id: "term-2026-2",
+    name: "2026–27 Term 2",
+    startsOn: "2027-01-11",
+    endsOn: "2027-05-28",
+    status: "upcoming",
+  },
 ];
 
 /** Two sections per course, both taught by the course's instructor. */
@@ -96,6 +103,7 @@ export const seedSections: Section[] = courses.flatMap((course) => {
     courseId: course.id,
     termId: course.termId,
     name: `Section ${letter}`,
+    code: `${course.code}-${letter}`,
     facultyIds: facultyId ? [facultyId] : [],
   }));
 });

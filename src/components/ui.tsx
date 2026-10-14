@@ -53,6 +53,15 @@ export function ButtonLink({
   return <Link className={buttonClass({ variant, size }, className)} {...props} />;
 }
 
+/**
+ * Shared look for text inputs and selects. Focus uses the global
+ * `:focus-visible` outline. `fieldBaseClass` leaves height and padding to the
+ * caller, for fields with an icon or a smaller size.
+ */
+export const fieldBaseClass =
+  "rounded-lg border border-line-strong bg-surface text-sm placeholder:text-ink-3 aria-invalid:border-bad disabled:opacity-50";
+export const fieldClass = `${fieldBaseClass} h-10 px-3`;
+
 export function Card({ className, ...props }: ComponentProps<"div">) {
   return <div className={cn("rounded-xl border border-line bg-surface shadow-xs", className)} {...props} />;
 }
