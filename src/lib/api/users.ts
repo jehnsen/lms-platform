@@ -12,7 +12,6 @@
 import { useMemo } from "react";
 import { mockSis } from "@/lib/adapters/sis";
 import { nowIso } from "@/lib/clock";
-import { courses as courseCatalogue } from "@/lib/data/courses";
 import { meetsPasswordPolicy } from "@/lib/domain/password-policy";
 import { can } from "@/lib/domain/permissions";
 import { isCourseArchived } from "@/lib/domain/terms";
@@ -29,6 +28,7 @@ import type { AccountStatus, Role, User } from "@/lib/types";
 import { storeCredential } from "./_credentials";
 import { useRepository } from "./_repository";
 import {
+  coursesRepo,
   enrollmentsRepo,
   sectionsRepo,
   settingsRepo,
@@ -205,7 +205,7 @@ function importContext(): ImportContext {
   return {
     users: usersRepo.get(),
     sections: sectionsRepo.get().map((section) => {
-      const course = courseCatalogue.find((candidate) => candidate.id === section.courseId);
+      const course = coursesRepo.get().find((candidate) => candidate.id === section.courseId);
       return {
         id: section.id,
         code: section.code,

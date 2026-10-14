@@ -6,6 +6,7 @@
  */
 import { can } from "@/lib/domain/permissions";
 import type { AuditEvent } from "@/lib/types";
+import { clearFiles } from "./_files";
 import { resetAllRepositories, useRepository } from "./_repository";
 import { auditRepo } from "./_stores";
 import { authorize, recordAudit, useActor } from "./session";
@@ -21,5 +22,7 @@ export function useAuditLog(): AuditEvent[] | null {
 export async function resetDemoData(): Promise<void> {
   authorize("delete", { type: "user" });
   resetAllRepositories();
+  // Uploaded files live outside the repositories.
+  await clearFiles().catch(() => undefined);
   recordAudit({ action: "demo.reset", resource: "all-data", outcome: "allowed" });
 }

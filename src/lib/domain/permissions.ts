@@ -13,6 +13,7 @@ export type Action = "view" | "create" | "update" | "delete" | "submit" | "expor
 
 export type ResourceType =
   | "course"
+  | "course-template"
   | "progress"
   | "quiz"
   | "grades"
@@ -69,7 +70,10 @@ export const PERMISSIONS: Record<Role, Grants> = {
     notification: OWN_NOTIFICATIONS,
   },
   faculty: {
-    course: { view: "course", update: "course" },
+    // FR-2.1: faculty create courses and edit the ones they teach.
+    course: { view: "course", create: "any", update: "course" },
+    // FR-2.5: templates are shared; only their author (or an admin) removes one.
+    "course-template": { view: "any", create: "any", delete: "own" },
     progress: { view: "course" },
     quiz: { view: "course" },
     grades: { view: "course" },
@@ -80,6 +84,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
   },
   admin: {
     course: { view: "any", update: "any" },
+    "course-template": { view: "any", delete: "any" },
     progress: { view: "any" },
     quiz: { view: "any" },
     grades: { view: "any" },

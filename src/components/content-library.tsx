@@ -5,37 +5,51 @@ import {
   AudioLines,
   Captions,
   CirclePlay,
+  Download,
   FileText,
   LoaderCircle,
+  Presentation,
   Sparkles,
   Trash2,
   UploadCloud,
-  X,
+  type LucideIcon,
 } from "lucide-react";
-import { AiBadge, Badge, Button, Card, Meter, PageContainer, PageHeader, buttonClass } from "@/components/ui";
+import { Dialog } from "@/components/dialog";
+import { AiBadge, Badge, Button, Card, Meter, PageContainer, PageHeader, buttonClass, fieldBaseClass } from "@/components/ui";
+import { useCourses } from "@/lib/api/courses";
+import {
+  addMaterial,
+  removeMaterial,
+  setMaterialCaptions,
+  useMaterialFile,
+  useMaterialUsage,
+  useMaterials,
+  useTextUrl,
+} from "@/lib/api/materials";
 import { useActor } from "@/lib/api/session";
-import { SAMPLE_VIDEOS, courses, getCourse } from "@/lib/data/courses";
-import { materials } from "@/lib/data/people";
+import { useSettings } from "@/lib/api/settings";
 import { can } from "@/lib/domain/permissions";
-import type { Material } from "@/lib/types";
-import { cn, formatBytes, formatClock, formatDate } from "@/lib/utils";
+import { MATERIAL_KINDS, UPLOAD_FORMATS, acceptedExtensions, checkUpload } from "@/lib/domain/uploads";
+import { SAMPLE_VIDEOS } from "@/lib/sample-media";
+import type { Material, MaterialKind } from "@/lib/types";
+import { cn, formatClock, formatDate } from "@/lib/utils";
 
-interface LibraryItem extends Material {
-  status: "uploading" | "processing" | "ready";
-  progress?: number;
-  /** Object URLs for files added in this session. They don't survive a reload. */
-  url?: string;
-  captionsUrl?: string;
-  /** Captions produced by the placeholder "auto-caption" action. */
-  demoCaptions?: boolean;
+/** A file on its way into the library. */
+interface Upload {
+  id: string;
+  title: string;
+  kind: MaterialKind;
+  progress: number;
+  status: "uploading" | "processing";
 }
 
-type KindFilter = "all" | Material["kind"];
+type KindFilter = "all" | MaterialKind;
 
-const KIND_META: Record<Material["kind"], { label: string; icon: typeof CirclePlay }> = {
+const KIND_META: Record<MaterialKind, { label: string; icon: LucideIcon }> = {
   video: { label: "Video", icon: CirclePlay },
   audio: { label: "Audio", icon: AudioLines },
   document: { label: "Document", icon: FileText },
+  slides: { label: "Slides", icon: Presentation },
 };
 
 const FILTERS: Array<{ value: KindFilter; label: string }> = [
@@ -43,10 +57,11 @@ const FILTERS: Array<{ value: KindFilter; label: string }> = [
   { value: "video", label: "Video" },
   { value: "audio", label: "Audio" },
   { value: "document", label: "Documents" },
+  { value: "slides", label: "Slides" },
 ];
 
 const CAPTION_FILE = /\.(vtt|srt)$/i;
-const DOCUMENT_FILE = /\.(pdf|pptx?|docx?|txt|md)$/i;
+const ACCEPT = [...acceptedExtensions(), ".vtt", ".srt"].join(",");
 
 const DEMO_CAPTIONS = `WEBVTT
 
@@ -60,15 +75,10 @@ Connect a speech-to-text service to transcribe uploaded audio.
 You can also attach your own .vtt or .srt file at any time.
 `;
 
+const hasSound = (kind: MaterialKind) => kind === "video" || kind === "audio";
+
 function baseName(filename: string) {
   return filename.replace(/\.[^.]+$/, "").toLowerCase();
-}
-
-function kindOf(file: File): Material["kind"] | undefined {
-  if (file.type.startsWith("video/")) return "video";
-  if (file.type.startsWith("audio/")) return "audio";
-  if (DOCUMENT_FILE.test(file.name)) return "document";
-  return undefined;
 }
 
 /** Browsers only play WebVTT, so SubRip files are converted on the way in. */
@@ -78,218 +88,273 @@ function toVtt(text: string, filename: string) {
   return `WEBVTT\n\n${clean.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2")}`;
 }
 
-function vttUrl(vtt: string) {
-  return URL.createObjectURL(new Blob([vtt], { type: "text/vtt" }));
+function wait(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
+/** Reads the running time from a video or audio file, or gives up after a few seconds. */
+function readDuration(file: File, kind: MaterialKind): Promise<string | undefined> {
+  if (!hasSound(kind)) return Promise.resolve(undefined);
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const probe = document.createElement(kind === "video" ? "video" : "audio");
+    const finish = (label?: string) => {
+      clearTimeout(timer);
+      URL.revokeObjectURL(url);
+      resolve(label);
+    };
+    const timer = setTimeout(() => finish(), 4000);
+    probe.preload = "metadata";
+    probe.onloadedmetadata = () => finish(Number.isFinite(probe.duration) ? formatClock(probe.duration) : undefined);
+    probe.onerror = () => finish();
+    probe.src = url;
+  });
+}
+
+function messageOf(error: unknown) {
+  return error instanceof Error ? error.message : "Something went wrong. Try again.";
+}
+
+/**
+ * The shared content library (US-07, FR-2.3, FR-2.6). Faculty upload files
+ * within the school's size limits; a lesson shows one by picking it in the
+ * course builder.
+ */
 export function ContentLibrary() {
-  const [items, setItems] = useState<LibraryItem[]>(() =>
-    materials.map((material) => ({ ...material, status: "ready" })),
-  );
-  const [courseId, setCourseId] = useState(courses[0].id);
+  const materials = useMaterials();
+  const usage = useMaterialUsage();
+  const courses = useCourses();
+  const { uploadLimitsMb } = useSettings();
+  const [chosenCourseId, setChosenCourseId] = useState<string | null>(null);
   const [filter, setFilter] = useState<KindFilter>("all");
   const [dragging, setDragging] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notices, setNotices] = useState<string[]>([]);
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [uploads, setUploads] = useState<Upload[]>([]);
+  const [captioning, setCaptioning] = useState<string[]>([]);
   // Faculty manage the library; admins can look but not change it (FR-1.1).
   const canEdit = can(useActor(), "create", { type: "content-library" });
-
-  const objectUrls = useRef(new Set<string>());
   const uploadCount = useRef(0);
 
-  // This page stays mounted (hidden) after navigating away, so simulated
-  // uploads are left to finish. Only the preview is closed, to stop its media.
+  // This page stays mounted (hidden) after navigating away, so uploads are
+  // left to finish. Only the preview is closed, to stop its media.
   useLayoutEffect(() => {
     return () => setPreviewId(null);
   }, []);
 
-  const patch = (id: string, changes: Partial<LibraryItem>) =>
-    setItems((previous) => previous.map((item) => (item.id === id ? { ...item, ...changes } : item)));
+  if (!materials) return null;
 
-  const track = (url: string) => {
-    objectUrls.current.add(url);
-    return url;
-  };
+  const open = courses.filter((course) => course.status !== "archived");
+  const courseId = open.some((course) => course.id === chosenCourseId) ? chosenCourseId! : open[0]?.id;
+  const titleOf = (id: string) => courses.find((course) => course.id === id)?.title;
 
-  const release = (url: string | undefined) => {
-    if (!url || !objectUrls.current.delete(url)) return;
-    URL.revokeObjectURL(url);
-  };
+  const patchUpload = (id: string, changes: Partial<Upload>) =>
+    setUploads((current) => current.map((upload) => (upload.id === id ? { ...upload, ...changes } : upload)));
 
-  /** Stand-in for a real upload: advances a progress bar, then a short "processing" phase. */
-  const simulateUpload = (id: string, progress = 0) => {
-    const next = Math.min(100, progress + 9);
-    if (next < 100) {
-      patch(id, { progress: next });
-      setTimeout(() => simulateUpload(id, next), 150);
-      return;
+  const report = (messages: string[]) => setNotices((current) => [...current, ...messages]);
+
+  /** MOCK transfer: a progress bar, then the file is stored and listed. A real upload reports real progress. */
+  const upload = async (row: Upload, file: File, toCourseId: string, captions: File | undefined) => {
+    for (let progress = 9; progress < 100; progress += 9) {
+      await wait(150);
+      patchUpload(row.id, { progress });
     }
-    patch(id, { progress: 100, status: "processing" });
-    setTimeout(() => patch(id, { status: "ready", progress: undefined }), 900);
-  };
-
-  const attachCaptions = async (id: string, file: File) => {
-    const url = track(vttUrl(toVtt(await file.text(), file.name)));
-    patch(id, { captions: "ready", captionsUrl: url, demoCaptions: false });
-  };
-
-  const autoCaption = (id: string) => {
-    patch(id, { captions: "generating" });
-    setTimeout(() => patch(id, { captions: "ready", captionsUrl: track(vttUrl(DEMO_CAPTIONS)), demoCaptions: true }), 2200);
+    patchUpload(row.id, { progress: 100, status: "processing" });
+    try {
+      const material = await addMaterial(file, toCourseId, await readDuration(file, row.kind));
+      if (captions) await setMaterialCaptions(material.id, toVtt(await captions.text(), captions.name));
+    } catch (error) {
+      report([messageOf(error)]);
+    } finally {
+      setUploads((current) => current.filter((upload) => upload.id !== row.id));
+    }
   };
 
   const addFiles = (files: File[]) => {
+    if (!courseId) return;
     const captionFiles = files.filter((file) => CAPTION_FILE.test(file.name));
-    const mediaFiles = files.filter((file) => !CAPTION_FILE.test(file.name));
-    const added: LibraryItem[] = [];
-    let rejected = 0;
+    const problems: string[] = [];
+    const accepted: Array<{ row: Upload; file: File }> = [];
 
-    for (const file of mediaFiles) {
-      const kind = kindOf(file);
-      if (!kind) {
-        rejected += 1;
+    for (const file of files.filter((candidate) => !CAPTION_FILE.test(candidate.name))) {
+      // FR-2.3: format and size are checked before anything is sent.
+      const check = checkUpload(file, uploadLimitsMb);
+      if (!check.ok) {
+        problems.push(check.reason);
         continue;
       }
       uploadCount.current += 1;
-      const id = `upload-${uploadCount.current}`;
-      const url = kind === "document" ? undefined : track(URL.createObjectURL(file));
-      added.push({
-        id,
-        title: file.name.replace(/\.[^.]+$/, ""),
-        kind,
-        courseId,
-        sizeLabel: formatBytes(file.size),
-        captions: "none",
-        uploadedAt: new Date().toISOString(),
-        status: "uploading",
-        progress: 0,
-        url,
+      accepted.push({
+        file,
+        row: {
+          id: `upload-${uploadCount.current}`,
+          title: file.name.replace(/\.[^.]+$/, ""),
+          kind: check.kind,
+          progress: 0,
+          status: "uploading",
+        },
       });
-
-      if (url) {
-        // Read the duration from the file itself.
-        const probe = document.createElement(kind === "video" ? "video" : "audio");
-        probe.preload = "metadata";
-        probe.onloadedmetadata = () => patch(id, { durationLabel: formatClock(probe.duration) });
-        probe.src = url;
-      }
     }
 
-    if (added.length > 0) {
-      setItems((previous) => [...added, ...previous]);
-      added.forEach((item) => setTimeout(() => simulateUpload(item.id), 150));
+    // Pair caption files with media: same file name first, then the first new video or audio
+    // file, then the newest library video without captions.
+    const captionsFor = new Map<string, File>();
+    for (const captions of captionFiles) {
+      const fresh =
+        accepted.find(({ row }) => row.title.toLowerCase() === baseName(captions.name) && !captionsFor.has(row.id)) ??
+        accepted.find(({ row }) => hasSound(row.kind) && !captionsFor.has(row.id));
+      const existing = materials.find((material) => material.kind === "video" && material.captions === "none");
+      if (fresh) captionsFor.set(fresh.row.id, captions);
+      else if (existing) void attachCaptions(existing.id, captions);
+      else problems.push(`${captions.name} has no video or audio file to attach to.`);
     }
 
-    // Pair caption files with media: same file name first, otherwise the newest video.
-    let unmatched = 0;
-    for (const file of captionFiles) {
-      const sameName = added.find((item) => item.title.toLowerCase() === baseName(file.name));
-      const fallback =
-        added.find((item) => item.kind !== "document") ??
-        items.find((item) => item.kind === "video" && item.captions === "none");
-      const target = sameName ?? fallback;
-      if (target) void attachCaptions(target.id, file);
-      else unmatched += 1;
-    }
-
-    const problems = [
-      rejected > 0 ? `${rejected} ${rejected === 1 ? "file was" : "files were"} skipped (unsupported type)` : null,
-      unmatched > 0 ? `${unmatched} caption ${unmatched === 1 ? "file has" : "files have"} no video to attach to` : null,
-    ].filter(Boolean);
-    setNotice(problems.length ? `${problems.join("; ")}.` : null);
+    setNotices(problems);
+    setUploads((current) => [...accepted.map(({ row }) => row), ...current]);
+    for (const { row, file } of accepted) void upload(row, file, courseId, captionsFor.get(row.id));
   };
 
-  const remove = (item: LibraryItem) => {
-    if (previewId === item.id) setPreviewId(null);
-    release(item.url);
-    release(item.captionsUrl);
-    setItems((previous) => previous.filter((other) => other.id !== item.id));
+  const attachCaptions = async (materialId: string, file: File) => {
+    try {
+      await setMaterialCaptions(materialId, toVtt(await file.text(), file.name));
+    } catch (error) {
+      report([messageOf(error)]);
+    }
   };
 
-  const visible = items.filter((item) => filter === "all" || item.kind === filter);
-  const preview = items.find((item) => item.id === previewId);
-  const captioned = items.filter((item) => item.kind !== "document" && item.captions === "ready").length;
-  const media = items.filter((item) => item.kind !== "document").length;
+  /** MOCK: stands in for a speech-to-text job. */
+  const autoCaption = async (materialId: string) => {
+    setCaptioning((current) => [...current, materialId]);
+    await wait(2200);
+    try {
+      await setMaterialCaptions(materialId, DEMO_CAPTIONS, true);
+    } catch (error) {
+      report([messageOf(error)]);
+    } finally {
+      setCaptioning((current) => current.filter((id) => id !== materialId));
+    }
+  };
+
+  const remove = async (material: Material) => {
+    if (previewId === material.id) setPreviewId(null);
+    try {
+      await removeMaterial(material.id);
+      setNotices([]);
+    } catch (error) {
+      setNotices([messageOf(error)]);
+    }
+  };
+
+  const visible = materials.filter((material) => filter === "all" || material.kind === filter);
+  const visibleUploads = uploads.filter((row) => filter === "all" || row.kind === filter);
+  const preview = materials.find((material) => material.id === previewId);
+  const media = materials.filter((material) => hasSound(material.kind));
+  const captioned = media.filter((material) => material.captions === "ready").length;
 
   return (
     <PageContainer>
       <PageHeader
         title="Content library"
-        description="Upload videos, audio and documents for your courses. Add captions so every learner can follow along."
+        description="Videos, audio, documents and slides shared by all faculty. Upload a file here, then add it to a lesson in the course builder."
       />
 
       {canEdit ? (
         <Card className="p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold">Upload study materials</h2>
-            <div className="flex items-center gap-2 text-sm">
-              <label htmlFor="upload-course" className="text-ink-2">
-                Add to
-              </label>
-              <select
-                id="upload-course"
-                value={courseId}
-                onChange={(event) => setCourseId(event.target.value)}
-                className="h-9 rounded-lg border border-line-strong bg-surface px-2 text-sm"
-              >
-                {courses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {courseId ? (
+              <div className="flex items-center gap-2 text-sm">
+                <label htmlFor="upload-course" className="text-ink-2">
+                  Add to
+                </label>
+                <select
+                  id="upload-course"
+                  value={courseId}
+                  onChange={(event) => setChosenCourseId(event.target.value)}
+                  className={cn(fieldBaseClass, "h-9 max-w-56 px-2")}
+                >
+                  {open.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
           </div>
 
-          <label
-            onDragOver={(event) => {
-              event.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setDragging(false);
-              addFiles(Array.from(event.dataTransfer.files));
-            }}
-            className={cn(
-              "relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors focus-within:border-primary",
-              dragging ? "border-primary bg-primary-soft" : "border-line-strong hover:border-primary",
-            )}
-          >
-            <UploadCloud aria-hidden className="size-8 text-ink-3" />
-            <span className="font-medium">Drop files here or browse</span>
-            <span className="max-w-md text-sm text-ink-2">
-              Video, audio, PDF or slides. Include a <code className="font-mono text-xs">.vtt</code> or{" "}
-              <code className="font-mono text-xs">.srt</code> file with the same name to attach captions
-              automatically.
-            </span>
-            <input
-              type="file"
-              multiple
-              accept="video/*,audio/*,.pdf,.ppt,.pptx,.doc,.docx,.txt,.md,.vtt,.srt"
-              className="sr-only"
-              onChange={(event) => {
-                addFiles(Array.from(event.target.files ?? []));
-                event.target.value = "";
+          {courseId ? (
+            <label
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDragging(true);
               }}
-            />
-          </label>
-
-          {notice ? (
-            <p role="status" className="mt-3 rounded-lg bg-warn-soft px-3 py-2 text-sm text-warn">
-              {notice}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                setDragging(false);
+                addFiles(Array.from(event.dataTransfer.files));
+              }}
+              className={cn(
+                "relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors focus-within:border-primary",
+                dragging ? "border-primary bg-primary-soft" : "border-line-strong hover:border-primary",
+              )}
+            >
+              <UploadCloud aria-hidden className="size-8 text-ink-3" />
+              <span className="font-medium">Drop files here or browse</span>
+              <span className="max-w-md text-sm text-ink-2">
+                Include a <code className="font-mono text-xs">.vtt</code> or{" "}
+                <code className="font-mono text-xs">.srt</code> file with the same name to attach captions
+                automatically.
+              </span>
+              <input
+                type="file"
+                multiple
+                accept={ACCEPT}
+                aria-describedby="upload-limits"
+                className="sr-only"
+                onChange={(event) => {
+                  addFiles(Array.from(event.target.files ?? []));
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          ) : (
+            <p className="rounded-lg bg-surface-2 p-4 text-sm text-ink-2">
+              You need a course in a current term to add materials to. Create one from the Courses page.
             </p>
-          ) : null}
+          )}
+
+          {/* FR-2.3, US-07: the limits are shown before anything is uploaded. */}
+          <dl id="upload-limits" className="mt-4 grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+            {MATERIAL_KINDS.map((kind) => (
+              <div key={kind} className="flex flex-wrap items-baseline justify-between gap-x-3 border-b border-line py-1">
+                <dt>
+                  <span className="font-medium">{UPLOAD_FORMATS[kind].label}</span>{" "}
+                  <span className="text-xs text-ink-3">
+                    {UPLOAD_FORMATS[kind].extensions.map((extension) => extension.toUpperCase()).join(", ")}
+                  </span>
+                </dt>
+                <dd className="text-ink-2 tabular-nums">up to {uploadLimitsMb[kind]} MB</dd>
+              </div>
+            ))}
+          </dl>
+
+          {/* Always rendered, so screen readers announce problems when they appear. */}
+          <div role="alert" className={notices.length > 0 ? "mt-3 rounded-lg bg-warn-soft px-3 py-2 text-sm text-warn" : undefined}>
+            {notices.map((notice) => (
+              <p key={notice}>{notice}</p>
+            ))}
+          </div>
           <p className="mt-3 text-xs text-ink-3">
-            Demo mode: files stay in this browser tab and uploads are simulated — nothing is sent to a
+            Demo mode: files are kept in this browser and the transfer is simulated. Nothing is sent to a
             server.
           </p>
         </Card>
       ) : null}
 
       <div className="mt-8 mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1" role="group" aria-label="Filter by type">
+        <div className="flex flex-wrap gap-1" role="group" aria-label="Filter by type">
           {FILTERS.map((option) => (
             <button
               key={option.value}
@@ -306,15 +371,34 @@ export function ContentLibrary() {
           ))}
         </div>
         <p className="text-sm text-ink-2">
-          {captioned} of {media} video and audio files have captions
+          {captioned} of {media.length} video and audio files have captions
         </p>
       </div>
 
       <Card className="overflow-hidden">
         <ul>
+          {visibleUploads.map((row) => {
+            const meta = KIND_META[row.kind];
+            return (
+              <li key={row.id} className="flex items-start gap-3 border-t border-line px-4 py-3.5 first:border-t-0">
+                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-surface-2 text-ink-2">
+                  <meta.icon aria-hidden className="size-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium">{row.title}</div>
+                  <div className="mt-2 flex items-center gap-3">
+                    <Meter value={row.progress} label={`Uploading ${row.title}`} className="max-w-xs flex-1" />
+                    <span className="text-xs text-ink-2 tabular-nums">
+                      {row.status === "uploading" ? `${row.progress}%` : "Processing…"}
+                    </span>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
           {visible.map((item) => {
             const meta = KIND_META[item.kind];
-            const busy = item.status !== "ready";
+            const used = usage[item.id] ?? 0;
             return (
               <li key={item.id} className="flex flex-col gap-3 border-t border-line px-4 py-3.5 first:border-t-0 md:flex-row md:items-center">
                 <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -324,46 +408,37 @@ export function ContentLibrary() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{item.title}</div>
                     <div className="text-xs text-ink-3">
-                      {[meta.label, item.durationLabel, item.sizeLabel, getCourse(item.courseId)?.title, formatDate(item.uploadedAt)]
+                      {[
+                        meta.label,
+                        item.durationLabel,
+                        item.sizeLabel,
+                        titleOf(item.courseId),
+                        formatDate(item.uploadedAt),
+                        used > 0 ? `Used in ${used} ${used === 1 ? "lesson" : "lessons"}` : null,
+                      ]
                         .filter(Boolean)
                         .join(" · ")}
                     </div>
-                    {busy ? (
-                      <div className="mt-2 flex items-center gap-3">
-                        <Meter
-                          value={item.progress ?? 100}
-                          label={`Uploading ${item.title}`}
-                          className="max-w-xs flex-1"
-                        />
-                        <span className="text-xs text-ink-2 tabular-nums">
-                          {item.status === "uploading" ? `${item.progress ?? 0}%` : "Processing…"}
-                        </span>
-                      </div>
-                    ) : null}
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                  {item.kind !== "document" ? (
+                  {hasSound(item.kind) ? (
                     <CaptionControls
                       item={item}
                       canEdit={canEdit}
-                      onAttach={attachCaptions}
-                      onAutoCaption={autoCaption}
+                      generating={captioning.includes(item.id)}
+                      onAttach={(file) => void attachCaptions(item.id, file)}
+                      onAutoCaption={() => void autoCaption(item.id)}
                     />
                   ) : null}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    disabled={busy || item.kind === "document"}
-                    onClick={() => setPreviewId(item.id)}
-                  >
-                    Preview
+                  <Button variant="secondary" size="sm" onClick={() => setPreviewId(item.id)}>
+                    Preview<span className="sr-only"> {item.title}</span>
                   </Button>
                   {canEdit ? (
                     <button
                       type="button"
-                      onClick={() => remove(item)}
+                      onClick={() => void remove(item)}
                       aria-label={`Remove ${item.title}`}
                       className="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-surface-2 hover:text-bad"
                     >
@@ -374,13 +449,15 @@ export function ContentLibrary() {
               </li>
             );
           })}
-          {visible.length === 0 ? (
+          {visible.length === 0 && visibleUploads.length === 0 ? (
             <li className="px-4 py-10 text-center text-sm text-ink-2">Nothing here yet.</li>
           ) : null}
         </ul>
       </Card>
 
-      {preview ? <PreviewDialog item={preview} onClose={() => setPreviewId(null)} /> : null}
+      {preview ? (
+        <PreviewDialog item={preview} courseTitle={titleOf(preview.courseId)} onClose={() => setPreviewId(null)} />
+      ) : null}
     </PageContainer>
   );
 }
@@ -388,15 +465,17 @@ export function ContentLibrary() {
 function CaptionControls({
   item,
   canEdit,
+  generating,
   onAttach,
   onAutoCaption,
 }: {
-  item: LibraryItem;
+  item: Material;
   canEdit: boolean;
-  onAttach: (id: string, file: File) => void;
-  onAutoCaption: (id: string) => void;
+  generating: boolean;
+  onAttach: (file: File) => void;
+  onAutoCaption: () => void;
 }) {
-  if (item.captions === "generating") {
+  if (generating) {
     return (
       <Badge tone="spark">
         <LoaderCircle aria-hidden className="size-3 animate-spin" />
@@ -425,12 +504,12 @@ function CaptionControls({
           aria-label={`Add a caption file to ${item.title}`}
           onChange={(event) => {
             const file = event.target.files?.[0];
-            if (file) onAttach(item.id, file);
+            if (file) onAttach(file);
             event.target.value = "";
           }}
         />
       </label>
-      <Button variant="spark" size="sm" disabled={item.status !== "ready"} onClick={() => onAutoCaption(item.id)}>
+      <Button variant="spark" size="sm" onClick={onAutoCaption}>
         <Sparkles aria-hidden className="size-4" />
         Auto-caption
       </Button>
@@ -438,66 +517,65 @@ function CaptionControls({
   );
 }
 
-function PreviewDialog({ item, onClose }: { item: LibraryItem; onClose: () => void }) {
-  const isSample = !item.url;
-  const source = item.url ?? (item.kind === "video" ? SAMPLE_VIDEOS.sintel : undefined);
+/** FR-2.4: in-browser preview. Video, audio and PDF play or display; other files download. */
+function PreviewDialog({
+  item,
+  courseTitle,
+  onClose,
+}: {
+  item: Material;
+  courseTitle: string | undefined;
+  onClose: () => void;
+}) {
+  const file = useMaterialFile(item);
+  const captionsUrl = useTextUrl(item.captionsVtt, "text/vtt");
+  const stored = file.state === "ready" ? file.url : undefined;
+  // A seeded sample video has no file, so a sample clip stands in for it.
+  const source = stored ?? (item.kind === "video" && file.state === "missing" ? SAMPLE_VIDEOS.sintel : undefined);
+  const fileName = item.fileName ?? item.title;
+  const isPdf = item.mimeType === "application/pdf" || /\.pdf$/i.test(fileName);
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Preview: ${item.title}`}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") onClose();
-      }}
-    >
-      <button type="button" aria-label="Close preview" onClick={onClose} className="absolute inset-0 bg-black/60" />
-      <div className="relative w-full max-w-3xl overflow-hidden rounded-xl border border-line bg-surface shadow-2xl">
-        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-          <div className="min-w-0">
-            <h2 className="truncate font-semibold">{item.title}</h2>
-            <p className="text-xs text-ink-3">{getCourse(item.courseId)?.title}</p>
-          </div>
-          <button
-            type="button"
-            autoFocus
-            onClick={onClose}
-            aria-label="Close preview"
-            className="grid size-9 shrink-0 place-items-center rounded-lg text-ink-2 hover:bg-surface-2"
-          >
-            <X aria-hidden className="size-5" />
-          </button>
+    <Dialog wide title={item.title} description={courseTitle} onClose={onClose}>
+      {file.state === "loading" ? (
+        <p className="text-sm text-ink-2">Loading the file…</p>
+      ) : source && item.kind === "video" ? (
+        <video controls playsInline src={source} className="aspect-video w-full rounded-lg bg-black">
+          {captionsUrl ? <track kind="captions" src={captionsUrl} srcLang="en" label="English" default /> : null}
+        </video>
+      ) : source && item.kind === "audio" ? (
+        <audio controls src={source} className="w-full" />
+      ) : stored ? (
+        <div>
+          {isPdf ? (
+            <iframe src={stored} title={item.title} className="mb-3 h-[60vh] w-full rounded-lg border border-line" />
+          ) : (
+            <p className="mb-3 text-sm text-ink-2">This kind of file can&apos;t be shown inside the page.</p>
+          )}
+          <a href={stored} download={fileName} className={buttonClass({ variant: "secondary" })}>
+            <Download aria-hidden className="size-4" />
+            Download {fileName}
+          </a>
         </div>
+      ) : (
+        <p className="text-sm text-ink-2">
+          Sample library items have no file attached in this demo. Upload your own to preview it.
+        </p>
+      )}
 
-        {source && item.kind === "video" ? (
-          <video controls playsInline src={source} className="aspect-video w-full bg-black">
-            {item.captionsUrl ? (
-              <track kind="captions" src={item.captionsUrl} srcLang="en" label="English" default />
-            ) : null}
-          </video>
-        ) : source ? (
-          <div className="p-6">
-            <audio controls src={source} className="w-full" />
-          </div>
-        ) : (
-          <p className="p-6 text-sm text-ink-2">
-            Sample library items have no file attached in this demo. Upload your own to preview it.
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center gap-2 border-t border-line px-4 py-3 text-xs text-ink-3">
-          {item.captionsUrl ? (
-            <span>Captions are on by default — use the player&apos;s CC control to toggle them.</span>
+      {hasSound(item.kind) ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3 text-xs text-ink-3">
+          {captionsUrl ? (
+            <span>Captions are on by default. Use the player&apos;s CC control to turn them off.</span>
           ) : item.captions === "ready" ? (
             <span>This item&apos;s captions are stored with the original file.</span>
           ) : (
             <span>No caption track attached to this file.</span>
           )}
           {item.demoCaptions ? <AiBadge>Demo captions</AiBadge> : null}
-          {isSample && source ? <span>Showing a sample clip in place of the stored file.</span> : null}
+          {!stored && source ? <span>Showing a sample clip in place of the stored file.</span> : null}
         </div>
-      </div>
-    </div>
+      ) : null}
+    </Dialog>
   );
 }

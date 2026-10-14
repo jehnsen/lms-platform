@@ -1,5 +1,5 @@
-import { courseLessons, courses } from "@/lib/data/courses";
 import { quizzes, quizzesForCourse } from "@/lib/data/quizzes";
+import { courseLessons } from "@/lib/domain/course-outline";
 import type { Course, LearnerProgress, Lesson, Quiz, QuizAttempt } from "@/lib/types";
 
 export function courseProgress(course: Course, state: LearnerProgress) {
@@ -12,8 +12,11 @@ export function courseProgress(course: Course, state: LearnerProgress) {
   };
 }
 
-/** The first lesson not yet completed, or the first lesson if all are done. */
-export function nextLesson(course: Course, state: LearnerProgress): Lesson {
+/**
+ * The first lesson not yet completed, or the first lesson if all are done.
+ * `undefined` for a course with no lessons to show yet.
+ */
+export function nextLesson(course: Course, state: LearnerProgress): Lesson | undefined {
   const lessons = courseLessons(course);
   return lessons.find((lesson) => !state.completedLessons.includes(lesson.id)) ?? lessons[0];
 }
@@ -57,7 +60,7 @@ function quizzesIn(courseList: Course[]) {
   return quizzes.filter((quiz) => courseIds.includes(quiz.courseId));
 }
 
-export function overallGrade(state: LearnerProgress, courseList: Course[] = courses) {
+export function overallGrade(state: LearnerProgress, courseList: Course[]) {
   const best = quizzesIn(courseList)
     .map((quiz) => bestAttempt(quiz.id, state.attempts)?.percent)
     .filter((percent): percent is number => percent !== undefined);
@@ -75,14 +78,14 @@ export function checkpointStats(state: LearnerProgress) {
   };
 }
 
-export function pendingQuizzes(state: LearnerProgress, courseList: Course[] = courses): Quiz[] {
+export function pendingQuizzes(state: LearnerProgress, courseList: Course[]): Quiz[] {
   return quizzesIn(courseList)
     .filter((quiz) => attemptsFor(quiz.id, state.attempts).length === 0)
     .sort((a, b) => a.due.localeCompare(b.due));
 }
 
 /** Courses the learner has started, most progress first. */
-export function activeCourses(state: LearnerProgress, courseList: Course[] = courses) {
+export function activeCourses(state: LearnerProgress, courseList: Course[]) {
   return courseList
     .map((course) => ({ course, progress: courseProgress(course, state) }))
     .filter(({ progress }) => progress.done > 0)

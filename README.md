@@ -40,24 +40,29 @@ Each role sees only its own menu and pages. Opening a page the role may not see 
 | --- | --- | --- | --- |
 | Sign in (mock): SSO, local password, second step for admins | `/login` | everyone | `src/components/login-form.tsx`, `src/lib/api/session.ts`, `src/lib/adapters/identity-provider.ts` |
 | Home page per role | `/` | all | `src/components/role-home.tsx`, `dashboard-view.tsx` (student), `home-faculty.tsx`, `home-admin.tsx`, `home-parent.tsx` |
-| Courses and lessons | `/courses`, `/courses/[courseId]` | student, faculty, admin | `src/components/course-catalog.tsx`, `course-overview.tsx`, `curriculum.tsx` |
-| Video lessons with in-video quizzes | `/courses/[courseId]/learn/[lessonId]` | student; faculty and admin preview | `src/components/lesson-player.tsx`, `lesson-workspace.tsx` |
+| Courses and lessons | `/courses`, `/courses/[courseId]` | student, faculty, admin | `src/components/course-catalog.tsx`, `course-overview.tsx`, `curriculum.tsx`, `src/lib/api/courses.ts` |
+| Course builder: details, sections and schedule, units and lessons, release times, section limits, templates, copies | `/courses/new` (faculty), `/courses/[courseId]/edit` (faculty who teach it, admin) | faculty, admin | `src/components/course-new.tsx`, `course-builder.tsx`, `lesson-editor.tsx`, `sortable-list.tsx`, `src/lib/domain/course-rules.ts`, `course-copy.ts`, `content-visibility.ts` |
+| Lessons: video with in-video quizzes, reading, link, document, slides | `/courses/[courseId]/learn/[lessonId]` | student; faculty and admin preview | `src/components/lesson-player.tsx`, `lesson-workspace.tsx`, `src/lib/api/materials.ts`, `src/lib/domain/links.ts` |
 | Graded quizzes | `/quizzes`, `/quizzes/[quizId]` | student | `src/components/quiz-runner.tsx`, `src/lib/grading.ts` |
 | Grades | `/grades` | student (own), parent (child) | `src/components/grades-view.tsx` |
 | Gradebook | `/gradebook` | faculty (own courses), admin (all, read-only) | `src/components/gradebook-view.tsx`, `src/lib/api/grades.ts` |
-| Content library | `/content` | faculty; admin read-only | `src/components/content-library.tsx` |
+| Content library: uploads within size limits, captions, preview | `/content` | faculty; admin read-only | `src/components/content-library.tsx`, `src/lib/api/materials.ts`, `src/lib/domain/uploads.ts` |
 | Lesson planner (simulated AI) | `/lesson-planner` | faculty | `src/components/lesson-plan-generator.tsx`, `src/lib/mock-ai/lesson-plan.ts` |
 | AI tutor (simulated) | `/tutor`, panel beside each lesson | student | `src/components/tutor-chat.tsx`, `src/lib/mock-ai/tutor.ts` |
 | Notifications | bell in the sidebar or top bar | all | `src/components/notification-bell.tsx`, `src/lib/api/notifications.ts` |
 | Users: CSV import, SIS sync, roles, statuses, parent–child links, passwords | `/admin/users` | admin | `src/components/admin-users.tsx`, `user-import.tsx`, `user-edit-dialog.tsx`, `src/lib/api/users.ts`, `src/lib/domain/user-import.ts` |
 | Terms: term-end archive | `/admin/terms` | admin | `src/components/admin-terms.tsx`, `src/lib/api/courses.ts`, `src/lib/domain/terms.ts` |
-| School settings: password policy, data retention | `/admin/settings` | admin | `src/components/admin-settings.tsx`, `src/lib/api/settings.ts`, `src/lib/domain/settings.ts` |
+| School settings: password policy, data retention, upload size limits | `/admin/settings` | admin | `src/components/admin-settings.tsx`, `src/lib/api/settings.ts`, `src/lib/domain/settings.ts` |
 | Audit log | `/admin/audit` | admin | `src/components/admin-audit.tsx`, `audit-table.tsx`, `src/lib/api/audit.ts` |
 | No-access page | `/forbidden` | all | `src/components/forbidden-view.tsx` |
 
 Pages behind sign-in live in `src/app/(app)/` and share the sidebar layout; `/login` lives in `src/app/(auth)/` without it.
 
 **Importing users.** On `/admin/users`, **Import CSV** takes a file with the columns `name`, `email`, `role`, `sections`, `sis_id` and `children` (download the template from the same panel). The file is checked first: you see how many rows are ready, which are duplicates and which have errors, and nothing is saved until you confirm. Rows with errors are skipped and can be downloaded as a report; the valid rows are still created.
+
+**Building a course.** Faculty press **New course** on `/courses` to start blank, from a template, or as a copy of a course they teach (a copy takes units, lessons, sections and schedules, never students or their work, and can move every date by a number of days). The builder at `/courses/[courseId]/edit` holds the details, the sections with their weekly meeting times, and the units and lessons. Reorder by dragging the handle, by keyboard on the handle (Space, arrow keys, Space), or with the Move up and Move down buttons. Each lesson can have a release date and time and can be limited to sections; on the course page, staff can switch **Show** to see what one section's students see right now. Nothing is saved until **Save course**.
+
+A new course has no students: they are placed in sections by the CSV import or the SIS sync, and both currently skip people who already have an account (Q-25 in `OPEN-QUESTIONS.md`).
 
 **Archiving a term.** On `/admin/terms`, archiving a term makes every course in it read-only for all roles: no quiz attempts, no progress, no edits. Grades stay viewable and gradebooks can still be exported. A term can be reopened.
 
@@ -89,14 +94,15 @@ src/proxy.ts       Redirects before a page is served (signed out, or wrong role)
 - **CSV import** — the file is read and validated in the browser and never leaves it.
 - **Term archive and data retention** — an admin starts the archive by hand; nothing runs on the term's end date. The retention period is stored but nothing is ever deleted.
 - **Permission enforcement** — done in the browser by `can()`, the route guard and `src/proxy.ts`.
-- **All data** — users, terms, sections, enrollments, school settings, learner progress, lesson plans, notifications and the audit log are kept in `localStorage` by the repositories in `src/lib/api/_stores.ts`, under versioned keys such as `lms:progress:v1`. The admin home page has **Reset demo data**; the student grades page has **Reset demo progress**.
+- **All data** — users, terms, sections, enrollments, courses, course templates, library items, school settings, learner progress, lesson plans, notifications and the audit log are kept in `localStorage` by the repositories in `src/lib/api/_stores.ts`, under versioned keys such as `lms:progress:v1`. The admin home page has **Reset demo data**; the student grades page has **Reset demo progress**.
 - **The audit log** — written by the browser, editable by the user, capped at 500 events.
 - **Notifications** — in-app only. Nothing is emailed or pushed.
-- **Course and quiz content** — static files in `src/lib/data/courses.ts` and `quizzes.ts`.
+- **Quiz content** — a static file, `src/lib/data/quizzes.ts`. Quizzes cannot be edited and are not copied with a course until Phase 3b. Courses start from the seed in `src/lib/data/courses.ts` and are then edited in the browser.
+- **Who sees which lesson** — release times and section limits are applied in the browser by `courseForViewer()`. The whole course is in the browser's storage, so this hides lessons from the screen, not from someone who inspects storage.
 - **Study time and streak on the student dashboard** — fixed sample numbers in `src/lib/data/people.ts`.
 - **AI tutor and lesson planner** — template-based, in `src/lib/mock-ai/`. No model is called.
-- **Uploads** — files stay in the browser tab; progress and auto-captioning are simulated.
-- **Lesson videos** — every video lesson plays one of two sample clips streamed from `media.w3.org` (`SAMPLE_VIDEOS` in `src/lib/data/courses.ts`), so they need an internet connection. Captions come from each lesson's `transcript`.
+- **Uploads** — files are kept in the browser's IndexedDB (`src/lib/api/_files.ts`): they survive a reload but exist only on the device that uploaded them. Upload progress and auto-captioning are simulated. The size and format check runs in the browser.
+- **Lesson videos** — a video lesson plays a file uploaded to the content library, or one of two sample clips streamed from `media.w3.org` (`SAMPLE_VIDEOS` in `src/lib/sample-media.ts`), which need an internet connection. Captions come from each lesson's `transcript`.
 
 ## Connecting a backend
 
@@ -106,14 +112,15 @@ The service layer is the seam: replace the body of each module in `src/lib/api/`
 | --- | --- |
 | `api/session.ts` | Real sign-in (password and SSO), second-step verification, sign-out and current-user endpoints; a server-issued session cookie. `authorize()` stays as a client-side courtesy check. |
 | `api/users.ts` | Users, role and status changes, parent–child links, password set, and the import: upload the file for a dry run, then commit. |
-| `api/courses.ts` | Courses visible to the caller, rosters, terms, term archive and reopen. |
+| `api/courses.ts` | Courses as the caller may see them (the server leaves out unreleased and other-section lessons), course create, copy and save, templates, rosters, terms, term archive and reopen. |
+| `api/materials.ts` | Content library list, upload, captions, delete, and the file a lesson shows. |
 | `api/settings.ts` | School settings. |
 | `api/progress.ts` | Lesson completion, quiz attempts, checkpoint answers. |
 | `api/grades.ts` | Class gradebook and export logging. |
 | `api/notifications.ts` | Notification list and read state. |
 | `api/lesson-plans.ts` | Saved lesson plans. |
 | `api/audit.ts` | Audit log reads. |
-| `api/_repository.ts`, `api/_stores.ts`, `api/_credentials.ts` | Delete: these are the mock database and the mock password store. |
+| `api/_repository.ts`, `api/_stores.ts`, `api/_credentials.ts`, `api/_files.ts` | Delete: these are the mock database, the mock password store and the mock file store. |
 
 Adapters for outside systems. Each is an interface with a mock; implement the interface on the server and call it from the API, never from the browser:
 
@@ -126,20 +133,22 @@ Other single-function seams:
 
 - `streamTutorReply()` in `src/lib/mock-ai/tutor.ts` — a streaming call to your chat endpoint.
 - `generateLessonPlan()` in `src/lib/mock-ai/lesson-plan.ts` — return the same `LessonPlan` shape from your API.
-- `simulateUpload()` and `autoCaption()` in `src/components/content-library.tsx` — real upload and transcription requests.
+- `upload()` and `autoCaption()` in `src/components/content-library.tsx` — real upload progress and a transcription request.
 
 The full list of server-side work is in `docs/requirements/BACKEND-BACKLOG.md`.
 
 ## Notes for contributors
 
 - **Next.js 16.** Read the guide in `node_modules/next/dist/docs/` before writing routing, layout, caching or auth code (see `AGENTS.md`). Middleware is called Proxy in this version.
-- **Cache Components are on.** Dynamic routes read `params` inside `<Suspense>` and declare `generateStaticParams`.
+- **Cache Components are on.** Dynamic routes read `params` inside `<Suspense>` and declare `generateStaticParams`, which returns the seeded ids (this version needs at least one).
+- **Records made in the browser are unknown to the server.** A course created in the builder has no prerendered page; its page renders on first request and must not call `notFound()` on the server. Look the record up in the component (`useCourse()`, `useCourseEditor()`) and render `NotFoundView` when it is missing.
+- **Time-dependent screens read the clock through `useNow()`** (`src/lib/use-now.ts`), so a lesson appears when its release time arrives without a reload.
 - **Pages render role-specific data in the browser only.** The route guard shows a skeleton until the session is known, so prerendered HTML never contains one role's data.
 - **Hidden pages stay mounted.** Next.js keeps recently visited pages alive when you navigate away. Anything that should stop or reset on leaving (media playback, open dialogs, "pending" flags) goes in a `useLayoutEffect` cleanup — see `src/components/lesson-player.tsx`.
 - **Changing the signed-in user reloads the page.** Use `reloadTo()` in `src/lib/navigation.ts` for sign-in, sign-out and role switches, so nothing cached for the previous user survives. Use `<Link>` and `useRouter()` everywhere else.
 - **Do not delete `.next/dev` while `npm run dev` is running.** The dev server will return errors until it is restarted.
 - **Storage versions.** When the shape of a stored value changes, bump the version passed to `createRepository`; the old key is ignored and the store restarts from its seed.
-- **Dependencies added for the requirements work.** `papaparse` (Phase 1) parses the CSV import; it is loaded with `import()` only when an admin picks a file. `vitest` (Phase 0) runs the unit tests.
+- **Dependencies added for the requirements work.** `papaparse` (Phase 1) parses the CSV import; it is loaded with `import()` only when an admin picks a file. `@dnd-kit/core`, `@dnd-kit/sortable` and `@dnd-kit/utilities` (Phase 2) give the course builder drag-and-drop that also works from the keyboard; use `SortableList` in `src/components/sortable-list.tsx` for any other reorderable list. `vitest` (Phase 0) runs the unit tests.
 - **Dialogs and form fields.** Use `Dialog` in `src/components/dialog.tsx` (the native `<dialog>` element: focus trap, Escape, inert page) and `fieldClass` in `src/components/ui.tsx` for inputs and selects.
 - **Theme and type.** Light and dark follow the system setting. Colours are tokens in `src/app/globals.css`; a unit test checks that every text and surface pair used reaches WCAG AA contrast in both themes. The typeface is Inter, set in `src/app/layout.tsx`.
 - Course and lesson photos in `public/thumbnails/` and `public/images/` are from [Unsplash](https://unsplash.com/license).

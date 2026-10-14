@@ -8,7 +8,7 @@ const TIPS = [
   { title: "Ask for it simpler", detail: "“Explain gradient descent like I'm new to this.”" },
   { title: "Ask for an example", detail: "“Give me a real-world example of osmosis.”" },
   { title: "Check yourself", detail: "Open any video lesson and say “quiz me” for practice questions." },
-  { title: "Plan your study", detail: "“How should I prepare for the module quiz?”" },
+  { title: "Plan your study", detail: "“How should I prepare for the unit quiz?”" },
 ];
 
 export default function TutorPage() {

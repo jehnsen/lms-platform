@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /**
  * A modal dialog on the native `<dialog>` element, which traps focus, closes
@@ -14,11 +15,14 @@ import { X } from "lucide-react";
 export function Dialog({
   title,
   description,
+  wide = false,
   onClose,
   children,
 }: {
   title: string;
   description?: ReactNode;
+  /** For media and long forms. */
+  wide?: boolean;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -43,7 +47,10 @@ export function Dialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className="m-auto w-[calc(100vw-2rem)] max-w-lg rounded-xl border border-line bg-surface p-0 text-ink shadow-2xl backdrop:bg-black/60"
+      className={cn(
+        "m-auto w-[calc(100vw-2rem)] rounded-xl border border-line bg-surface p-0 text-ink shadow-2xl backdrop:bg-black/60",
+        wide ? "max-w-3xl" : "max-w-lg",
+      )}
     >
       <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
         <div className="min-w-0">

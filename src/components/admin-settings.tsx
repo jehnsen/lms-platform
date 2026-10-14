@@ -6,7 +6,8 @@ import { Button, Card, PageContainer, PageHeader, fieldClass } from "@/component
 import { SettingsError, updateSettings, useSettings } from "@/lib/api/settings";
 import { MIN_LENGTH_RANGE } from "@/lib/domain/password-policy";
 import { RETENTION_YEARS_RANGE } from "@/lib/domain/settings";
-import type { PasswordPolicy, SchoolSettings } from "@/lib/types";
+import { MATERIAL_KINDS, UPLOAD_FORMATS, UPLOAD_LIMIT_RANGE_MB } from "@/lib/domain/uploads";
+import type { MaterialKind, PasswordPolicy, SchoolSettings } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const CHARACTER_RULES: Array<{ key: keyof Omit<PasswordPolicy, "minLength">; label: string }> = [
@@ -31,6 +32,9 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
   // Kept as text while it is typed, so the field can be cleared and retyped.
   const [minLength, setMinLength] = useState(String(saved.passwordPolicy.minLength));
   const [retentionYears, setRetentionYears] = useState(String(saved.retentionYears ?? 7));
+  const [uploadLimits, setUploadLimits] = useState(() =>
+    Object.fromEntries(MATERIAL_KINDS.map((kind) => [kind, String(saved.uploadLimitsMb[kind])])) as Record<MaterialKind, string>,
+  );
   const [busy, setBusy] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
   const [savedNote, setSavedNote] = useState(false);
@@ -39,6 +43,9 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
   const next: SchoolSettings = {
     passwordPolicy: { ...draft.passwordPolicy, minLength: Number(minLength) },
     retentionYears: keepForever ? null : Number(retentionYears),
+    uploadLimitsMb: Object.fromEntries(
+      MATERIAL_KINDS.map((kind) => [kind, Number(uploadLimits[kind])]),
+    ) as Record<MaterialKind, number>,
   };
   const changed = JSON.stringify(next) !== JSON.stringify(saved);
 
@@ -183,6 +190,49 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
             </div>
             <p className="mt-4 text-xs text-ink-3">
               Deleting data is a server job. Nothing is deleted in this demo, whatever is chosen here.
+            </p>
+          </fieldset>
+        </Card>
+
+        <Card className="p-5">
+          <fieldset>
+            <legend className="text-lg font-semibold tracking-tight">Upload size limits</legend>
+            <p className="mt-1 text-sm text-ink-2">
+              The largest file the content library accepts for each kind of material. Faculty see these limits
+              before they upload.
+            </p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {MATERIAL_KINDS.map((kind) => (
+                <div key={kind}>
+                  <label htmlFor={`settings-upload-${kind}`} className="mb-1 block text-sm font-medium">
+                    {UPLOAD_FORMATS[kind].label}
+                  </label>
+                  <div className="flex items-center gap-2 text-sm">
+                    <input
+                      id={`settings-upload-${kind}`}
+                      type="number"
+                      inputMode="numeric"
+                      min={UPLOAD_LIMIT_RANGE_MB.min}
+                      max={UPLOAD_LIMIT_RANGE_MB.max}
+                      value={uploadLimits[kind]}
+                      onChange={(event) => {
+                        setSavedNote(false);
+                        setUploadLimits((current) => ({ ...current, [kind]: event.target.value }));
+                      }}
+                      aria-describedby={`settings-upload-${kind}-hint`}
+                      className={cn(fieldClass, "w-28")}
+                    />
+                    <span>MB</span>
+                  </div>
+                  <p id={`settings-upload-${kind}-hint`} className="mt-1 text-xs text-ink-3">
+                    {UPLOAD_FORMATS[kind].extensions.map((extension) => extension.toUpperCase()).join(", ")}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-ink-3">
+              In this demo files are kept in the browser, which has its own storage limit. A server must enforce
+              these limits again.
             </p>
           </fieldset>
         </Card>

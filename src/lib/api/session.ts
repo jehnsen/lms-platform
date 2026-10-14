@@ -11,7 +11,6 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { IdentityProviderError, createMockIdentityProvider } from "@/lib/adapters/identity-provider";
 import { nowIso } from "@/lib/clock";
-import { courses as courseCatalogue } from "@/lib/data/courses";
 import { DEMO_USER_IDS } from "@/lib/data/directory";
 import {
   can,
@@ -27,10 +26,10 @@ import {
   type Session,
 } from "@/lib/domain/session-cookie";
 import { archivedCourseIds } from "@/lib/domain/terms";
-import type { AuditEvent, Enrollment, Role, Section, Term, User } from "@/lib/types";
+import type { AuditEvent, Course, Enrollment, Role, Section, Term, User } from "@/lib/types";
 import { checkCredential } from "./_credentials";
 import { useRepository } from "./_repository";
-import { auditRepo, enrollmentsRepo, sectionsRepo, termsRepo, usersRepo } from "./_stores";
+import { auditRepo, coursesRepo, enrollmentsRepo, sectionsRepo, termsRepo, usersRepo } from "./_stores";
 
 /** The signed-in user, with the relationships permission scopes need. */
 export interface CurrentUser extends Actor {
@@ -92,6 +91,7 @@ function buildActor(
   sections: Section[],
   enrollments: Enrollment[],
   terms: Term[],
+  courses: Course[],
 ): CurrentUser | null {
   if (!session) return null;
   const user = users.find((candidate) => candidate.id === session.userId);
@@ -120,7 +120,7 @@ function buildActor(
     childIds: user.childIds ?? [],
     courseIds,
     // FR-1.8: courses of an archived term can be read but not changed.
-    readOnlyCourseIds: archivedCourseIds(courseCatalogue, terms),
+    readOnlyCourseIds: archivedCourseIds(courses, terms),
   };
 }
 
@@ -131,9 +131,10 @@ export function useActor(): CurrentUser | null | undefined {
   const sections = useRepository(sectionsRepo);
   const enrollments = useRepository(enrollmentsRepo);
   const terms = useRepository(termsRepo);
+  const courses = useRepository(coursesRepo);
   return useMemo(
-    () => (session === undefined ? undefined : buildActor(session, users, sections, enrollments, terms)),
-    [session, users, sections, enrollments, terms],
+    () => (session === undefined ? undefined : buildActor(session, users, sections, enrollments, terms, courses)),
+    [session, users, sections, enrollments, terms, courses],
   );
 }
 
@@ -145,6 +146,7 @@ export function getActor(): CurrentUser | null {
     sectionsRepo.get(),
     enrollmentsRepo.get(),
     termsRepo.get(),
+    coursesRepo.get(),
   );
 }
 

@@ -12,8 +12,8 @@ import {
   PageSkeleton,
 } from "@/components/ui";
 import { resetMyProgress, selectViewedChild, useViewedLearner } from "@/lib/api/progress";
-import { courseLessons } from "@/lib/data/courses";
 import { getQuiz, quizzes, quizzesForCourse } from "@/lib/data/quizzes";
+import { courseLessons } from "@/lib/domain/course-outline";
 import { letterGrade } from "@/lib/grading";
 import {
   attemptsFor,

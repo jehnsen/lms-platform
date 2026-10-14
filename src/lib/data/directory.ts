@@ -95,16 +95,27 @@ export const seedTerms: Term[] = [
   },
 ];
 
-/** Two sections per course, both taught by the course's instructor. */
-export const seedSections: Section[] = courses.flatMap((course) => {
+/**
+ * Two sections per course, both taught by the course's instructor. Section A
+ * meets on Monday and Wednesday, Section B on Tuesday and Thursday; each
+ * course has its own hour and room.
+ */
+export const seedSections: Section[] = courses.flatMap((course, courseIndex) => {
   const facultyId = TEACHING.find((entry) => entry.courseId === course.id)?.facultyId;
-  return ["A", "B"].map((letter) => ({
+  const hour = String(8 + courseIndex).padStart(2, "0");
+  return ["A", "B"].map((letter, letterIndex) => ({
     id: `${course.id}-${letter.toLowerCase()}`,
     courseId: course.id,
     termId: course.termId,
     name: `Section ${letter}`,
     code: `${course.code}-${letter}`,
     facultyIds: facultyId ? [facultyId] : [],
+    meetings: [1 + letterIndex, 3 + letterIndex].map((day) => ({
+      day,
+      start: `${hour}:00`,
+      end: `${hour}:50`,
+      room: `Room ${101 + courseIndex}`,
+    })),
   }));
 });
 
@@ -207,7 +218,7 @@ export const seedNotifications: Notification[] = [
     userId: DEMO_USER_IDS.student,
     category: "deadlines",
     title: "Quiz due Oct 24",
-    body: "Module 1 quiz: Inside the cell is due in Biology: Cells and Genetics.",
+    body: "Unit 1 quiz: Inside the cell is due in Biology: Cells and Genetics.",
     href: "/quizzes/bio-quiz-1",
     createdAt: "2026-10-12T08:00:00.000Z",
   },
@@ -216,7 +227,7 @@ export const seedNotifications: Notification[] = [
     userId: DEMO_USER_IDS.student,
     category: "grades",
     title: "Quiz graded: 90%",
-    body: "Your score for Module 1 quiz: HTML and structure is in.",
+    body: "Your score for Unit 1 quiz: HTML and structure is in.",
     href: "/grades",
     createdAt: "2026-10-08T16:46:00.000Z",
     readAt: "2026-10-08T18:00:00.000Z",
@@ -226,7 +237,7 @@ export const seedNotifications: Notification[] = [
     userId: DEMO_USER_IDS.faculty,
     category: "grades",
     title: "New quiz submissions",
-    body: "Learners have submitted Module 1 quiz: What is machine learning?",
+    body: "Learners have submitted Unit 1 quiz: What is machine learning?",
     href: "/gradebook",
     createdAt: "2026-10-12T09:15:00.000Z",
   },
@@ -235,7 +246,7 @@ export const seedNotifications: Notification[] = [
     userId: DEMO_USER_IDS.parent,
     category: "grades",
     title: "Mike scored 90%",
-    body: "Module 1 quiz: HTML and structure in Web Development Fundamentals.",
+    body: "Unit 1 quiz: HTML and structure in Web Development Fundamentals.",
     href: "/grades",
     createdAt: "2026-10-08T16:46:00.000Z",
   },

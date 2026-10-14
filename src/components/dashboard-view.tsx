@@ -26,8 +26,8 @@ import {
 import { useCourses } from "@/lib/api/courses";
 import { useMyProgress } from "@/lib/api/progress";
 import { useActor } from "@/lib/api/session";
-import { getCourse } from "@/lib/data/courses";
 import { studyStreakDays, weeklyActivity } from "@/lib/data/people";
+import { courseLessons } from "@/lib/domain/course-outline";
 import {
   activeCourses,
   checkpointStats,
@@ -48,21 +48,27 @@ export function DashboardView() {
   // Archived courses are read-only (FR-1.8), so there is nothing in them to resume or to do.
   const open = courses.filter((course) => course.status !== "archived");
   const active = activeCourses(state, open);
-  const resume = active[0]?.course ?? open[0] ?? courses[0];
+  // A course with no lessons released yet has nothing to start.
+  const hasLessons = (course: (typeof courses)[number]) => courseLessons(course).length > 0;
+  const resume = active[0]?.course ?? open.find(hasLessons) ?? courses.find(hasLessons);
+  const resumeLesson = resume ? nextLesson(resume, state) : undefined;
 
-  if (!resume) {
+  if (!resume || !resumeLesson) {
     return (
       <PageContainer>
         <PageHeader
           title={`Welcome, ${actor ? firstNameOf(actor.name) : ""}`}
-          description="You are not enrolled in any courses yet. They will appear here once the school adds you to a section."
+          description={
+            courses.length === 0
+              ? "You are not enrolled in any courses yet. They will appear here once the school adds you to a section."
+              : "Your courses have no lessons released yet. They will appear here as your teachers release them."
+          }
         />
       </PageContainer>
     );
   }
 
   const resumeProgress = courseProgress(resume, state);
-  const resumeLesson = nextLesson(resume, state);
   const started = resumeProgress.done > 0;
   const average = overallGrade(state, courses);
   const checkpoints = checkpointStats(state);
@@ -288,7 +294,7 @@ export function DashboardView() {
                               <span className="sr-only">
                                 Due {due.month} {due.day} ·{" "}
                               </span>
-                              {getCourse(quiz.courseId)?.title} · {quiz.questions.length} questions
+                              {courses.find((course) => course.id === quiz.courseId)?.title} · {quiz.questions.length} questions
                             </span>
                           </span>
                           <ArrowRight aria-hidden className="size-4 shrink-0 text-ink-3" />

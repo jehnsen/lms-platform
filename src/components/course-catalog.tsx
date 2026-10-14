@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Star } from "lucide-react";
+import { Plus, Star } from "lucide-react";
 import { CourseCover } from "@/components/course-art";
-import { Badge, Meter, PageContainer, PageHeader } from "@/components/ui";
-import { useCourses } from "@/lib/api/courses";
+import { Badge, ButtonLink, Meter, PageContainer, PageHeader } from "@/components/ui";
+import { useCanCreateCourse, useCourses } from "@/lib/api/courses";
 import { useCanTrackProgress, useMyProgress } from "@/lib/api/progress";
-import { courseLessons, courseMinutes } from "@/lib/data/courses";
+import { courseLessons, courseMinutes } from "@/lib/domain/course-outline";
 import { courseProgress } from "@/lib/progress";
 import { cn, formatMinutes } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ export function CourseCatalog() {
   const state = useMyProgress();
   // Faculty and admins open courses to preview them; only learners have progress.
   const tracking = useCanTrackProgress();
+  const canCreate = useCanCreateCourse();
   const [subject, setSubject] = useState("All");
   const subjects = ["All", ...Array.from(new Set(courses.map((course) => course.subject)))];
   const visible = courses.filter((course) => subject === "All" || course.subject === subject);
@@ -28,6 +29,14 @@ export function CourseCatalog() {
           tracking
             ? "Short captioned videos with questions along the way, auto-graded quizzes, and an AI tutor in every lesson."
             : "Open a course to preview it the way learners see it."
+        }
+        actions={
+          canCreate ? (
+            <ButtonLink href="/courses/new">
+              <Plus aria-hidden className="size-4" />
+              New course
+            </ButtonLink>
+          ) : undefined
         }
       />
 
@@ -79,11 +88,15 @@ export function CourseCatalog() {
                   <p className="mt-1.5 flex-1 text-sm text-ink-2 text-pretty">{course.tagline}</p>
                   <div className="mt-4 flex items-center justify-between gap-3 text-xs text-ink-3">
                     <span>{course.instructor}</span>
-                    <span className="flex items-center gap-1 tabular-nums">
-                      <Star aria-hidden className="size-3.5 fill-current" />
-                      <span className="sr-only">Rating </span>
-                      {course.rating}
-                    </span>
+                    {course.rating > 0 ? (
+                      <span className="flex items-center gap-1 tabular-nums">
+                        <Star aria-hidden className="size-3.5 fill-current" />
+                        <span className="sr-only">Rating </span>
+                        {course.rating}
+                      </span>
+                    ) : (
+                      <span>{course.code}</span>
+                    )}
                   </div>
                   <div className="mt-3 border-t border-line pt-3">
                     {!tracking ? (

@@ -12,11 +12,10 @@ import {
 } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, Meter, PageContainer } from "@/components/ui";
 import { ForbiddenView } from "@/components/forbidden-view";
-import { useCourseReadOnly } from "@/lib/api/courses";
+import { useCourse, useCourseReadOnly } from "@/lib/api/courses";
 import { recordAttempt, useMyProgress } from "@/lib/api/progress";
 import { useActor } from "@/lib/api/session";
 import { now } from "@/lib/clock";
-import { getCourse } from "@/lib/data/courses";
 import { getQuiz, quizPoints } from "@/lib/data/quizzes";
 import {
   gradeQuiz,
@@ -47,13 +46,14 @@ export function QuizRunner({ quizId }: { quizId: string }) {
   const quiz = getQuiz(quizId);
   // FR-1.8: in an archived course the quiz and past results can be seen, but not retaken.
   const archived = useCourseReadOnly(quiz?.courseId);
+  const courseAccess = useCourse(quiz?.courseId);
   if (!quiz) return null;
   // Only learners enrolled in the quiz's course may take it (FR-1.1).
   const enrolled = can(actor, archived ? "view" : "submit", { type: "quiz", courseId: quiz.courseId });
   if (actor && !enrolled) {
     return <ForbiddenView resource={`quiz:${quiz.id}`} what="this quiz" />;
   }
-  const course = getCourse(quiz.courseId);
+  const course = courseAccess.status === "ok" ? courseAccess.course : undefined;
   const attempts = attemptsFor(quiz.id, state.attempts);
   const best = bestAttempt(quiz.id, state.attempts);
   const unanswered = quiz.questions.filter((question) => !isAnswered(answers[question.id])).length;

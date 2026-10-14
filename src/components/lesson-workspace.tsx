@@ -2,13 +2,25 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronRight, ListChecks, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarClock,
+  Check,
+  ChevronRight,
+  Download,
+  ExternalLink,
+  ListChecks,
+  Sparkles,
+} from "lucide-react";
 import { Curriculum } from "@/components/curriculum";
 import { ForbiddenView } from "@/components/forbidden-view";
 import { LessonPlayer, type LessonPlayerHandle } from "@/components/lesson-player";
+import { NotFoundView } from "@/components/not-found-view";
 import { TutorChat, type TutorChatHandle } from "@/components/tutor-chat";
-import { Badge, Button, ButtonLink, PageContainer } from "@/components/ui";
-import { useCanViewCourse, useCourseReadOnly } from "@/lib/api/courses";
+import { Badge, Button, ButtonLink, PageContainer, PageSkeleton, buttonClass } from "@/components/ui";
+import { useCourse, useCourseReadOnly } from "@/lib/api/courses";
+import { useLessonMaterial, type StoredFile } from "@/lib/api/materials";
 import {
   recordCheckpoint,
   setLessonComplete,
@@ -16,9 +28,14 @@ import {
   useMyProgress,
 } from "@/lib/api/progress";
 import { useActor } from "@/lib/api/session";
-import { SAMPLE_VIDEOS, findLesson } from "@/lib/data/courses";
+import { isScheduled } from "@/lib/domain/content-visibility";
+import { LESSON_TYPE_LABELS, locateLesson } from "@/lib/domain/course-outline";
+import { embedUrlFor, isWebUrl } from "@/lib/domain/links";
 import { can } from "@/lib/domain/permissions";
-import { cn } from "@/lib/utils";
+import { SAMPLE_VIDEOS } from "@/lib/sample-media";
+import type { Lesson, Material } from "@/lib/types";
+import { useNow } from "@/lib/use-now";
+import { cn, formatDateTime } from "@/lib/utils";
 
 type SidePanel = "tutor" | "content";
 type LessonTab = "overview" | "transcript";
@@ -32,7 +49,11 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
   const readOnly = useCourseReadOnly(courseId);
   const recording = tracking && !readOnly;
   const hasTutor = can(actor, "view", { type: "tutor" });
-  const allowed = useCanViewCourse(courseId);
+  // The course as this person may see it: a lesson not released to a student is simply not in it (US-09).
+  const access = useCourse(courseId);
+  const location = access.status === "ok" ? locateLesson(access.course, lessonId) : undefined;
+  const attachment = useLessonMaterial(location?.lesson);
+  const now = useNow();
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, boolean>>({});
   const playerRef = useRef<LessonPlayerHandle>(null);
   const tutorRef = useRef<TutorChatHandle>(null);
@@ -40,10 +61,24 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
   const [tab, setTab] = useState<LessonTab>("overview");
   const [fraction, setFraction] = useState(0);
 
-  const location = findLesson(courseId, lessonId);
-  if (!location) return null;
-  if (allowed === false) return <ForbiddenView resource={`course:${courseId}`} what="this course" />;
+  if (access.status === "loading") return <PageSkeleton />;
+  if (access.status === "missing") return <NotFoundView />;
+  if (access.status === "forbidden") return <ForbiddenView resource={`course:${courseId}`} what="this course" />;
+  if (!location) {
+    return (
+      <NotFoundView message="This lesson isn't available. It may not be released yet, it may be for another section, or it may have been removed." />
+    );
+  }
   const { course, module: courseModule, lesson, index, total, previous, next } = location;
+  const staff = access.staff;
+
+  // A video lesson plays its uploaded file when it has one, otherwise a sample clip.
+  const uploadedVideo =
+    attachment.material?.kind === "video" && attachment.file.state === "ready" ? attachment.file.url : undefined;
+  const videoSrc =
+    lesson.type !== "video" || attachment.file.state === "loading"
+      ? undefined
+      : (uploadedVideo ?? SAMPLE_VIDEOS[lesson.video ?? "sintel"]);
 
   const complete = state.completedLessons.includes(lesson.id);
   const transcript = lesson.transcript ?? [];
@@ -80,11 +115,11 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_23rem]">
         <div className="min-w-0">
-          {lesson.type === "video" && lesson.video ? (
+          {videoSrc ? (
             <LessonPlayer
-              key={lesson.id}
+              key={`${lesson.id}-${videoSrc}`}
               ref={playerRef}
-              src={SAMPLE_VIDEOS[lesson.video]}
+              src={videoSrc}
               poster={lesson.thumbnail}
               title={lesson.title}
               transcript={transcript}
@@ -106,12 +141,17 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
           <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <p className="text-sm text-ink-3">
-                Lesson {index + 1} of {total} · {lesson.type === "video" ? "Video" : "Reading"} ·{" "}
-                {lesson.minutes} min
+                Lesson {index + 1} of {total} · {LESSON_TYPE_LABELS[lesson.type]} · {lesson.minutes} min
               </p>
               <h1 className="mt-1 text-2xl leading-tight font-semibold tracking-tight text-balance sm:text-3xl">
                 {lesson.title}
               </h1>
+              {staff && isScheduled(lesson, now) ? (
+                <Badge tone="warn" className="mt-2">
+                  <CalendarClock aria-hidden className="size-3" />
+                  Hidden from students until {formatDateTime(lesson.releaseAt!)}
+                </Badge>
+              ) : null}
             </div>
             {recording ? (
               <Button
@@ -185,14 +225,18 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
               )}
             </div>
           ) : (
-            <article className="mt-6 max-w-[65ch]">
-              <p className="text-lg text-ink-2 text-pretty">{lesson.summary}</p>
-              <div className="mt-5 flex flex-col gap-4 leading-relaxed text-pretty">
+            <article className="mt-6">
+              {lesson.summary ? <p className="max-w-[65ch] text-lg text-ink-2 text-pretty">{lesson.summary}</p> : null}
+              {lesson.type === "link" ? <LinkContent lesson={lesson} /> : null}
+              {lesson.type === "document" || lesson.type === "slides" ? (
+                <FileContent material={attachment.material} file={attachment.file} />
+              ) : null}
+              <div className="mt-5 flex max-w-[65ch] flex-col gap-4 leading-relaxed text-pretty">
                 {(lesson.body ?? []).map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
               </div>
-              <div className="mt-8">
+              <div className="mt-8 max-w-[65ch]">
                 <KeyPoints points={lesson.keyPoints} />
               </div>
             </article>
@@ -211,7 +255,7 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
               {tracking && isLastInModule && courseModule.quizId ? (
                 <ButtonLink variant={next ? "secondary" : "primary"} href={`/quizzes/${courseModule.quizId}`}>
                   <ListChecks aria-hidden className="size-4" />
-                  {readOnly ? "See the module quiz" : "Take the module quiz"}
+                  {readOnly ? "See the unit quiz" : "Take the unit quiz"}
                 </ButtonLink>
               ) : null}
               {next ? (
@@ -262,7 +306,7 @@ export function LessonWorkspace({ courseId, lessonId }: { courseId: string; less
             role="tabpanel"
             className={cn("min-h-0 flex-1 overflow-y-auto p-3", sidePanel !== "content" && "hidden")}
           >
-            <Curriculum course={course} currentLessonId={lesson.id} />
+            <Curriculum course={course} currentLessonId={lesson.id} staff={staff} />
           </div>
         </aside>
       </div>
@@ -298,7 +342,72 @@ function SideTab({
   );
 }
 
+/** FR-2.4: an external link. Known video players are embedded; everything else opens in a new tab. */
+function LinkContent({ lesson }: { lesson: Lesson }) {
+  const url = lesson.url ?? "";
+  if (!isWebUrl(url)) return <p className="mt-5 text-sm text-ink-2">This lesson has no link yet.</p>;
+  const embed = embedUrlFor(url);
+  return (
+    <div className="mt-5">
+      {embed ? (
+        <div className="mb-4 aspect-video overflow-hidden rounded-xl border border-line bg-black">
+          <iframe
+            src={embed}
+            title={lesson.title}
+            allow="encrypted-media; picture-in-picture; fullscreen"
+            referrerPolicy="strict-origin-when-cross-origin"
+            loading="lazy"
+            className="size-full"
+          />
+        </div>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-3">
+        <a href={url} target="_blank" rel="noopener noreferrer" className={buttonClass({ variant: embed ? "secondary" : "primary" })}>
+          <ExternalLink aria-hidden className="size-4" />
+          Open link<span className="sr-only"> (opens in a new tab)</span>
+        </a>
+        <span className="min-w-0 text-sm break-all text-ink-3">{new URL(url).hostname} · opens in a new tab</span>
+      </div>
+    </div>
+  );
+}
+
+/** FR-2.3: a document or slide deck from the content library, shown in the page when the browser can, and always downloadable. */
+function FileContent({ material, file }: { material: Material | undefined; file: StoredFile }) {
+  if (!material) {
+    return <p className="mt-5 text-sm text-ink-2">The file for this lesson is no longer in the content library.</p>;
+  }
+  if (file.state === "loading") return <p className="mt-5 text-sm text-ink-2">Loading the file…</p>;
+  if (file.state !== "ready") {
+    return (
+      <p className="mt-5 rounded-lg bg-surface-2 p-4 text-sm text-ink-2">
+        “{material.title}” is a sample library item with no file behind it in this demo. Upload a file in the
+        content library and attach it to this lesson to see it here.
+      </p>
+    );
+  }
+  const fileName = material.fileName ?? material.title;
+  const isPdf = material.mimeType === "application/pdf" || /\.pdf$/i.test(fileName);
+  return (
+    <div className="mt-5">
+      {isPdf ? (
+        <iframe src={file.url} title={material.title} className="mb-4 h-[70vh] w-full rounded-xl border border-line bg-surface" />
+      ) : (
+        <p className="mb-4 rounded-lg bg-surface-2 p-4 text-sm text-ink-2">
+          This kind of file can&apos;t be shown inside the page. Download it to open it on your device.
+        </p>
+      )}
+      <a href={file.url} download={fileName} className={buttonClass({ variant: isPdf ? "secondary" : "primary" })}>
+        <Download aria-hidden className="size-4" />
+        Download {fileName}
+      </a>
+      <span className="ml-3 text-sm text-ink-3">{material.sizeLabel}</span>
+    </div>
+  );
+}
+
 function KeyPoints({ points }: { points: string[] }) {
+  if (points.length === 0) return null;
   return (
     <div className="rounded-xl border border-line bg-surface p-4">
       <h2 className="text-sm font-semibold">Key points</h2>

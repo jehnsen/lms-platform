@@ -2,7 +2,7 @@
 
 Everything that must be real on a server before go-live. This phase of the project is frontend-first: each item below has a typed interface and a mock in the browser, and this file records what has to replace the mock.
 
-**Last updated:** 2026-10-14, after Phase 1. Items are added as each phase introduces a new mock.
+**Last updated:** 2026-10-14, after Phase 2. Items are added as each phase introduces a new mock.
 
 ## How the frontend is prepared for it
 
@@ -48,19 +48,22 @@ Replace each mock repository with database tables and API endpoints.
 | --- | --- | --- |
 | `api/session.ts` | Session, current user | `POST /auth/sign-in`, `POST /auth/sign-out`, `GET /me` |
 | `api/users.ts` | Users, roles, statuses, parent–child links, passwords, bulk import | `GET /users`, `GET /me/children`, `PATCH /users/:id`, `PUT /users/:id/password`, `PUT` and `DELETE /users/:id/children/:studentId`, `POST /users/imports` (dry run and commit) |
-| `api/courses.ts` | Terms, sections, enrollments, course visibility, rosters, term archive | `GET /courses`, `GET /courses/:id/roster`, `GET /terms`, `POST /terms/:id/archive`, `POST /terms/:id/reopen` |
-| `api/settings.ts` | School settings: password policy, retention period | `GET /settings`, `PUT /settings` |
+| `api/courses.ts` | Courses with units and lessons, sections and schedules, enrollments, course visibility, rosters, templates, terms, term archive | `GET /courses`, `GET /courses/:id`, `POST /courses` (blank, from a template, or a copy with a date shift), `PUT /courses/:id`, `GET /courses/:id/roster`, `GET`, `POST` and `DELETE /course-templates`, `GET /terms`, `POST /terms/:id/archive`, `POST /terms/:id/reopen` |
+| `api/materials.ts` | Content library items, captions, and the files behind them | `GET /materials`, `POST /materials` (upload), `PATCH /materials/:id`, `DELETE /materials/:id`, `GET /courses/:id/lessons/:lessonId/file` |
+| `api/settings.ts` | School settings: password policy, retention period, upload size limits | `GET /settings`, `PUT /settings` |
 | `api/progress.ts` | Completed lessons, quiz attempts, checkpoint answers | `GET /users/:id/progress`, `POST /lessons/:id/completion`, `POST /quizzes/:id/attempts`, `POST /checkpoints/:id/answers` |
 | `api/grades.ts` | Class gradebook | `GET /courses/:id/gradebook`, `POST /courses/:id/gradebook/exports` |
 | `api/notifications.ts` | In-app notifications | `GET /notifications`, `POST /notifications/:id/read` |
 | `api/lesson-plans.ts` | Saved lesson plans | `GET/POST/DELETE /lesson-plans` |
 | `api/audit.ts` | Audit log reads | `GET /audit-events` |
 
-Still read directly from static seed files, to be moved behind the service layer in the phase shown:
+Still read directly from a static seed file, to be moved behind the service layer in the phase shown:
 
-- Course catalogue, units and lessons: `src/lib/data/courses.ts` (Phase 2).
-- Quizzes and questions: `src/lib/data/quizzes.ts` (Phase 3b).
-- Content library items: `src/lib/data/people.ts` and component state (Phase 2).
+- Quizzes and questions: `src/lib/data/quizzes.ts` (Phase 3b). Until then a copied course has no quizzes.
+
+Moved behind the service layer in Phase 2: the course catalogue with its units and lessons, and the content library. `src/lib/data/courses.ts` and `people.ts` are now only seeds.
+
+**Content visibility (US-09).** `GET /courses` and `GET /courses/:id` must return only the lessons the caller may see: nothing scheduled for later and nothing restricted to another section. The rule is `courseForViewer()` in `src/lib/domain/content-visibility.ts`. Today the whole course is in the browser's storage and the filter runs there, so a student who inspects storage can read an unreleased lesson. The same applies to lesson files: `GET /courses/:id/lessons/:lessonId/file` must check that the caller may see that lesson.
 
 Quiz grading currently runs in the browser (`src/lib/grading.ts`), which means the answers are shipped to the client. The server must grade attempts and never send answer keys.
 
@@ -109,8 +112,10 @@ Each gets an adapter interface and a mock in the phase shown.
 
 | Needed | Mock today |
 | --- | --- |
-| Upload storage, virus scanning, size limits enforced on the server | Files stay in the browser tab; progress is simulated. |
-| Video transcoding and streaming | Every lesson plays one of two public sample clips. |
+| Upload storage, virus scanning, format and size limits enforced on the server | Files are kept in the browser's IndexedDB (`src/lib/api/_files.ts`), so they exist only on the device that uploaded them. The format and size check (`src/lib/domain/uploads.ts`) runs in the browser against limits from settings. Transfer progress is simulated. |
+| Authorized, expiring download URLs | The file is read from IndexedDB and handed to the page as an object URL. |
+| Embedded third-party media under a Content Security Policy | YouTube and Vimeo links are embedded with `youtube-nocookie.com` and `player.vimeo.com` frames (`src/lib/domain/links.ts`); no CSP is set. The backend or hosting layer should send a `frame-src` allow-list. |
+| Video transcoding and streaming | A lesson plays an uploaded file straight from the browser's storage, or one of two public sample clips. |
 | Caption generation | "Auto-caption" produces placeholder captions. |
 
 ## 8. AI services (beyond the BRD)

@@ -38,6 +38,8 @@ export interface SchoolSettings {
   passwordPolicy: PasswordPolicy;
   /** US-04: years an archived account's data is kept. `null` keeps it indefinitely. */
   retentionYears: number | null;
+  /** FR-2.3: largest file, in megabytes, accepted for each kind of material. */
+  uploadLimitsMb: Record<MaterialKind, number>;
 }
 
 export interface Term {
@@ -49,6 +51,16 @@ export interface Term {
   status: "upcoming" | "active" | "archived";
 }
 
+/** One weekly class meeting of a section (FR-2.1). */
+export interface Meeting {
+  /** Day of the week: 0 is Sunday, 6 is Saturday. */
+  day: number;
+  /** 24-hour local times, "HH:MM". */
+  start: string;
+  end: string;
+  room?: string;
+}
+
 /** A class group taking a course in a term. Faculty teach sections; students enrol in them. */
 export interface Section {
   id: string;
@@ -58,6 +70,8 @@ export interface Section {
   /** Short code used in CSV imports and the SIS feed, e.g. "CS-110-A" (FR-1.5). */
   code: string;
   facultyIds: string[];
+  /** The weekly schedule. Feeds the timetable and calendar in Phase 5. */
+  meetings: Meeting[];
 }
 
 /** A student's place in a section. Created by CSV or SIS import, never by hand (out of scope). */
@@ -157,10 +171,13 @@ export interface Checkpoint {
   explanation: string;
 }
 
+/** BR-06: what a lesson delivers. */
+export type LessonType = "video" | "reading" | "link" | "document" | "slides";
+
 export interface Lesson {
   id: string;
   title: string;
-  type: "video" | "reading";
+  type: LessonType;
   minutes: number;
   summary: string;
   keyPoints: string[];
@@ -172,6 +189,14 @@ export interface Lesson {
   checkpoints?: Checkpoint[];
   /** Reading lessons: body paragraphs. */
   body?: string[];
+  /** Link lessons: the external page or embeddable media (FR-2.4). */
+  url?: string;
+  /** Document, slides and uploaded-video lessons: the content library item to show. */
+  materialId?: string;
+  /** FR-2.7: hidden from students until this moment (ISO date-time). */
+  releaseAt?: string;
+  /** FR-2.8: when set and not empty, only students in these sections see the lesson. */
+  sectionIds?: string[];
 }
 
 export interface CourseModule {
@@ -194,6 +219,9 @@ export interface Course {
   termId: string;
   /** Archived courses are read-only; their grades stay viewable (FR-1.8). */
   status: "active" | "archived";
+  /** First and last teaching day (YYYY-MM-DD). The term's dates apply when absent. */
+  startsOn?: string;
+  endsOn?: string;
   thumbnail: string;
   /** Shown behind the thumbnail while it loads. */
   accent: string;
@@ -319,13 +347,36 @@ export interface LessonPlan {
   grading: { item: string; weight: number }[];
 }
 
+export type MaterialKind = "video" | "audio" | "document" | "slides";
+
+/** An item in the shared content library (FR-2.3, FR-2.6). */
 export interface Material {
   id: string;
   title: string;
-  kind: "video" | "audio" | "document";
+  kind: MaterialKind;
   courseId: string;
   sizeLabel: string;
   durationLabel?: string;
   captions: "ready" | "generating" | "none";
   uploadedAt: string;
+  /** Set for uploads. Seeded sample items have no file behind them. */
+  fileName?: string;
+  mimeType?: string;
+  /** WebVTT text of the caption track attached to this item. */
+  captionsVtt?: string;
+  /** Captions produced by the placeholder "auto-caption" action. */
+  demoCaptions?: boolean;
+}
+
+/** FR-2.5: a reusable course structure with its content and no student data. */
+export interface CourseTemplate {
+  id: string;
+  name: string;
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+  /** The course as it was when the template was saved. Its id and term are not reused. */
+  course: Course;
+  /** Section names and schedules, keyed by the ids the lessons' `sectionIds` refer to. */
+  sections: Array<Pick<Section, "id" | "name" | "meetings">>;
 }

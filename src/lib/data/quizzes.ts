@@ -4,7 +4,7 @@ export const quizzes: Quiz[] = [
   {
     id: "ml-quiz-1",
     courseId: "ml-foundations",
-    title: "Module 1 quiz: What is machine learning?",
+    title: "Unit 1 quiz: What is machine learning?",
     description: "Check your understanding of models, training, and the main types of learning.",
     minutes: 8,
     passMark: 70,
@@ -73,7 +73,7 @@ export const quizzes: Quiz[] = [
   {
     id: "ml-quiz-2",
     courseId: "ml-foundations",
-    title: "Module 2 quiz: Training models",
+    title: "Unit 2 quiz: Training models",
     description: "Loss, gradient descent, learning rate, and overfitting.",
     minutes: 10,
     passMark: 70,
@@ -145,7 +145,7 @@ export const quizzes: Quiz[] = [
   {
     id: "web-quiz-1",
     courseId: "web-dev",
-    title: "Module 1 quiz: HTML and structure",
+    title: "Unit 1 quiz: HTML and structure",
     description: "How the web works and how to choose meaningful HTML elements.",
     minutes: 6,
     passMark: 70,
@@ -206,7 +206,7 @@ export const quizzes: Quiz[] = [
   {
     id: "web-quiz-2",
     courseId: "web-dev",
-    title: "Module 2 quiz: Styling with CSS",
+    title: "Unit 2 quiz: Styling with CSS",
     description: "The box model, flexbox, and specificity.",
     minutes: 8,
     passMark: 70,
@@ -272,7 +272,7 @@ export const quizzes: Quiz[] = [
   {
     id: "bio-quiz-1",
     courseId: "cell-biology",
-    title: "Module 1 quiz: Inside the cell",
+    title: "Unit 1 quiz: Inside the cell",
     description: "Organelles and how substances cross the membrane.",
     minutes: 8,
     passMark: 70,
@@ -333,7 +333,7 @@ export const quizzes: Quiz[] = [
   {
     id: "fin-quiz-1",
     courseId: "money-skills",
-    title: "Module 1 quiz: Budgeting basics",
+    title: "Unit 1 quiz: Budgeting basics",
     description: "Needs and wants, the 50/30/20 rule, and building a budget.",
     minutes: 6,
     passMark: 70,

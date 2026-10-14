@@ -30,6 +30,9 @@ function describeChanges(before: SchoolSettings, after: SchoolSettings) {
     changed.push("password policy");
   }
   if (before.retentionYears !== after.retentionYears) changed.push("data retention");
+  if (JSON.stringify(before.uploadLimitsMb) !== JSON.stringify(after.uploadLimitsMb)) {
+    changed.push("upload size limits");
+  }
   return changed;
 }
 
@@ -44,6 +47,6 @@ export async function updateSettings(next: SchoolSettings): Promise<void> {
     action: "settings.update",
     resource: "settings",
     outcome: "allowed",
-    detail: `Changed ${changed.join(" and ")}`,
+    detail: `Changed ${changed.join(", ")}`,
   });
 }

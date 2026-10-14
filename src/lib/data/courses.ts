@@ -1,16 +1,10 @@
-import type { Course, CourseModule, Lesson, VideoKey } from "@/lib/types";
+import type { Course } from "@/lib/types";
 
 /**
- * Placeholder clips streamed from the W3C media server. Every video lesson
- * plays one of these until real uploads are wired to a backend; captions and
- * checkpoints are positioned as fractions of the clip so any video can be
- * swapped in.
+ * Seed data: the courses the demo starts with. The app reads courses through
+ * `src/lib/api/courses.ts`, which loads these into its mock repository; only
+ * seeds and build-time `generateStaticParams` import this file directly.
  */
-export const SAMPLE_VIDEOS: Record<VideoKey, string> = {
-  sintel: "https://media.w3.org/2010/05/sintel/trailer.mp4",
-  bunny: "https://media.w3.org/2010/05/bunny/trailer.mp4",
-};
-
 export const courses: Course[] = [
   {
     id: "ml-foundations",
@@ -851,45 +845,3 @@ export const courses: Course[] = [
     ],
   },
 ];
-
-export function getCourse(courseId: string) {
-  return courses.find((course) => course.id === courseId);
-}
-
-export function courseLessons(course: Course): Lesson[] {
-  return course.modules.flatMap((module) => module.lessons);
-}
-
-export function courseMinutes(course: Course) {
-  return courseLessons(course).reduce((sum, lesson) => sum + lesson.minutes, 0);
-}
-
-export interface LessonLocation {
-  course: Course;
-  module: CourseModule;
-  lesson: Lesson;
-  index: number;
-  total: number;
-  previous?: Lesson;
-  next?: Lesson;
-}
-
-export function findLesson(courseId: string, lessonId: string): LessonLocation | undefined {
-  const course = getCourse(courseId);
-  if (!course) return undefined;
-  const lessons = courseLessons(course);
-  const index = lessons.findIndex((lesson) => lesson.id === lessonId);
-  if (index === -1) return undefined;
-  const lesson = lessons[index];
-  const courseModule = course.modules.find((module) => module.lessons.includes(lesson));
-  if (!courseModule) return undefined;
-  return {
-    course,
-    module: courseModule,
-    lesson,
-    index,
-    total: lessons.length,
-    previous: lessons[index - 1],
-    next: lessons[index + 1],
-  };
-}

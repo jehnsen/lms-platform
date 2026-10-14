@@ -127,6 +127,30 @@ describe("US-04, FR-1.8: an archived course is read-only and its grades stay vie
   });
 });
 
+describe("US-06, US-08: faculty build courses; templates are shared", () => {
+  it("lets faculty create a course and edit only the ones they teach", () => {
+    expect(can(faculty, "create", { type: "course" })).toBe(true);
+    expect(can(faculty, "update", { type: "course", courseId: "math" })).toBe(true);
+    expect(can(faculty, "update", { type: "course", courseId: "art" })).toBe(false);
+  });
+
+  it("does not let students or parents create or edit courses", () => {
+    for (const actor of [student, parent]) {
+      expect(can(actor, "create", { type: "course" })).toBe(false);
+      expect(can(actor, "update", { type: "course", courseId: "math" })).toBe(false);
+    }
+  });
+
+  it("lets every teacher use a template, and only its author or an admin delete it", () => {
+    expect(can(faculty, "view", { type: "course-template" })).toBe(true);
+    expect(can(faculty, "create", { type: "course-template" })).toBe(true);
+    expect(can(faculty, "delete", { type: "course-template", ownerId: "f1" })).toBe(true);
+    expect(can(faculty, "delete", { type: "course-template", ownerId: "f2" })).toBe(false);
+    expect(can(admin, "delete", { type: "course-template", ownerId: "f2" })).toBe(true);
+    expect(can(student, "view", { type: "course-template" })).toBe(false);
+  });
+});
+
 describe("FR-1.7: non-active accounts can do nothing", () => {
   it("denies everything to inactive and archived accounts", () => {
     expect(can({ ...student, status: "inactive" }, "view", { type: "grades", ownerId: "s1" })).toBe(false);
@@ -155,6 +179,18 @@ describe("page access by role", () => {
     expect(canAccessRoute("parent", "/grades")).toBe(true);
     expect(canAccessRoute("faculty", "/grades")).toBe(false);
     expect(canAccessRoute("admin", "/grades")).toBe(false);
+  });
+
+  it("opens the course builder to roles that may author courses", () => {
+    expect(canAccessRoute("faculty", "/courses/new")).toBe(true);
+    expect(canAccessRoute("student", "/courses/new")).toBe(false);
+    expect(canAccessRoute("admin", "/courses/new")).toBe(false);
+    expect(canAccessRoute("faculty", "/courses/math/edit")).toBe(true);
+    expect(canAccessRoute("admin", "/courses/math/edit")).toBe(true);
+    expect(canAccessRoute("student", "/courses/math/edit")).toBe(false);
+    // The course page and its lessons stay open to students.
+    expect(canAccessRoute("student", "/courses/math")).toBe(true);
+    expect(canAccessRoute("student", "/courses/math/learn/edit")).toBe(true);
   });
 
   it("opens the admin area to admins only", () => {

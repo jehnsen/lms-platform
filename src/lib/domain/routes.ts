@@ -12,6 +12,8 @@ import type { Role } from "@/lib/types";
 interface RouteRule {
   /** Matches the path itself and anything beneath it. */
   prefix: string;
+  /** Narrows the rule to paths of this shape, for pages that sit below a record's id. */
+  pattern?: RegExp;
   action: Action;
   resource: ResourceType;
   /** When set, the role's grant must have one of these scopes. */
@@ -20,6 +22,9 @@ interface RouteRule {
 
 const ROUTE_RULES: RouteRule[] = [
   { prefix: "/courses", action: "view", resource: "course" },
+  // FR-2.1: the course builder. Creating and editing are for roles that hold those permissions.
+  { prefix: "/courses/new", action: "create", resource: "course" },
+  { prefix: "/courses", pattern: /^\/courses\/[^/]+\/edit$/, action: "update", resource: "course" },
   { prefix: "/quizzes", action: "submit", resource: "quiz" },
   // The learner's own grades page: students for themselves, parents for a child.
   { prefix: "/grades", action: "view", resource: "grades", scopes: ["own", "child"] },
@@ -51,11 +56,12 @@ export function isPublicPath(pathname: string) {
 /**
  * May a signed-in user with this role open this path? Paths with no rule
  * (the home page, the forbidden page, unknown URLs) are open to every role.
+ * A rule with a pattern beats one without; after that the longest prefix wins.
  */
 export function canAccessRoute(role: Role, pathname: string): boolean {
-  const rule = ROUTE_RULES.filter((candidate) => matches(pathname, candidate.prefix)).sort(
-    (a, b) => b.prefix.length - a.prefix.length,
-  )[0];
+  const rule = ROUTE_RULES.filter(
+    (candidate) => matches(pathname, candidate.prefix) && (!candidate.pattern || candidate.pattern.test(pathname)),
+  ).sort((a, b) => Number(Boolean(b.pattern)) - Number(Boolean(a.pattern)) || b.prefix.length - a.prefix.length)[0];
   if (!rule) return true;
   const scope = scopeFor(role, rule.action, rule.resource);
   if (!scope) return false;

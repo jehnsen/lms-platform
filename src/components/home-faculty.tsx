@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Clapperboard, Table2, WandSparkles } from "lucide-react";
 import { CourseCover } from "@/components/course-art";
-import { PageContainer, PageHeader, SectionTitle } from "@/components/ui";
+import { ButtonLink, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
 import { useCourses } from "@/lib/api/courses";
 import { useGradebook } from "@/lib/api/grades";
 import { useActor } from "@/lib/api/session";
@@ -45,8 +45,9 @@ export function FacultyHome() {
         description={
           courses.length === 0
             ? "No courses are assigned to you this term."
-            : `You teach ${courses.length} ${courses.length === 1 ? "course" : "courses"} this term.`
+            : `You teach ${courses.length} ${courses.length === 1 ? "course" : "courses"}.`
         }
+        actions={<ButtonLink href="/courses/new">New course</ButtonLink>}
       />
 
       {courses.length > 0 ? (
@@ -132,6 +133,11 @@ function TeachingCourseCard({ course }: { course: Course }) {
           <Link href={`/courses/${course.id}`} className="text-primary-ink hover:underline">
             Preview course
           </Link>
+          {course.status === "archived" ? null : (
+            <Link href={`/courses/${course.id}/edit`} className="text-primary-ink hover:underline">
+              Edit course
+            </Link>
+          )}
           <Link href="/gradebook" className="text-primary-ink hover:underline">
             Gradebook
           </Link>

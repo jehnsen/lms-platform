@@ -4,6 +4,7 @@
  * Every mock repository, in one place so services can share them without
  * importing each other. Each one stands in for a backend table.
  */
+import { courses as seedCourses } from "@/lib/data/courses";
 import {
   DEMO_USER_IDS,
   seedEnrollments,
@@ -13,12 +14,16 @@ import {
   seedTerms,
   seedUsers,
 } from "@/lib/data/directory";
+import { materials as seedMaterials } from "@/lib/data/people";
 import { DEFAULT_SETTINGS } from "@/lib/domain/settings";
 import type {
   AuditEvent,
+  Course,
+  CourseTemplate,
   Enrollment,
   LearnerProgress,
   LessonPlan,
+  Material,
   Notification,
   SchoolSettings,
   Section,
@@ -41,7 +46,18 @@ function readLegacyLearner(): (Partial<LearnerProgress> & { savedPlans?: LessonP
 
 export const usersRepo = createRepository<User[]>("users", 1, seedUsers);
 export const termsRepo = createRepository<Term[]>("terms", 2, seedTerms);
-export const sectionsRepo = createRepository<Section[]>("sections", 2, seedSections);
+export const sectionsRepo = createRepository<Section[]>("sections", 3, seedSections);
+
+/** The course catalogue: every course with its units and lessons. */
+export const coursesRepo = createRepository<Course[]>("courses", 1, seedCourses);
+
+const NO_TEMPLATES: CourseTemplate[] = [];
+
+/** FR-2.5: course templates shared by all faculty. */
+export const templatesRepo = createRepository<CourseTemplate[]>("course-templates", 1, NO_TEMPLATES);
+
+/** FR-2.6: the shared content library. The files themselves are in `_files.ts`. */
+export const materialsRepo = createRepository<Material[]>("materials", 1, seedMaterials);
 export const enrollmentsRepo = createRepository<Enrollment[]>("enrollments", 1, seedEnrollments);
 
 /** Learner progress keyed by user id. */
@@ -98,7 +114,7 @@ export const viewedChildRepo = createRepository<Record<string, string>>(
 );
 
 /** School-wide policy set by admins. One record, not a list. */
-export const settingsRepo = createRepository<SchoolSettings>("settings", 1, DEFAULT_SETTINGS);
+export const settingsRepo = createRepository<SchoolSettings>("settings", 2, DEFAULT_SETTINGS);
 
 export interface MockCredential {
   digest: string;

@@ -8,18 +8,21 @@
  * `POST /quizzes/:id/attempts`, `POST /checkpoints/:id/answers`.
  */
 import { useMemo } from "react";
-import { courses as courseCatalogue } from "@/lib/data/courses";
 import { seedProgress } from "@/lib/data/directory";
 import { can } from "@/lib/domain/permissions";
 import type { Course, LearnerProgress, QuizAttempt, User } from "@/lib/types";
+import { useNow } from "@/lib/use-now";
 import { useRepository } from "./_repository";
 import {
+  coursesRepo,
   enrollmentsRepo,
   progressRepo,
   sectionsRepo,
+  termsRepo,
   usersRepo,
   viewedChildRepo,
 } from "./_stores";
+import { coursesForLearner } from "./courses";
 import { authorize, authorizeOwn, getActor, recordAudit, useActor } from "./session";
 import { useLinkedChildren } from "./users";
 
@@ -41,7 +44,7 @@ export function useCanTrackProgress(): boolean {
 export interface ViewedLearner {
   learner: User;
   progress: LearnerProgress;
-  /** The courses this learner is enrolled in. */
+  /** The courses this learner is enrolled in, with only the lessons released to them (US-09). */
   courses: Course[];
   /** True when looking at someone else's record (a parent viewing a child). */
   readOnly: boolean;
@@ -62,26 +65,21 @@ export function useViewedLearner(): ViewedLearner | null | undefined {
 
   const sections = useRepository(sectionsRepo);
   const enrollments = useRepository(enrollmentsRepo);
+  const catalogue = useRepository(coursesRepo);
+  const terms = useRepository(termsRepo);
+  const now = useNow();
 
   return useMemo(() => {
     if (actor === undefined) return undefined;
     if (!actor) return null;
 
-    const describe = (learner: User, readOnly: boolean): ViewedLearner => {
-      const sectionIds = enrollments
-        .filter((entry) => entry.userId === learner.id)
-        .map((entry) => entry.sectionId);
-      const courseIds = sections
-        .filter((section) => sectionIds.includes(section.id))
-        .map((section) => section.courseId);
-      return {
-        learner,
-        progress: all[learner.id] ?? EMPTY_PROGRESS,
-        courses: courseCatalogue.filter((course) => courseIds.includes(course.id)),
-        readOnly,
-        children,
-      };
-    };
+    const describe = (learner: User, readOnly: boolean): ViewedLearner => ({
+      learner,
+      progress: all[learner.id] ?? EMPTY_PROGRESS,
+      courses: coursesForLearner(learner, catalogue, sections, enrollments, terms, now),
+      readOnly,
+      children,
+    });
 
     const self = users.find((user) => user.id === actor.id);
     if (self && can(actor, "view", { type: "grades", ownerId: actor.id })) return describe(self, false);
@@ -89,7 +87,7 @@ export function useViewedLearner(): ViewedLearner | null | undefined {
     const child = children.find((candidate) => candidate.id === selection[actor.id]) ?? children[0];
     if (child && can(actor, "view", { type: "grades", ownerId: child.id })) return describe(child, true);
     return null;
-  }, [actor, users, all, selection, children, sections, enrollments]);
+  }, [actor, users, all, selection, children, sections, enrollments, catalogue, terms, now]);
 }
 
 /** Parent only: switch which linked child is shown. */

@@ -276,7 +276,7 @@ export function composeTutorReply(
       "**Watch actively.** Answer every in-video checkpoint before continuing — getting one wrong is useful information.",
       "**Recall, don't re-read.** After a lesson, close it and write the key points from memory.",
       "**Space it out.** Three 20-minute sessions across a week beat one long one.",
-      "**Test early.** Take the module quiz as soon as you finish; you can retake it and your best score counts.",
+      "**Test early.** Take the unit quiz as soon as you finish; you can retake it and your best score counts.",
     ])}\n\nTell me what you're preparing for and I'll suggest where to start.`;
   }
 

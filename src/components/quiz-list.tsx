@@ -5,7 +5,6 @@ import { ArrowRight } from "lucide-react";
 import { Badge, Card, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
 import { useCourses } from "@/lib/api/courses";
 import { useMyProgress } from "@/lib/api/progress";
-import { getCourse } from "@/lib/data/courses";
 import { quizzes } from "@/lib/data/quizzes";
 import { attemptsFor, bestAttempt } from "@/lib/progress";
 import type { Quiz } from "@/lib/types";
@@ -32,7 +31,7 @@ export function QuizList() {
           <div className="min-w-0 flex-1 basis-64">
             <div className="font-medium">{quiz.title}</div>
             <div className="mt-0.5 text-sm text-ink-3">
-              {getCourse(quiz.courseId)?.title} · {quiz.questions.length} questions · about{" "}
+              {courses.find((course) => course.id === quiz.courseId)?.title} · {quiz.questions.length} questions · about{" "}
               {quiz.minutes} min · due {formatDate(quiz.due)}
             </div>
           </div>
