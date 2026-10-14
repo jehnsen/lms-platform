@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+# npm run audit:ui output
+/.audit/
 
 # next.js
 /.next/
