@@ -26,6 +26,9 @@ export type ResourceType =
   | "grades"
   | "gradebook"
   | "sis-export"
+  | "attendance"
+  | "calendar"
+  | "calendar-event"
   | "content-library"
   | "lesson-plan"
   | "tutor"
@@ -77,6 +80,9 @@ export const PERMISSIONS: Record<Role, Grants> = {
     assignment: { view: "course", submit: "course" },
     submission: { view: "own" },
     grades: { view: "own" },
+    // US-20, US-21: a student sees their own attendance and their own calendar.
+    attendance: { view: "own" },
+    calendar: { view: "any" },
     tutor: { view: "any" },
     notification: OWN_NOTIFICATIONS,
   },
@@ -97,6 +103,10 @@ export const PERMISSIONS: Record<Role, Grants> = {
     "similarity-report": { view: "course", create: "course" },
     grades: { view: "course" },
     gradebook: { view: "course", update: "course", export: "course" },
+    // US-19: faculty take and correct attendance for the sections they teach, and add exams and cancelled classes for their courses.
+    attendance: { view: "course", create: "course", update: "course" },
+    calendar: { view: "any" },
+    "calendar-event": { create: "course", update: "course", delete: "course" },
     "content-library": { view: "any", create: "any", update: "any", delete: "any" },
     "lesson-plan": { view: "own", create: "own", delete: "own" },
     notification: OWN_NOTIFICATIONS,
@@ -115,6 +125,10 @@ export const PERMISSIONS: Record<Role, Grants> = {
     gradebook: { view: "any", export: "any" },
     // US-18: sending final grades to the SIS is the administrator's job.
     "sis-export": { create: "any" },
+    // Admins oversee attendance but do not take it; they keep the school's calendar.
+    attendance: { view: "any" },
+    calendar: { view: "any" },
+    "calendar-event": { create: "any", update: "any", delete: "any" },
     "content-library": { view: "any" },
     user: { view: "any", create: "any", update: "any", delete: "any" },
     term: { view: "any", update: "any" },
@@ -126,6 +140,8 @@ export const PERMISSIONS: Record<Role, Grants> = {
   parent: {
     progress: { view: "child" },
     grades: { view: "child" },
+    attendance: { view: "child" },
+    calendar: { view: "any" },
     notification: OWN_NOTIFICATIONS,
   },
 };

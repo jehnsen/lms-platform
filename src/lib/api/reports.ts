@@ -13,6 +13,7 @@ import { useMemo } from "react";
 import { mockSis } from "@/lib/adapters/sis";
 import { nowIso } from "@/lib/clock";
 import { courseForViewer } from "@/lib/domain/content-visibility";
+import { formatRate, type AttendanceSummary } from "@/lib/domain/attendance";
 import { termSummary, type CourseTotal, type TermSummary } from "@/lib/domain/gradebook";
 import { can, type Actor } from "@/lib/domain/permissions";
 import {
@@ -26,7 +27,8 @@ import { courseProgress } from "@/lib/progress";
 import type { Course, GradingScale, Section, Term, User } from "@/lib/types";
 import { useNow } from "@/lib/use-now";
 import { useRepository } from "./_repository";
-import { coursesRepo, termsRepo, usersRepo } from "./_stores";
+import { attendanceRepo, coursesRepo, termsRepo, usersRepo } from "./_stores";
+import { courseAttendance } from "./attendance";
 import { readGradeData, studentCourseGrade, useGradeData, type GradeData } from "./grades";
 import { EMPTY_PROGRESS } from "./progress";
 import { authorize, getActor, recordAudit, useActor } from "./session";
@@ -82,6 +84,8 @@ export interface ReportCourse {
   /** The total on the course's scale; `null` while nothing is graded. */
   grade: string | null;
   lessons: { done: number; total: number };
+  /** FR-5.4: attendance in this course so far, and whether it is below the school's threshold. */
+  attendance: { summary: AttendanceSummary; below: boolean };
 }
 
 export interface ProgressReport {
@@ -97,6 +101,8 @@ export interface ProgressReport {
   audience: "learner" | "staff";
   /** Staff: marks counted here that the student cannot see yet. */
   unreleased: number;
+  /** The attendance the school expects, in percent. */
+  attendanceThreshold: number;
 }
 
 /**
@@ -110,6 +116,7 @@ export function useProgressReport(studentId: string | undefined, termId: string 
   const catalogue = useRepository(coursesRepo);
   const allTerms = useRepository(termsRepo);
   const data = useGradeData();
+  const sheets = useRepository(attendanceRepo);
   const now = useNow();
 
   return useMemo(() => {
@@ -139,6 +146,7 @@ export function useProgressReport(studentId: string | undefined, termId: string 
           total: grade.total,
           grade: grade.total.percent === null ? null : gradeOnScale(grade.total.percent, grade.scale),
           lessons: { done: lessons.done, total: lessons.total },
+          attendance: courseAttendance(student.id, course.id, sheets, data.settings.attendance),
         };
       });
 
@@ -152,8 +160,9 @@ export function useProgressReport(studentId: string | undefined, termId: string 
       gpaScale,
       audience,
       unreleased: courses.reduce((sum, entry) => sum + entry.total.counts.unreleased, 0),
+      attendanceThreshold: data.settings.attendance.thresholdPercent,
     };
-  }, [actor, users, catalogue, allTerms, data, now, studentId, termId]);
+  }, [actor, users, catalogue, allTerms, data, sheets, now, studentId, termId]);
 }
 
 /** FR-4.4: the report-card data as rows, one for each course, for a spreadsheet or another system. */
@@ -176,6 +185,11 @@ export function reportRows(report: ProgressReport): string[][] {
       "work_awaiting_grade",
       "lessons_done",
       "lessons_total",
+      "attendance_percent",
+      "sessions_absent",
+      "sessions_late",
+      "sessions_excused",
+      "sessions_recorded",
     ],
     ...report.courses.map((entry) => [
       report.student.sisId ?? "",
@@ -196,6 +210,11 @@ export function reportRows(report: ProgressReport): string[][] {
       String(entry.total.counts.toMark + entry.total.counts.held),
       String(entry.lessons.done),
       String(entry.lessons.total),
+      entry.attendance.summary.rate === null ? "" : formatRate(entry.attendance.summary.rate).replace("%", ""),
+      String(entry.attendance.summary.absent),
+      String(entry.attendance.summary.late),
+      String(entry.attendance.summary.excused),
+      String(entry.attendance.summary.recorded),
     ]),
   ];
 }

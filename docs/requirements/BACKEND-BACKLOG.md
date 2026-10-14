@@ -2,7 +2,7 @@
 
 Everything that must be real on a server before go-live. This phase of the project is frontend-first: each item below has a typed interface and a mock in the browser, and this file records what has to replace the mock.
 
-**Last updated:** 2026-10-14, after Phase 4. Items are added as each phase introduces a new mock.
+**Last updated:** 2026-10-14, after Phase 5. Items are added as each phase introduces a new mock.
 
 ## How the frontend is prepared for it
 
@@ -52,11 +52,13 @@ Replace each mock repository with database tables and API endpoints.
 | `api/courses.ts` | Courses with units and lessons, sections and schedules, enrollments, course visibility, rosters, templates, terms, term archive | `GET /courses`, `GET /courses/:id`, `POST /courses` (blank, from a template, or a copy with a date shift), `PUT /courses/:id`, `GET /courses/:id/roster`, `GET`, `POST` and `DELETE /course-templates`, `GET /terms`, `POST /terms/:id/archive`, `POST /terms/:id/reopen` |
 | `api/materials.ts` | Content library items, captions, and the files behind them | `GET /materials`, `POST /materials` (upload), `PATCH /materials/:id`, `DELETE /materials/:id`, `GET /courses/:id/lessons/:lessonId/file` |
 | `api/assignments.ts` | Assignments with rubrics and attachments, submissions with files, inline comments, grades and their release, similarity reports | `GET` and `POST /assignments`, `GET`, `PUT` and `DELETE /assignments/:id`, `GET` and `POST /assignments/:id/submissions`, `PUT /submissions/:id/grade`, `POST` and `DELETE /submissions/:id/comments`, `POST /assignments/:id/release`, `POST /submissions/:id/similarity`, file downloads |
-| `api/settings.ts` | School settings: password policy, retention period, upload size limits, default late rule, submission size limit, who sees similarity reports, grading scales and the default scale | `GET /settings`, `PUT /settings` |
+| `api/settings.ts` | School settings: password policy, retention period, upload size limits, default late rule, submission size limit, who sees similarity reports, grading scales and the default scale, attendance policy and coordinators | `GET /settings`, `PUT /settings` |
 | `api/progress.ts` | Completed lessons, checkpoint answers, and reading a learner's attempts | `GET /users/:id/progress`, `POST /lessons/:id/completion`, `POST /checkpoints/:id/answers` |
 | `api/quizzes.ts` | Quizzes and questions, the question bank, attempts in progress, handed-in attempts, the grading queue | `GET` and `POST /quizzes`, `GET`, `PUT` and `DELETE /quizzes/:id`, `POST /quizzes/:id/attempts`, `PATCH /attempts/:id`, `POST /attempts/:id/submit`, `GET /grading-queue`, `PUT /attempts/:id/marks/:questionId`, `GET`, `POST` and `DELETE /question-bank` |
 | `api/grades.ts` | Class gradebook with totals, each course's grading setup (categories, weights, scale, missing-work rule), held quiz scores, a learner's released grades | `GET /courses/:id/gradebook`, `GET` and `PUT /courses/:id/gradebook/setup`, `POST /quizzes/:id/grades/hold`, `POST /quizzes/:id/grades/release`, `GET /users/:id/grades`, `POST /courses/:id/gradebook/exports` |
 | `api/reports.ts` | Progress reports, and the export of final grades to the SIS | `GET /reports/progress?studentId=&termId=`, `POST /reports/progress/exports`, `POST /sis/grade-exports` (dry run and send), `GET /sis/grade-exports/:id` |
+| `api/attendance.ts` | Attendance sheets (one per class session) with their corrections, each student's rate, and whether each student is currently below the threshold | `GET /sections/:id/sessions`, `GET` and `PUT /sessions/:id/attendance`, `GET /sections/:id/attendance`, `GET /users/:id/attendance` |
+| `api/calendar.ts` | Exams, holidays and other calendar events; the calendar built for the caller | `GET /calendar?from=&to=` (and `&studentId=` for a parent), `GET` and `POST /calendar-events`, `PUT` and `DELETE /calendar-events/:id` |
 | `api/notifications.ts` | In-app notifications | `GET /notifications`, `POST /notifications/:id/read` |
 | `api/lesson-plans.ts` | Saved lesson plans | `GET/POST/DELETE /lesson-plans` |
 | `api/audit.ts` | Audit log reads | `GET /audit-events` |
@@ -94,6 +96,16 @@ Bulk import: the CSV file is parsed and validated in the browser (`previewUserIm
 - **SIS export.** `planSisExport()` checks each record in the browser and `mockSis.exportGrades()` pretends to send them. The real export runs on the server with the SIS credentials, in the SIS's own format (Q-18), keeps what was sent and what the SIS answered for each record, and can be retried safely. The audit entry must be written by the server.
 - **Progress reports.** Built in the browser from every table. The server builds the report for the caller's permissions, and generates the printable file (PDF comes with Phase 7).
 
+**Attendance and the calendar (Epic E).** Everything the browser decides today must be decided by the server:
+
+- **Sessions.** A class session is not stored: `sectionSessions()` in `src/lib/domain/schedule.ts` works it out from the section's weekly schedule, the course's dates and the days with no classes. The server can do the same, or materialise sessions; either way a session's id must stay stable once attendance is recorded against it.
+- **The correction window.** `editDecision()` compares the submission time with the browser's clock. The server stamps `submittedAt` and enforces the window itself.
+- **The audit trail.** Corrections are kept on the sheet and in the mock audit log, both editable in the browser. The server must write them to append-only storage.
+- **Who is on the roster.** Taken from enrollments held in the browser. The server decides it, including students who joined or left the section part-way through the term.
+- **Alerts, once per breach.** `evaluateAttendanceAlerts()` runs in the browser of whoever saved the attendance or the policy, and remembers each breach in `attendanceAlertsRepo`. On the server this is a job triggered by attendance and policy changes, with the breach state stored in the database, so that two teachers saving at once cannot send the alert twice.
+- **Time zone.** Class times are plain times and "today" is the device's date (Q-34). The server needs the school's time zone as a setting.
+- **What a parent or student receives.** The whole attendance table is in the browser's storage; the screens show only one student's. The API must return only that student's marks.
+
 ### Scheduled jobs
 
 None of these can run in a browser. Each has a manual stand-in or a recorded setting today.
@@ -103,6 +115,7 @@ None of these can run in a browser. Each has a manual stand-in or a recorded set
 | Archive a term on its end date (US-04) | An admin presses "Archive term"; a term past its end date is flagged. |
 | Scheduled SIS sync (FR-1.6) | An admin presses "Sync from SIS". |
 | Delete data when the retention period ends (US-04, Q-12) | The period is stored in settings; nothing is deleted. |
+| Check attendance against the threshold and send the alerts (FR-5.5) | Runs in the browser when attendance or the attendance policy is saved. |
 
 ## 4. Audit storage (FR-1.2, NFR-3)
 

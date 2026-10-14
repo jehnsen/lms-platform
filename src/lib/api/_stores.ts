@@ -5,6 +5,12 @@
  * importing each other. Each one stands in for a backend table.
  */
 import { seedAssignments, seedSubmissions } from "@/lib/data/assignments";
+import {
+  seedAttendanceAlerts,
+  seedAttendanceNotifications,
+  seedAttendanceSheets,
+  seedCalendarEvents,
+} from "@/lib/data/attendance";
 import { courses as seedCourses } from "@/lib/data/courses";
 import {
   DEMO_USER_IDS,
@@ -21,8 +27,11 @@ import { quizzes as seedQuizzes } from "@/lib/data/quizzes";
 import { DEFAULT_SETTINGS } from "@/lib/domain/settings";
 import type {
   Assignment,
+  AttendanceAlertState,
+  AttendanceSheet,
   AuditEvent,
   BankQuestion,
+  CalendarEvent,
   Course,
   CourseTemplate,
   Enrollment,
@@ -102,11 +111,10 @@ export const lessonPlansRepo = createRepository<Record<string, LessonPlan[]>>(
   },
 );
 
-export const notificationsRepo = createRepository<Notification[]>(
-  "notifications",
-  1,
-  seedNotifications,
-);
+export const notificationsRepo = createRepository<Notification[]>("notifications", 2, [
+  ...seedNotifications,
+  ...seedAttendanceNotifications,
+]);
 
 const NO_EVENTS: AuditEvent[] = [];
 
@@ -123,7 +131,23 @@ export const viewedChildRepo = createRepository<Record<string, string>>(
 );
 
 /** School-wide policy set by admins. One record, not a list. */
-export const settingsRepo = createRepository<SchoolSettings>("settings", 4, DEFAULT_SETTINGS);
+export const settingsRepo = createRepository<SchoolSettings>("settings", 5, DEFAULT_SETTINGS);
+
+/** FR-5.1: the attendance taken for each class session. One sheet per session, keyed by the session's id. */
+export const attendanceRepo = createRepository<AttendanceSheet[]>("attendance", 1, seedAttendanceSheets);
+
+/**
+ * FR-5.5: whether each student is below the attendance threshold in each
+ * course, keyed by `studentId|courseId`, so an alert is sent once per breach.
+ */
+export const attendanceAlertsRepo = createRepository<Record<string, AttendanceAlertState>>(
+  "attendance-alerts",
+  1,
+  seedAttendanceAlerts,
+);
+
+/** FR-5.3: exams, holidays and other events on the academic calendar. Classes and due dates are not stored here. */
+export const calendarEventsRepo = createRepository<CalendarEvent[]>("calendar-events", 1, seedCalendarEvents);
 
 const NO_SETUPS: Record<string, GradebookSetup> = {};
 

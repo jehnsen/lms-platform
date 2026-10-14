@@ -12,6 +12,7 @@ import { tidyScale } from "@/lib/grading";
 import type { SchoolSettings } from "@/lib/types";
 import { useRepository } from "./_repository";
 import { settingsRepo } from "./_stores";
+import { evaluateAttendanceAlerts } from "./attendance";
 import { authorize, recordAudit } from "./session";
 
 export class SettingsError extends Error {
@@ -45,6 +46,7 @@ function describeChanges(before: SchoolSettings, after: SchoolSettings) {
   ) {
     changed.push("grading scales");
   }
+  if (JSON.stringify(before.attendance) !== JSON.stringify(after.attendance)) changed.push("attendance policy");
   return changed;
 }
 
@@ -62,4 +64,6 @@ export async function updateSettings(input: SchoolSettings): Promise<void> {
     outcome: "allowed",
     detail: `Changed ${changed.join(", ")}`,
   });
+  // FR-5.4: a new threshold or counting rule applies at once, so students it puts below are alerted now.
+  if (changed.includes("attendance policy")) evaluateAttendanceAlerts();
 }

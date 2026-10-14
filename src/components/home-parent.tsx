@@ -1,21 +1,25 @@
 "use client";
 
-import { Card, ButtonLink, Meter, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
+import Link from "next/link";
+import { Badge, Card, ButtonLink, Meter, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
+import { useViewedAttendance } from "@/lib/api/attendance";
 import { useViewedGrades } from "@/lib/api/grades";
 import { selectViewedChild } from "@/lib/api/progress";
 import { useActor } from "@/lib/api/session";
+import { formatRate } from "@/lib/domain/attendance";
 import { isFinal } from "@/lib/domain/quizzes";
 import { gradeBeside, percentAndGrade } from "@/lib/grading";
 import { courseProgress } from "@/lib/progress";
 import { firstNameOf, formatDate } from "@/lib/utils";
 
 /**
- * Parent home (US-05): one linked child's results, read-only. Attendance and
- * announcements join it when those features exist (Phases 5 and 6).
+ * Parent home (US-05): one linked child's results and attendance, read-only.
+ * Announcements join it when that feature exists (Phase 6).
  */
 export function ParentHome() {
   const actor = useActor();
   const grades = useViewedGrades();
+  const attendance = useViewedAttendance();
   const greeting = `Welcome, ${actor ? firstNameOf(actor.name) : ""}`;
 
   if (!grades) {
@@ -120,6 +124,38 @@ export function ParentHome() {
                 : [gradeBeside(overall, overallScale), "Across the course grades released so far."].filter(Boolean).join(". ")}
             </p>
           </Card>
+
+          <section>
+            <SectionTitle
+              action={
+                <Link href="/attendance" className="text-sm font-medium text-primary-ink hover:underline">
+                  Details
+                </Link>
+              }
+            >
+              Attendance
+            </SectionTitle>
+            <Card>
+              {!attendance || attendance.courses.every((entry) => entry.summary.recorded === 0) ? (
+                <p className="p-4 text-sm text-ink-2">No attendance has been recorded yet.</p>
+              ) : (
+                <ul>
+                  {attendance.courses.map((entry) => (
+                    <li
+                      key={entry.course.id}
+                      className="flex items-center justify-between gap-3 border-t border-line p-3.5 first:border-t-0"
+                    >
+                      <span className="min-w-0 truncate text-sm font-medium">{entry.course.title}</span>
+                      <span className="flex shrink-0 items-center gap-2 text-sm font-semibold tabular-nums">
+                        {entry.below ? <Badge tone="bad">Below {attendance.policy.thresholdPercent}%</Badge> : null}
+                        {formatRate(entry.summary.rate)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </section>
 
           <section>
             <SectionTitle>Recent results</SectionTitle>

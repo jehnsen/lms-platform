@@ -50,6 +50,85 @@ export interface SchoolSettings {
   gradingScales: GradingScale[];
   /** The scale a course uses until its teacher picks one, and the one used for averages across courses. */
   defaultScaleId: string;
+  /** FR-5.2, FR-5.4: how attendance is counted, when it can be corrected and who is alerted. */
+  attendance: AttendancePolicy;
+}
+
+// ---------------------------------------------------------------------------
+// Attendance and scheduling (BR-17 to BR-19)
+// ---------------------------------------------------------------------------
+
+/** FR-5.1: what a teacher records for each student in a class session. */
+export type AttendanceStatus = "present" | "absent" | "late" | "excused";
+
+/** FR-5.2, FR-5.4: school policy for attendance. Every value is an open question with a default (Q-19). */
+export interface AttendancePolicy {
+  /** A student whose attendance in a course falls below this percentage triggers an alert. */
+  thresholdPercent: number;
+  /** Sessions that must be recorded for a student in a course before the threshold is checked. */
+  minSessions: number;
+  /** How a Late mark counts: as attended, as half a session, or as missed. */
+  late: "present" | "half" | "absent";
+  /** How an Excused mark counts: left out of the rate, as attended, or as missed. */
+  excused: "excluded" | "present" | "absent";
+  /** Hours after a session's attendance is first submitted in which it can still be corrected. 0: never. */
+  editWindowHours: number;
+  /** Q-04: the staff accounts that receive attendance alerts as academic coordinator. Empty: the section's teachers. */
+  coordinatorIds: string[];
+}
+
+/** One correction to a submitted attendance sheet (FR-5.2). */
+export interface AttendanceChange {
+  at: string;
+  byId: string;
+  studentId: string;
+  /** `null` when the student had no mark, for example because they joined the section later. */
+  from: AttendanceStatus | null;
+  to: AttendanceStatus;
+}
+
+/** FR-5.1: the attendance taken for one class session of a section. */
+export interface AttendanceSheet {
+  /** The session's id: section, date and start time (`sessionId()` in `domain/schedule.ts`). */
+  id: string;
+  sectionId: string;
+  courseId: string;
+  /** YYYY-MM-DD. */
+  date: string;
+  /** "HH:MM", as in the section's schedule. */
+  start: string;
+  marks: Record<string, AttendanceStatus>;
+  submittedAt: string;
+  submittedById: string;
+  /** Every correction made after it was submitted, oldest first. */
+  changes: AttendanceChange[];
+}
+
+/** FR-5.5: whether a student is currently below the threshold in a course, so an alert is sent once per breach. */
+export interface AttendanceAlertState {
+  breached: boolean;
+  /** When the alert for the current, or the latest, breach was sent. */
+  alertedAt?: string;
+}
+
+/** FR-5.3: an entry on the academic calendar that is not a class or a due date. */
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  kind: "exam" | "holiday" | "event";
+  /** YYYY-MM-DD. */
+  date: string;
+  /** Last day of an event that runs over several days. */
+  endDate?: string;
+  /** "HH:MM". Absent: all day. */
+  start?: string;
+  end?: string;
+  room?: string;
+  /** The course it belongs to. Absent: the whole school. */
+  courseId?: string;
+  /** No classes meet on these dates: for the whole school, or for this course when it has one. */
+  noClasses?: boolean;
+  createdById: string;
 }
 
 export interface Term {

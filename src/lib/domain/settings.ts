@@ -4,6 +4,7 @@
  * docs/requirements/OPEN-QUESTIONS.md.
  */
 import { DEFAULT_LATE_POLICY, latePolicyProblems } from "@/lib/domain/assignments";
+import { DEFAULT_ATTENDANCE_POLICY, attendancePolicyProblems } from "@/lib/domain/attendance";
 import { DEFAULT_PASSWORD_POLICY, MIN_LENGTH_RANGE } from "@/lib/domain/password-policy";
 import {
   DEFAULT_UPLOAD_LIMITS_MB,
@@ -29,6 +30,8 @@ export const DEFAULT_SETTINGS: SchoolSettings = {
   // Q-17: the grading scales and their bands, and the one a course starts with.
   gradingScales: DEFAULT_GRADING_SCALES,
   defaultScaleId: DEFAULT_SCALE_ID,
+  // Q-19, Q-04: the attendance threshold, how marks count, the correction window and who is alerted.
+  attendance: DEFAULT_ATTENDANCE_POLICY,
 };
 
 export const RETENTION_YEARS_RANGE = { min: 1, max: 99 } as const;
@@ -75,5 +78,6 @@ export function settingsProblems(settings: SchoolSettings): string[] {
   if (!settings.gradingScales.some((scale) => scale.id === settings.defaultScaleId)) {
     problems.push("Choose the grading scale a course starts with.");
   }
+  problems.push(...attendancePolicyProblems(settings.attendance));
   return problems;
 }

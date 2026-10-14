@@ -45,6 +45,9 @@ const ROUTE_RULES: RouteRule[] = [
   { prefix: "/grades", action: "view", resource: "grades", scopes: ["own", "child"] },
   // FR-4.4: progress reports. Every role has some; which students it covers is decided when the report is built.
   { prefix: "/reports", action: "view", resource: "grades" },
+  // FR-5.3: the timetable and calendar, for every role. FR-5.1: attendance, each role for the students it may see.
+  { prefix: "/calendar", action: "view", resource: "calendar" },
+  { prefix: "/attendance", action: "view", resource: "attendance" },
   { prefix: "/tutor", action: "view", resource: "tutor" },
   { prefix: "/gradebook", action: "view", resource: "gradebook" },
   { prefix: "/content", action: "view", resource: "content-library" },

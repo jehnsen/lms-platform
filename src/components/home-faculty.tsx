@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Clapperboard, Table2, WandSparkles } from "lucide-react";
+import { ArrowUpRight, CalendarCheck, Clapperboard, Table2, WandSparkles } from "lucide-react";
 import { CourseCover } from "@/components/course-art";
 import { ButtonLink, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
 import { useCourses } from "@/lib/api/courses";
@@ -12,6 +12,12 @@ import type { Course } from "@/lib/types";
 import { firstNameOf } from "@/lib/utils";
 
 const TEACH_LINKS = [
+  {
+    href: "/attendance",
+    icon: CalendarCheck,
+    title: "Take attendance",
+    detail: "Mark today's class sessions.",
+  },
   {
     href: "/gradebook",
     icon: Table2,
@@ -64,7 +70,7 @@ export function FacultyHome() {
 
       <section className="mt-10">
         <SectionTitle>Teaching tools</SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {TEACH_LINKS.map((link) => (
             <Link
               key={link.href}

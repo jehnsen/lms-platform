@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
 import {
   BookOpen,
+  CalendarCheck,
+  CalendarDays,
   CalendarRange,
   Clapperboard,
   ClipboardCheck,
@@ -59,12 +61,14 @@ const NAV: NavGroup[] = [
       { href: "/courses", label: "Courses", icon: BookOpen },
       { href: "/assignments", label: "Assignments", icon: ClipboardCheck },
       { href: "/quizzes", label: "Quizzes", icon: ListChecks },
+      { href: "/calendar", label: "Calendar", icon: CalendarDays },
     ],
   },
   {
     heading: { student: "Learn", parent: "Your child" },
     items: [
       { href: "/grades", label: { student: "My grades", parent: "Grades" }, icon: GraduationCap },
+      { href: "/attendance", label: { student: "Attendance", parent: "Attendance" }, icon: CalendarCheck },
       { href: "/reports", label: { student: "Progress report", parent: "Progress report" }, icon: FileText },
       { href: "/tutor", label: "AI tutor", icon: Sparkles },
     ],
@@ -73,6 +77,7 @@ const NAV: NavGroup[] = [
     heading: { faculty: "Teach", admin: "Oversight" },
     items: [
       { href: "/grading", label: "Grading queue", icon: PenLine },
+      { href: "/attendance", label: { faculty: "Attendance", admin: "Attendance" }, icon: CalendarCheck },
       { href: "/gradebook", label: "Gradebook", icon: Table2 },
       { href: "/reports", label: { faculty: "Progress reports", admin: "Progress reports" }, icon: FileText },
       { href: "/content", label: "Content library", icon: Clapperboard },

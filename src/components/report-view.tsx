@@ -5,6 +5,7 @@ import { Download, Printer } from "lucide-react";
 import { Badge, Button, Card, PageContainer, PageHeader, PageSkeleton } from "@/components/ui";
 import { logReportExport, reportRows, useProgressReport, useReportStudents, type ProgressReport } from "@/lib/api/reports";
 import { useActor } from "@/lib/api/session";
+import { formatRate } from "@/lib/domain/attendance";
 import { downloadCsv } from "@/lib/download";
 import { formatDate } from "@/lib/utils";
 
@@ -165,12 +166,13 @@ function ReportCard({ report }: { report: ProgressReport }) {
         <p className="px-5 py-4 text-sm text-ink-2">No courses in this term.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[42rem] text-sm">
+          <table className="w-full min-w-[48rem] text-sm">
             <thead>
               <tr className="text-left text-xs text-ink-3">
                 <th scope="col" className="px-5 py-2.5 font-medium">Course</th>
                 <th scope="col" className="px-3 py-2.5 font-medium">Made up of</th>
                 <th scope="col" className="px-3 py-2.5 text-right font-medium">Lessons</th>
+                <th scope="col" className="px-3 py-2.5 text-right font-medium">Attendance</th>
                 <th scope="col" className="px-3 py-2.5 text-right font-medium">Missing</th>
                 <th scope="col" className="px-3 py-2.5 text-right font-medium">Total</th>
                 <th scope="col" className="px-5 py-2.5 text-right font-medium">Grade</th>
@@ -196,6 +198,15 @@ function ReportCard({ report }: { report: ProgressReport }) {
                   </td>
                   <td className="px-3 py-3 text-right text-ink-2 tabular-nums">
                     {entry.lessons.done}/{entry.lessons.total}
+                  </td>
+                  <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
+                    <span className={entry.attendance.below ? "font-medium text-bad" : undefined}>
+                      {formatRate(entry.attendance.summary.rate)}
+                    </span>
+                    {entry.attendance.below ? <span className="sr-only"> (below {report.attendanceThreshold}%)</span> : null}
+                    {entry.attendance.summary.absent > 0 ? (
+                      <span className="block text-xs text-ink-3">{entry.attendance.summary.absent} absent</span>
+                    ) : null}
                   </td>
                   <td className="px-3 py-3 text-right tabular-nums">{entry.total.counts.missing}</td>
                   <td className="px-3 py-3 text-right font-semibold tabular-nums">
@@ -224,8 +235,9 @@ function ReportCard({ report }: { report: ProgressReport }) {
           <p>Every mark counted here has been released to the student.</p>
         )}
         <p>
-          The term average is the plain average of the course totals. The GPA counts each course equally. Attendance
-          joins this report when attendance is recorded.
+          The term average is the plain average of the course totals. The GPA counts each course equally.
+          Attendance is the share of recorded sessions attended; the school expects at least{" "}
+          {report.attendanceThreshold}%.
         </p>
       </div>
     </Card>

@@ -6,10 +6,12 @@ import { GradingScaleFields } from "@/components/grading-scale-fields";
 import { LatePolicyFields } from "@/components/late-policy-fields";
 import { Button, Card, PageContainer, PageHeader, fieldClass } from "@/components/ui";
 import { SettingsError, updateSettings, useSettings } from "@/lib/api/settings";
+import { useUsers } from "@/lib/api/users";
+import { ATTENDANCE_RANGES } from "@/lib/domain/attendance";
 import { MIN_LENGTH_RANGE } from "@/lib/domain/password-policy";
 import { RETENTION_YEARS_RANGE, SUBMISSION_LIMIT_RANGE_MB } from "@/lib/domain/settings";
 import { MATERIAL_KINDS, UPLOAD_FORMATS, UPLOAD_LIMIT_RANGE_MB } from "@/lib/domain/uploads";
-import type { MaterialKind, PasswordPolicy, SchoolSettings } from "@/lib/types";
+import type { AttendancePolicy, MaterialKind, PasswordPolicy, SchoolSettings } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const CHARACTER_RULES: Array<{ key: keyof Omit<PasswordPolicy, "minLength">; label: string }> = [
@@ -38,6 +40,13 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
     Object.fromEntries(MATERIAL_KINDS.map((kind) => [kind, String(saved.uploadLimitsMb[kind])])) as Record<MaterialKind, string>,
   );
   const [submissionLimit, setSubmissionLimit] = useState(String(saved.submissionLimitMb));
+  const [threshold, setThreshold] = useState(String(saved.attendance.thresholdPercent));
+  const [minSessions, setMinSessions] = useState(String(saved.attendance.minSessions));
+  const [editWindow, setEditWindow] = useState(String(saved.attendance.editWindowHours));
+  // Q-04: the academic coordinator is a responsibility given to staff accounts, not a fifth role.
+  const staff = (useUsers() ?? []).filter(
+    (user) => (user.role === "faculty" || user.role === "admin") && user.status === "active",
+  );
   const [busy, setBusy] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
   const [savedNote, setSavedNote] = useState(false);
@@ -54,6 +63,16 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
     similarityVisibleToStudents: draft.similarityVisibleToStudents,
     gradingScales: draft.gradingScales,
     defaultScaleId: draft.defaultScaleId,
+    attendance: {
+      ...draft.attendance,
+      thresholdPercent: threshold.trim() === "" ? Number.NaN : Number(threshold),
+      minSessions: minSessions.trim() === "" ? Number.NaN : Number(minSessions),
+      editWindowHours: editWindow.trim() === "" ? Number.NaN : Number(editWindow),
+    },
+  };
+  const setAttendance = (changes: Partial<AttendancePolicy>) => {
+    setSavedNote(false);
+    setDraft((current) => ({ ...current, attendance: { ...current.attendance, ...changes } }));
   };
   const changed = JSON.stringify(next) !== JSON.stringify(saved);
 
@@ -320,6 +339,152 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
                 setDraft((current) => ({ ...current, gradingScales, defaultScaleId }));
               }}
             />
+          </fieldset>
+        </Card>
+
+        <Card className="p-5">
+          <fieldset className="min-w-0">
+            <legend className="text-lg font-semibold tracking-tight">Attendance</legend>
+            <p className="mt-1 text-sm text-ink-2">
+              When a student&apos;s attendance in a course falls below the threshold, the student, their linked
+              parents and the academic coordinator are alerted once. They are not alerted again unless attendance
+              recovers and then falls below it again. A change made here applies at once: students the new rule
+              puts below the threshold are alerted when it is saved.
+            </p>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="settings-attendance-threshold" className="mb-1 block text-sm font-medium">
+                  Attendance threshold
+                </label>
+                <div className="flex items-center gap-2 text-sm">
+                  <input
+                    id="settings-attendance-threshold"
+                    type="number"
+                    inputMode="decimal"
+                    min={ATTENDANCE_RANGES.thresholdPercent.min}
+                    max={ATTENDANCE_RANGES.thresholdPercent.max}
+                    value={threshold}
+                    onChange={(event) => {
+                      setSavedNote(false);
+                      setThreshold(event.target.value);
+                    }}
+                    className={cn(fieldClass, "w-28")}
+                  />
+                  <span>% of sessions</span>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="settings-attendance-min" className="mb-1 block text-sm font-medium">
+                  Start checking after
+                </label>
+                <div className="flex items-center gap-2 text-sm">
+                  <input
+                    id="settings-attendance-min"
+                    type="number"
+                    inputMode="numeric"
+                    min={ATTENDANCE_RANGES.minSessions.min}
+                    max={ATTENDANCE_RANGES.minSessions.max}
+                    value={minSessions}
+                    onChange={(event) => {
+                      setSavedNote(false);
+                      setMinSessions(event.target.value);
+                    }}
+                    aria-describedby="settings-attendance-min-hint"
+                    className={cn(fieldClass, "w-28")}
+                  />
+                  <span>recorded sessions</span>
+                </div>
+                <p id="settings-attendance-min-hint" className="mt-1 text-xs text-ink-3">
+                  So one absence in the first week does not set off an alert.
+                </p>
+              </div>
+              <div>
+                <label htmlFor="settings-attendance-late" className="mb-1 block text-sm font-medium">
+                  Late counts as
+                </label>
+                <select
+                  id="settings-attendance-late"
+                  value={draft.attendance.late}
+                  onChange={(event) => setAttendance({ late: event.target.value as AttendancePolicy["late"] })}
+                  className={cn(fieldClass, "w-full")}
+                >
+                  <option value="present">Attended</option>
+                  <option value="half">Half a session</option>
+                  <option value="absent">Missed</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="settings-attendance-excused" className="mb-1 block text-sm font-medium">
+                  Excused counts as
+                </label>
+                <select
+                  id="settings-attendance-excused"
+                  value={draft.attendance.excused}
+                  onChange={(event) => setAttendance({ excused: event.target.value as AttendancePolicy["excused"] })}
+                  className={cn(fieldClass, "w-full")}
+                >
+                  <option value="excluded">Not counted either way</option>
+                  <option value="present">Attended</option>
+                  <option value="absent">Missed</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <label htmlFor="settings-attendance-window" className="mb-1 block text-sm font-medium">
+                Attendance can be corrected for
+              </label>
+              <div className="flex items-center gap-2 text-sm">
+                <input
+                  id="settings-attendance-window"
+                  type="number"
+                  inputMode="numeric"
+                  min={ATTENDANCE_RANGES.editWindowHours.min}
+                  max={ATTENDANCE_RANGES.editWindowHours.max}
+                  value={editWindow}
+                  onChange={(event) => {
+                    setSavedNote(false);
+                    setEditWindow(event.target.value);
+                  }}
+                  aria-describedby="settings-attendance-window-hint"
+                  className={cn(fieldClass, "w-28")}
+                />
+                <span>hours after it is submitted</span>
+              </div>
+              <p id="settings-attendance-window-hint" className="mt-1 text-xs text-ink-3">
+                After that the record is locked. 0 locks it as soon as it is submitted. Every correction is logged.
+              </p>
+            </div>
+
+            <fieldset className="mt-5">
+              <legend className="mb-1.5 text-sm font-medium">Academic coordinators</legend>
+              <p className="mb-2 text-xs text-ink-3">
+                The staff who receive attendance alerts. With nobody chosen, an alert goes to the teachers of the
+                student&apos;s section.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {staff.map((user) => (
+                  <label key={user.id} className="flex cursor-pointer items-center gap-2.5 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={draft.attendance.coordinatorIds.includes(user.id)}
+                      onChange={(event) =>
+                        setAttendance({
+                          coordinatorIds: event.target.checked
+                            ? [...draft.attendance.coordinatorIds, user.id]
+                            : draft.attendance.coordinatorIds.filter((id) => id !== user.id),
+                        })
+                      }
+                      className="size-4 accent-primary"
+                    />
+                    <span>
+                      {user.name} <span className="text-ink-3">· {user.role === "admin" ? "Admin" : "Faculty"}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           </fieldset>
         </Card>
 
