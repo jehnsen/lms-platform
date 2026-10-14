@@ -42,6 +42,7 @@ import type {
 import { useRepository } from "./_repository";
 import {
   coursesRepo,
+  gradebookSetupsRepo,
   progressRepo,
   questionBankRepo,
   quizDraftsRepo,
@@ -473,7 +474,9 @@ export async function markAnswer(
     outcome: "allowed",
     detail: `${quiz.title}: ${points} of ${quiz.questions.find((question) => question.id === questionId)?.points ?? "?"}`,
   });
-  if (attempt.status === "awaiting-marking" && result.attempt.status === "graded") {
+  // FR-4.3: while the quiz's scores are held, the student hears nothing until they are released.
+  const held = gradebookSetupsRepo.get()[quiz.courseId]?.heldQuizIds.includes(quiz.id) ?? false;
+  if (attempt.status === "awaiting-marking" && result.attempt.status === "graded" && !held) {
     notify({
       userId: studentId,
       category: "grades",

@@ -13,7 +13,6 @@ export const quizzes: Quiz[] = [
     description: "Check your understanding of models, training, and the main types of learning.",
     minutes: 8,
     passMark: 70,
-    weight: 40,
     due: "2026-10-20",
     status: "published",
     questions: [
@@ -83,7 +82,6 @@ export const quizzes: Quiz[] = [
     description: "Loss, gradient descent, learning rate, and overfitting.",
     minutes: 10,
     passMark: 70,
-    weight: 60,
     due: "2026-10-27",
     status: "published",
     // FR-3.7: a timed quiz, so the timer, autosave and automatic submission can be seen.
@@ -184,7 +182,6 @@ export const quizzes: Quiz[] = [
     description: "How the web works and how to choose meaningful HTML elements.",
     minutes: 6,
     passMark: 70,
-    weight: 50,
     due: "2026-10-18",
     status: "published",
     questions: [
@@ -246,7 +243,6 @@ export const quizzes: Quiz[] = [
     description: "The box model, flexbox, and specificity.",
     minutes: 8,
     passMark: 70,
-    weight: 50,
     due: "2026-11-01",
     status: "published",
     questions: [
@@ -313,7 +309,6 @@ export const quizzes: Quiz[] = [
     description: "Organelles and how substances cross the membrane.",
     minutes: 8,
     passMark: 70,
-    weight: 100,
     due: "2026-10-24",
     status: "published",
     questions: [
@@ -375,7 +370,6 @@ export const quizzes: Quiz[] = [
     description: "Needs and wants, the 50/30/20 rule, and building a budget.",
     minutes: 6,
     passMark: 70,
-    weight: 100,
     due: "2026-10-30",
     status: "published",
     questions: [

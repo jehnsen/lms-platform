@@ -9,8 +9,8 @@ import { useMyProgress } from "@/lib/api/progress";
 import { settleExpiredAttempts, useMyDrafts, useQuizzes } from "@/lib/api/quizzes";
 import { useActor } from "@/lib/api/session";
 import { can } from "@/lib/domain/permissions";
-import { isManuallyMarked } from "@/lib/grading";
-import { attemptsFor, awaitingMarking, bestAttempt } from "@/lib/progress";
+import { isManuallyMarked, quizPoints } from "@/lib/grading";
+import { attemptsFor, bestAttempt, pendingReason } from "@/lib/progress";
 import type { Quiz } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
@@ -42,6 +42,7 @@ function StudentQuizzes() {
 
   const row = (quiz: Quiz) => {
     const best = bestAttempt(quiz.id, state.attempts);
+    const waiting = pendingReason(quiz.id, state.attempts);
     const inProgress = drafts[quiz.id] !== undefined;
     return (
       <li key={quiz.id} className="border-t border-line first:border-t-0">
@@ -68,10 +69,10 @@ function StudentQuizzes() {
                 </Badge>
                 <span className="font-medium">Best {best.percent}%</span>
               </>
-            ) : awaitingMarking(quiz.id, state.attempts) ? (
-              <Badge tone="warn">Awaiting marking</Badge>
+            ) : waiting ? (
+              <Badge tone="warn">{waiting === "marking" ? "Awaiting marking" : "Grade not released yet"}</Badge>
             ) : inProgress ? null : (
-              <Badge>{quiz.weight}% of grade</Badge>
+              <Badge>{quizPoints(quiz)} points</Badge>
             )}
           </span>
           <span className="flex items-center gap-1 text-sm font-medium text-primary-ink">
@@ -87,7 +88,7 @@ function StudentQuizzes() {
     <PageContainer className="max-w-4xl">
       <PageHeader
         title="Quizzes"
-        description="Marked the moment you hand in, except answers your teacher marks by hand. Timed quizzes save your answers as you go."
+        description="Most quizzes are marked the moment you hand in. Answers your teacher marks by hand, and scores your teacher holds back, arrive later. Timed quizzes save your answers as you go."
       />
 
       <section>
@@ -171,7 +172,7 @@ function StaffQuizzes() {
                             <span className="flex flex-wrap items-center gap-2 text-sm">
                               {quiz.timeLimitMinutes ? <Badge>{quiz.timeLimitMinutes} min limit</Badge> : null}
                               {manual > 0 ? <Badge tone="warn">{manual} marked by hand</Badge> : null}
-                              <Badge>{quiz.weight}% of grade</Badge>
+                              <Badge>{quizPoints(quiz)} points</Badge>
                             </span>
                             <span className="flex items-center gap-1 text-sm font-medium text-primary-ink">
                               Open

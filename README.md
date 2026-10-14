@@ -46,8 +46,10 @@ Each role sees only its own menu and pages. Opening a page the role may not see 
 | Quizzes: timed attempts with autosave and automatic hand-in, five question kinds, instant marking | `/quizzes`, `/quizzes/[quizId]` | student takes them; faculty and admin see questions and answers | `src/components/quiz-list.tsx`, `quiz-runner.tsx`, `quiz-questions.tsx`, `quiz-preview.tsx`, `src/lib/api/quizzes.ts`, `src/lib/grading.ts`, `src/lib/domain/quizzes.ts` |
 | Quiz builder and question bank | `/quizzes/new`, `/quizzes/[quizId]/edit` | faculty | `src/components/quiz-builder.tsx`, `question-editor.tsx`, `sortable-list.tsx` |
 | Grading queue for teacher-marked answers | `/grading` | faculty | `src/components/grading-queue.tsx`, `src/lib/api/quizzes.ts` |
-| Grades | `/grades` | student (own), parent (child) | `src/components/grades-view.tsx` |
-| Gradebook | `/gradebook` | faculty (own courses), admin (all, read-only) | `src/components/gradebook-view.tsx`, `src/lib/api/grades.ts` |
+| Grades: released grades and feedback, a running total for each course | `/grades` | student (own), parent (child) | `src/components/grades-view.tsx`, `src/lib/api/grades.ts` |
+| Gradebook: categories and weights, grading scale, totals, grade release for each item, CSV export | `/gradebook` | faculty (own courses), admin (all, read-only) | `src/components/gradebook-view.tsx`, `gradebook-setup-dialog.tsx`, `src/lib/api/grades.ts`, `src/lib/domain/gradebook.ts` |
+| Progress report for a student and term, printable, with a CSV of the report-card data | `/reports` | student (own), parent (child), faculty (students and courses they teach), admin | `src/components/report-view.tsx`, `src/lib/api/reports.ts` |
+| Export final grades to the SIS, with failed records and reasons | buttons on `/gradebook` (one course) and `/admin/terms` (a whole term) | admin | `src/components/sis-export-dialog.tsx`, `src/lib/api/reports.ts`, `src/lib/domain/sis-export.ts`, `src/lib/adapters/sis.ts` |
 | Content library: uploads within size limits, captions, preview | `/content` | faculty; admin read-only | `src/components/content-library.tsx`, `src/lib/api/materials.ts`, `src/lib/domain/uploads.ts` |
 | Assignments: set, hand in, receipt, late rules, resubmission | `/assignments`, `/assignments/new` (faculty), `/assignments/[assignmentId]`, `/assignments/[assignmentId]/edit` (faculty) | student, faculty; admin read-only | `src/components/assignment-list.tsx`, `assignment-editor.tsx`, `assignment-detail.tsx`, `rubric.tsx`, `late-policy-fields.tsx`, `src/lib/api/assignments.ts`, `src/lib/domain/assignments.ts` |
 | Marking: inline comments, rubric scoring, feedback, grade release, similarity report | `/assignments/[assignmentId]/submissions/[studentId]` | faculty; admin read-only | `src/components/submission-marking.tsx`, `annotated-text.tsx`, `src/lib/adapters/plagiarism.ts` |
@@ -55,8 +57,8 @@ Each role sees only its own menu and pages. Opening a page the role may not see 
 | AI tutor (simulated) | `/tutor`, panel beside each lesson | student | `src/components/tutor-chat.tsx`, `src/lib/mock-ai/tutor.ts` |
 | Notifications | bell in the sidebar or top bar | all | `src/components/notification-bell.tsx`, `src/lib/api/notifications.ts` |
 | Users: CSV import, SIS sync, roles, statuses, parent–child links, passwords | `/admin/users` | admin | `src/components/admin-users.tsx`, `user-import.tsx`, `user-edit-dialog.tsx`, `src/lib/api/users.ts`, `src/lib/domain/user-import.ts` |
-| Terms: term-end archive | `/admin/terms` | admin | `src/components/admin-terms.tsx`, `src/lib/api/courses.ts`, `src/lib/domain/terms.ts` |
-| School settings: password policy, data retention, upload size limits, default late rule, submission size limit, who sees similarity reports | `/admin/settings` | admin | `src/components/admin-settings.tsx`, `src/lib/api/settings.ts`, `src/lib/domain/settings.ts` |
+| Terms: term-end archive, export of a term's final grades to the SIS | `/admin/terms` | admin | `src/components/admin-terms.tsx`, `src/lib/api/courses.ts`, `src/lib/domain/terms.ts` |
+| School settings: password policy, data retention, upload size limits, default late rule, submission size limit, who sees similarity reports, grading scales | `/admin/settings` | admin | `src/components/admin-settings.tsx`, `src/lib/api/settings.ts`, `src/lib/domain/settings.ts` |
 | Audit log | `/admin/audit` | admin | `src/components/admin-audit.tsx`, `audit-table.tsx`, `src/lib/api/audit.ts` |
 | No-access page | `/forbidden` | all | `src/components/forbidden-view.tsx` |
 
@@ -72,9 +74,15 @@ A new course has no students: they are placed in sections by the CSV import or t
 
 The seeded demo has an assignment with marked, unmarked and late work (as faculty, open "Reflection: where have you met machine learning?") and one the student has still to do.
 
-**Building and marking a quiz.** Faculty press **New quiz** on `/quizzes`: settings (due date, pass mark, share of the course grade, an optional time limit and attempt limit, the unit it follows) and questions of five kinds: multiple choice, multiple answers, true or false, matching and short answer. Questions can be saved to, and copied from, the question bank shared by all faculty. Multiple choice, true or false and matching are marked automatically; a short answer is marked by keyword or by a teacher, as the question says. Teacher-marked answers arrive on `/grading`; saving a mark there updates the student's score, and the attempt counts once nothing is left to mark.
+**Building and marking a quiz.** Faculty press **New quiz** on `/quizzes`: settings (due date, pass mark, gradebook category, an optional time limit and attempt limit, the unit it follows) and questions of five kinds: multiple choice, multiple answers, true or false, matching and short answer. Questions can be saved to, and copied from, the question bank shared by all faculty. Multiple choice, true or false and matching are marked automatically; a short answer is marked by keyword or by a teacher, as the question says. Teacher-marked answers arrive on `/grading`; saving a mark there updates the student's score, and the attempt counts once nothing is left to mark.
 
 In the seeded demo, "Unit 2 quiz: Training models" has a 10-minute limit, a matching question and a teacher-marked question, and two answers are already waiting in Dr. Okafor's grading queue.
+
+**Grading a course.** On `/gradebook` a teacher presses **Set up grading** to name the course's categories and give each a weight (the save is refused until they total 100%), say which category each quiz and assignment counts in, choose the scale the grade is reported on (percentage, letter or GPA) and decide whether work not handed in by its due date counts as zero. Inside a category, work counts in proportion to its points. Totals are worked out from the stored scores every time they are shown, so they follow each new score and each change of weights. A course nobody has set up uses Assignments 50% and Quizzes 50% on the school's default scale. The grades of the letter and GPA scales are school policy: an admin changes them on `/admin/settings`.
+
+**Releasing grades.** The "Grade items and release" card on `/gradebook` lists every quiz and assignment. An assignment's marks stay hidden until the teacher presses **Release**. A quiz's scores are shown when the student hands in, unless the teacher presses **Hold**; they are then released for the whole class at once. Students are notified on release. On `/grades` a student (or a parent, for a linked child) sees only released grades and feedback, and a running total for each course that counts only those. In the teacher's gradebook an unreleased mark carries a `*` and does count.
+
+**Reports and the SIS export.** `/reports` shows one student's progress report for a term: the grade in each course with its category breakdown, missing work, lessons done, the term average and the GPA. It can be printed or downloaded as CSV. An admin exports final grades to the SIS with **Export to SIS** on `/gradebook` (one course) or **Export grades to SIS** on `/admin/terms` (every course of a term). The dialog shows what will go and lists every record that cannot, with the reason; both lists can be downloaded, and each export is written to the audit log. In the seeded demo, exporting Machine Learning Foundations fails the students whose work is not marked or not released yet.
 
 **Archiving a term.** On `/admin/terms`, archiving a term makes every course in it read-only for all roles: no quiz attempts, no progress, no edits. Grades stay viewable and gradebooks can still be exported. A term can be reopened.
 
@@ -106,7 +114,7 @@ src/proxy.ts       Redirects before a page is served (signed out, or wrong role)
 - **CSV import** — the file is read and validated in the browser and never leaves it.
 - **Term archive and data retention** — an admin starts the archive by hand; nothing runs on the term's end date. The retention period is stored but nothing is ever deleted.
 - **Permission enforcement** — done in the browser by `can()`, the route guard and `src/proxy.ts`.
-- **All data** — users, terms, sections, enrollments, courses, course templates, library items, assignments, submissions, school settings, learner progress, lesson plans, notifications and the audit log are kept in `localStorage` by the repositories in `src/lib/api/_stores.ts`, under versioned keys such as `lms:progress:v1`. The admin home page has **Reset demo data**; the student grades page has **Reset demo progress**.
+- **All data** — users, terms, sections, enrollments, courses, course templates, library items, assignments, submissions, school settings, gradebook setups, learner progress, lesson plans, notifications and the audit log are kept in `localStorage` by the repositories in `src/lib/api/_stores.ts`, under versioned keys such as `lms:progress:v1`. The admin home page has **Reset demo data**; the student grades page has **Reset demo progress**.
 - **The audit log** — written by the browser, editable by the user, capped at 500 events.
 - **Notifications** — in-app only. Nothing is emailed or pushed.
 - **Quizzes** — a quiz reaches the browser with its answer key and is marked there. The time limit runs on the browser's clock; answers are saved to local storage as they are given; and an attempt whose time runs out while the app is closed is handed in the next time the student opens the quizzes page or the quiz. Courses and quizzes start from the seeds in `src/lib/data/` and are then edited in the browser.
@@ -115,6 +123,8 @@ src/proxy.ts       Redirects before a page is served (signed out, or wrong role)
 - **AI tutor and lesson planner** — template-based, in `src/lib/mock-ai/`. No model is called.
 - **Assignments** — the submission time comes from the browser's clock, the late rule and rubric total are worked out in the browser, and a student's unreleased mark is hidden by the screen, not withheld by a server. The receipt code is a checksum, not proof.
 - **Similarity reports** — `mockPlagiarismProvider` in `src/lib/adapters/plagiarism.ts` compares nothing. It derives a low score from the text, and a high one when the work contains the sentence "Machine learning is a field of study in artificial intelligence", so a flagged report can be shown on purpose.
+- **Grades and totals** — worked out in the browser from the stored scores by the rules in `src/lib/domain/gradebook.ts`. A student's unreleased quiz scores and assignment marks are hidden by the screens and left out of their totals, but they are in the same browser storage; a server must withhold them. Whether work is "missing" is decided against the browser's clock.
+- **SIS grade export** — `mockSis.exportGrades()` in `src/lib/adapters/sis.ts` sends nothing. It accepts every record whose student ID looks like `S-` and digits and turns the rest down, so a rejection can be shown on purpose (give a student a different SIS ID on `/admin/users`). The file's columns are a placeholder until the school's SIS is known.
 - **Uploads** — library files, assignment attachments and submitted files are kept in the browser's IndexedDB (`src/lib/api/_files.ts`): they survive a reload but exist only on the device that uploaded them. Upload progress and auto-captioning are simulated. The size and format check runs in the browser.
 - **Lesson videos** — a video lesson plays a file uploaded to the content library, or one of two sample clips streamed from `media.w3.org` (`SAMPLE_VIDEOS` in `src/lib/sample-media.ts`), which need an internet connection. Captions come from each lesson's `transcript`.
 
@@ -132,7 +142,8 @@ The service layer is the seam: replace the body of each module in `src/lib/api/`
 | `api/settings.ts` | School settings. |
 | `api/progress.ts` | Lesson completion, checkpoint answers, and a learner's record. |
 | `api/quizzes.ts` | Quizzes (without answer keys for students), the question bank, starting an attempt, autosave, handing in (the server marks and enforces the time limit), the grading queue and manual marks. |
-| `api/grades.ts` | Class gradebook and export logging. |
+| `api/grades.ts` | Class gradebook with totals (the server computes them with the rules in `src/lib/domain/gradebook.ts`), each course's categories, weights and scale, holding and releasing quiz scores, and a learner's released grades (the server withholds the rest). |
+| `api/reports.ts` | Progress report for a student and term, and the export of final grades to the SIS: a dry run that lists failed records, then the send, which the server performs and audit-logs. |
 | `api/notifications.ts` | Notification list and read state. |
 | `api/lesson-plans.ts` | Saved lesson plans. |
 | `api/audit.ts` | Audit log reads. |
@@ -143,7 +154,7 @@ Adapters for outside systems. Each is an interface with a mock; implement the in
 | Interface | File | What the real one does |
 | --- | --- | --- |
 | `IdentityProvider` | `src/lib/adapters/identity-provider.ts` | SAML 2.0 or OIDC sign-in with the school identity provider (FR-1.3). |
-| `SisAdapter` | `src/lib/adapters/sis.ts` | Reads the roster from the Student Information System (FR-1.5, FR-1.6). Grade export and a connection test join it later. |
+| `SisAdapter` | `src/lib/adapters/sis.ts` | `fetchRoster()` reads the roster from the Student Information System (FR-1.5, FR-1.6). `exportGrades()` sends final grades in the SIS's format and returns the records it turned down, each with a reason (FR-4.5). A connection test joins it later. |
 | `PlagiarismProvider` | `src/lib/adapters/plagiarism.ts` | Sends a submission to the similarity-checking service and returns its report (FR-3.8). |
 
 Other single-function seams:

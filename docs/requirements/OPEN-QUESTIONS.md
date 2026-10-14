@@ -2,7 +2,7 @@
 
 Points the BRD and the BA deliverables leave open, or where the two disagree. Nothing here has been decided on the client's behalf: each row records the **default the app uses for now**, and every default is either configurable or isolated in one place so it can change without rework.
 
-**Last updated:** 2026-10-14, after Phase 3b. New in Phase 3b: Q-43 to Q-47; defaults recorded for Q-15 and Q-16. **Q-25 still blocks placing existing students in new courses** (see its row).
+**Last updated:** 2026-10-14, after Phase 4. New in Phase 4: Q-48 to Q-55; defaults recorded for Q-17 and Q-18. **Q-18 (the SIS export format) is needed before go-live. Q-25 still blocks placing existing students in new courses** (see its row).
 
 Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row), `Deferred` (not needed until a later phase).
 
@@ -54,6 +54,16 @@ Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row
 | Q-45 | When do students see the correct answers and explanations? | FR-3.6 | Straight after handing in, as in the prototype, even while classmates may still be taking the quiz. Hand-marked answers show the sample answer once they are marked. | Open |
 | Q-46 | Who owns the question bank? | FR-3.5 | One bank shared by all faculty. Anyone on the faculty can add to it and copy from it; a teacher can remove only what they added, an admin anything. Copies are independent, so changing a question in a quiz never changes the bank. | Open |
 | Q-47 | Should assignments be copied when a course is copied or made from a template? | US-08, FR-2.5 | No. Units, lessons, quizzes, sections and schedules are copied; assignments are not. | Open |
+| Q-17 | Grading scale bands and the GPA mapping; default grade categories and weights; and who sets each. | FR-4.1, FR-4.2, US-16 | Three scales: Percentage, Letter grades (A 93, A− 90, B+ 87, B 83, B− 80, C+ 77, C 73, C− 70, D 60, F 0) and GPA 4.0 (the same bands worth 4.0 down to 0.0). An admin changes the grades of the letter and GPA scales in Settings and picks the scale a course starts with (letter). The teacher picks the scale for each course and sets its categories and weights; a course nobody has set up uses Assignments 50% and Quizzes 50%. Admins cannot add a fourth scale yet. | Open |
+| Q-18 | The SIS export format: which SIS, which file or API, which columns and codes, and how a term and a section are identified in it. | FR-4.5, FR-8.1, US-18 | A CSV with one row for each student and course: `term`, `course_code`, `section_code`, `student_id` (the account's SIS ID), `student_name`, `final_percent`, `final_grade` (on the course's scale), `grade_points`. Defined in one place, `src/lib/domain/sis-export.ts`. | Open, needed before go-live |
+| Q-48 | Inside a grade category, does each piece of work count equally, or in proportion to its points? | FR-4.1, FR-4.2 | In proportion to its points: a 50-point project counts five times a 10-point quiz in the same category. | Open |
+| Q-49 | Does work that was never handed in count as zero in the course grade? If so, from when: the due date, or the end of term? | FR-4.2, US-17 | A per-course option the teacher sets, off by default: off leaves ungraded work out, so the total is "the grade so far"; on counts work as zero once its due date has passed. With it off, a student who handed in one good piece of work and nothing else has a high final grade, so the school should decide this before final grades are exported. | Open |
+| Q-50 | Do courses carry credits or units, so that a GPA across courses weights them? | FR-4.2, FR-4.4 | No credits. The term GPA and the term average on a progress report count every course equally. | Open |
+| Q-51 | Should quiz scores be shown as soon as a student hands in, and may a teacher hold them? Is release for a whole class at once, or student by student? | FR-4.3, US-17 | Shown on hand-in, as in the prototype, unless the teacher holds that quiz's scores in the gradebook. Holding and releasing apply to the whole class. While held, a student sees that they handed in and nothing else. A teacher can hold scores again after releasing them. | Open |
+| Q-52 | Who may export grades to the SIS, when, and what happens when a grade is exported a second time? | FR-4.5, US-18 | Administrators only (US-18 is the administrator's story), at any time, for one course or a whole term, as often as they like. What a repeat export does to grades already in the SIS is for the SIS to decide. | Open |
+| Q-53 | Which grades must be held back from an SIS export? | FR-4.5, US-18 | A record fails, with the reason shown, when the account has no SIS ID, nothing is graded, some work is handed in but not marked, or some marks are not released to the student. Work that was never handed in does not block the export. | Open |
+| Q-54 | How are final grades rounded, and is there a rule for borderline grades? | FR-4.2 | Totals are worked out exactly and rounded to a whole percent at the end, halves up; the grade on the scale is read from the rounded percent, so 89.5% is 90% and an A−. | Open |
+| Q-55 | What must a progress report or report card contain beyond grades: attendance, teacher comments, conduct, a signature, the school's layout? | FR-4.4, US-18 | For each course: section, teachers, the grade by category, the total, the grade on the course's scale, work missing and lessons done; then the term average and GPA. Attendance joins it in Phase 5. No teacher comments, conduct or school branding. | Open |
 
 ## Policies needed by later phases
 
@@ -61,8 +71,6 @@ Each becomes a configurable setting with a default when its phase is built.
 
 | # | Question | Affects | Phase |
 | --- | --- | --- | --- |
-| Q-17 | Grading scale bands and the GPA mapping; default grade categories and weights. | FR-4.1, FR-4.2 | 4 |
-| Q-18 | The SIS export format. | FR-4.5, FR-8.1 | 4 |
 | Q-19 | Attendance threshold; how Late and Excused count towards it; the window in which attendance can be edited. | FR-5.2, FR-5.4 | 5 |
 | Q-20 | Who may message whom (for example, may students message each other; may parents message faculty)? Child-safety rules apply. | FR-6.2 | 6 |
 | Q-21 | Which alerts are mandatory and cannot be switched off. | FR-6.7 | 6 |

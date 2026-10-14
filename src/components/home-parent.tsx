@@ -1,10 +1,12 @@
 "use client";
 
 import { Card, ButtonLink, Meter, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
-import { selectViewedChild, useViewedLearner } from "@/lib/api/progress";
+import { useViewedGrades } from "@/lib/api/grades";
+import { selectViewedChild } from "@/lib/api/progress";
 import { useActor } from "@/lib/api/session";
-import { letterGrade } from "@/lib/grading";
-import { courseGrade, courseProgress, overallGrade } from "@/lib/progress";
+import { isFinal } from "@/lib/domain/quizzes";
+import { gradeBeside, percentAndGrade } from "@/lib/grading";
+import { courseProgress } from "@/lib/progress";
 import { firstNameOf, formatDate } from "@/lib/utils";
 
 /**
@@ -13,10 +15,10 @@ import { firstNameOf, formatDate } from "@/lib/utils";
  */
 export function ParentHome() {
   const actor = useActor();
-  const viewed = useViewedLearner();
+  const grades = useViewedGrades();
   const greeting = `Welcome, ${actor ? firstNameOf(actor.name) : ""}`;
 
-  if (!viewed) {
+  if (!grades) {
     return (
       <PageContainer>
         <PageHeader
@@ -27,10 +29,12 @@ export function ParentHome() {
     );
   }
 
-  const { learner, progress, courses, quizzes, children } = viewed;
+  const { learner, progress, quizzes, children } = grades.viewed;
   const childName = firstNameOf(learner.name);
-  const overall = overallGrade(progress, courses, quizzes);
-  const recent = [...progress.attempts]
+  const { overall, overallScale } = grades;
+  // Scores that count: not waiting for a teacher, and released (US-17).
+  const recent = progress.attempts
+    .filter(isFinal)
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
     .slice(0, 4);
 
@@ -70,8 +74,8 @@ export function ParentHome() {
           <SectionTitle>{childName}&apos;s courses</SectionTitle>
           <Card>
             <ul>
-              {courses.map((course) => {
-                const grade = courseGrade(course, progress, quizzes);
+              {grades.courses.map(({ course, total, scale }) => {
+                const grade = total.percent;
                 const lessons = courseProgress(course, progress);
                 return (
                   <li key={course.id} className="border-t border-line p-4 first:border-t-0">
@@ -84,7 +88,7 @@ export function ParentHome() {
                         {grade === null ? (
                           <span className="font-normal text-ink-3">Not graded yet</span>
                         ) : (
-                          `${grade}% · ${letterGrade(grade)}`
+                          percentAndGrade(grade, scale)
                         )}
                       </div>
                     </div>
@@ -97,7 +101,7 @@ export function ParentHome() {
                   </li>
                 );
               })}
-              {courses.length === 0 ? (
+              {grades.courses.length === 0 ? (
                 <li className="p-4 text-sm text-ink-2">{childName} is not enrolled in any courses yet.</li>
               ) : null}
             </ul>
@@ -111,7 +115,9 @@ export function ParentHome() {
               {overall === null ? "—" : `${overall}%`}
             </div>
             <p className="mt-1 text-xs text-ink-3">
-              {overall === null ? "No quizzes graded yet." : `Grade ${letterGrade(overall)}, best attempt per quiz.`}
+              {overall === null
+                ? "Nothing is graded yet."
+                : [gradeBeside(overall, overallScale), "Across the course grades released so far."].filter(Boolean).join(". ")}
             </p>
           </Card>
 

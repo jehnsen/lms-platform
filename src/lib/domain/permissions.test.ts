@@ -68,6 +68,15 @@ describe("US-03: each person only sees what their role permits", () => {
     expect(can(admin, "update", { type: "gradebook", courseId: "art" })).toBe(false);
   });
 
+  it("lets only an admin send final grades to the SIS (US-18)", () => {
+    expect(can(admin, "create", { type: "sis-export" })).toBe(true);
+    expect(can(faculty, "create", { type: "sis-export" })).toBe(false);
+    expect(can(student, "create", { type: "sis-export" })).toBe(false);
+    expect(can(parent, "create", { type: "sis-export" })).toBe(false);
+    // Faculty still download their own gradebook.
+    expect(can(faculty, "export", { type: "gradebook", courseId: "math" })).toBe(true);
+  });
+
   it("denies a scoped permission when the resource does not say whose it is", () => {
     expect(can(student, "view", { type: "grades" })).toBe(false);
     expect(can(faculty, "view", { type: "gradebook" })).toBe(false);
@@ -240,6 +249,14 @@ describe("page access by role", () => {
     expect(canAccessRoute("parent", "/grades")).toBe(true);
     expect(canAccessRoute("faculty", "/grades")).toBe(false);
     expect(canAccessRoute("admin", "/grades")).toBe(false);
+  });
+
+  it("opens progress reports to every role, each for the students it may see", () => {
+    for (const role of ["student", "parent", "faculty", "admin"] as const) {
+      expect(canAccessRoute(role, "/reports")).toBe(true);
+    }
+    expect(can(student, "view", { type: "grades", ownerId: "s2" })).toBe(false);
+    expect(can(faculty, "view", { type: "grades", courseId: "art" })).toBe(false);
   });
 
   it("opens the course builder to roles that may author courses", () => {

@@ -54,7 +54,6 @@ const quiz: Quiz = {
   description: "",
   minutes: 10,
   passMark: 70,
-  weight: 40,
   due: "2026-10-20",
   questions: [single, multi, bool, matching, autoShort, manualShort],
   timeLimitMinutes: 20,
@@ -261,9 +260,8 @@ describe("FR-3.5: a quiz is checked before it is published", () => {
   });
 
   it("checks the limits and percentages", () => {
-    expect(quizProblems({ ...quiz, passMark: 120, weight: -5, minutes: 0, timeLimitMinutes: 0, maxAttempts: 1.5 })).toEqual([
+    expect(quizProblems({ ...quiz, passMark: 120, minutes: 0, timeLimitMinutes: 0, maxAttempts: 1.5 })).toEqual([
       "The pass mark must be from 0 to 100 percent.",
-      "The share of the course grade must be from 0 to 100 percent.",
       "The estimated time must be at least 1 minute.",
       "The time limit must be a whole number of minutes, at least 1.",
       "The number of attempts must be a whole number, at least 1.",

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Archive, ArchiveRestore, LoaderCircle } from "lucide-react";
+import { useLayoutEffect, useState } from "react";
+import { Archive, ArchiveRestore, LoaderCircle, Send } from "lucide-react";
+import { SisExportDialog } from "@/components/sis-export-dialog";
 import { Badge, Button, Card, PageContainer, PageHeader } from "@/components/ui";
 import { archiveTerm, reopenTerm, useTermSummaries, type TermSummary } from "@/lib/api/courses";
 import type { Term } from "@/lib/types";
@@ -47,7 +48,13 @@ function TermCard({ summary }: { summary: TermSummary }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const badge = STATUS_BADGES[term.status];
+
+  // This page stays mounted when hidden: do not come back to an open dialog.
+  useLayoutEffect(() => {
+    return () => setExporting(false);
+  }, []);
   const courseText = `${courses.length} ${courses.length === 1 ? "course" : "courses"}`;
 
   const run = async (work: () => Promise<void>) => {
@@ -79,18 +86,27 @@ function TermCard({ summary }: { summary: TermSummary }) {
           </p>
         </div>
 
-        {term.status === "active" && !confirming ? (
-          <Button variant="secondary" onClick={() => setConfirming(true)}>
-            <Archive aria-hidden className="size-4" />
-            Archive term
-          </Button>
-        ) : null}
-        {term.status === "archived" && !confirming ? (
-          <Button variant="ghost" onClick={() => setConfirming(true)}>
-            <ArchiveRestore aria-hidden className="size-4" />
-            Reopen term
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          {/* US-18: final grades for every course of the term, in one export. */}
+          {courses.length > 0 && term.status !== "upcoming" ? (
+            <Button variant="secondary" onClick={() => setExporting(true)}>
+              <Send aria-hidden className="size-4" />
+              Export grades to SIS
+            </Button>
+          ) : null}
+          {term.status === "active" && !confirming ? (
+            <Button variant="secondary" onClick={() => setConfirming(true)}>
+              <Archive aria-hidden className="size-4" />
+              Archive term
+            </Button>
+          ) : null}
+          {term.status === "archived" && !confirming ? (
+            <Button variant="ghost" onClick={() => setConfirming(true)}>
+              <ArchiveRestore aria-hidden className="size-4" />
+              Reopen term
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {courses.length > 0 ? (
@@ -140,6 +156,15 @@ function TermCard({ summary }: { summary: TermSummary }) {
         <p role="alert" className="mt-3 text-sm text-bad">
           {failure}
         </p>
+      ) : null}
+
+      {exporting ? (
+        <SisExportDialog
+          courseIds={courses.map((course) => course.id)}
+          label={`${term.name} · ${courseText}`}
+          fileName={`${term.id}-final-grades`}
+          onClose={() => setExporting(false)}
+        />
       ) : null}
     </Card>
   );

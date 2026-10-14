@@ -3,9 +3,12 @@
  *
  * Backend seam. The real adapter runs on the server with the SIS credentials
  * and on a schedule; the browser only asks for a manual sync and reads the
- * result. Grade export (FR-4.5) and the connection test (FR-8.2) join this
- * interface in Phases 4 and 8.
+ * result. Grade export (FR-4.5) sends records the app has already checked and
+ * reports the ones the SIS itself turns down. The connection test (FR-8.2)
+ * joins this interface in Phase 8.
  */
+import type { SisGradeRecord } from "@/lib/domain/sis-export";
+
 export interface SisRosterRecord {
   sisId: string;
   name: string;
@@ -18,6 +21,14 @@ export interface SisAdapter {
   readonly name: string;
   /** Everyone the SIS says should have an account, with their sections. */
   fetchRoster(): Promise<SisRosterRecord[]>;
+  /** FR-4.5: sends final grades. Resolves with how many were taken and each one refused, with the reason. */
+  exportGrades(records: SisGradeRecord[]): Promise<SisGradeResult>;
+}
+
+export interface SisGradeResult {
+  accepted: number;
+  /** `key` is the record's own key, so the caller can match it. */
+  rejected: Array<{ key: string; reason: string }>;
 }
 
 const MOCK_LATENCY_MS = 1200;
@@ -40,5 +51,17 @@ export const mockSis: SisAdapter = {
       { sisId: "S-1015", name: "Omar Farouk", email: "", role: "student", sectionCodes: ["IT-101-B"] },
       { sisId: "S-1016", name: "Priscilla Nwosu", email: "priscilla.nwosu@example.com", role: "student", sectionCodes: ["ART-900-A"] },
     ];
+  },
+  /**
+   * MOCK: nothing is sent anywhere. It takes every record whose student ID
+   * looks like one of its own ("S-" and digits) and turns the rest down, so an
+   * export can show a rejection.
+   */
+  async exportGrades(records) {
+    await new Promise<void>((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
+    const rejected = records
+      .filter((record) => !/^S-\d+$/.test(record.studentSisId))
+      .map((record) => ({ key: record.key, reason: "The SIS has no student with this ID." }));
+    return { accepted: records.length - rejected.length, rejected };
   },
 };

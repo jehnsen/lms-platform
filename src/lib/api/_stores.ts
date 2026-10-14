@@ -26,6 +26,7 @@ import type {
   Course,
   CourseTemplate,
   Enrollment,
+  GradebookSetup,
   LearnerProgress,
   LessonPlan,
   Material,
@@ -122,7 +123,15 @@ export const viewedChildRepo = createRepository<Record<string, string>>(
 );
 
 /** School-wide policy set by admins. One record, not a list. */
-export const settingsRepo = createRepository<SchoolSettings>("settings", 3, DEFAULT_SETTINGS);
+export const settingsRepo = createRepository<SchoolSettings>("settings", 4, DEFAULT_SETTINGS);
+
+const NO_SETUPS: Record<string, GradebookSetup> = {};
+
+/**
+ * FR-4.1: how each course is graded, keyed by course id. A course with no
+ * entry uses the default setup (`defaultSetup` in `domain/gradebook.ts`).
+ */
+export const gradebookSetupsRepo = createRepository<Record<string, GradebookSetup>>("gradebook-setups", 1, NO_SETUPS);
 
 /** FR-3.1: assignments, drafts included. */
 export const assignmentsRepo = createRepository<Assignment[]>("assignments", 1, seedAssignments);

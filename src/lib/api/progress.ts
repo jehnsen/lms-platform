@@ -9,13 +9,15 @@
  */
 import { useMemo } from "react";
 import { seedProgress } from "@/lib/data/directory";
+import { attemptsForLearner } from "@/lib/domain/gradebook";
 import { can } from "@/lib/domain/permissions";
-import type { Course, LearnerProgress, Quiz, User } from "@/lib/types";
+import type { Course, GradebookSetup, LearnerProgress, Quiz, User } from "@/lib/types";
 import { useNow } from "@/lib/use-now";
 import { useRepository } from "./_repository";
 import {
   coursesRepo,
   enrollmentsRepo,
+  gradebookSetupsRepo,
   progressRepo,
   quizzesRepo,
   sectionsRepo,
@@ -29,11 +31,24 @@ import { useLinkedChildren } from "./users";
 
 export const EMPTY_PROGRESS: LearnerProgress = { completedLessons: [], attempts: [], checkpoints: {} };
 
+/**
+ * FR-4.3 (US-17): a learner's record as the learner, or a parent, may see it.
+ * Attempts at a quiz whose scores the teacher is holding back carry no score
+ * and no answers. The server must do this before the record leaves it.
+ */
+function forLearner(progress: LearnerProgress, setups: Record<string, GradebookSetup>): LearnerProgress {
+  const held = Object.values(setups).flatMap((setup) => setup.heldQuizIds);
+  const attempts = attemptsForLearner(progress.attempts, held);
+  return attempts === progress.attempts ? progress : { ...progress, attempts };
+}
+
 /** The signed-in user's own progress. Empty for roles that do not learn. */
 export function useMyProgress(): LearnerProgress {
   const actor = useActor();
   const all = useRepository(progressRepo);
-  return (actor && all[actor.id]) || EMPTY_PROGRESS;
+  const setups = useRepository(gradebookSetupsRepo);
+  const mine = (actor && all[actor.id]) || EMPTY_PROGRESS;
+  return useMemo(() => forLearner(mine, setups), [mine, setups]);
 }
 
 /** May the signed-in user record progress (complete lessons, answer checkpoints)? */
@@ -71,6 +86,7 @@ export function useViewedLearner(): ViewedLearner | null | undefined {
   const catalogue = useRepository(coursesRepo);
   const terms = useRepository(termsRepo);
   const allQuizzes = useRepository(quizzesRepo);
+  const setups = useRepository(gradebookSetupsRepo);
   const now = useNow();
 
   return useMemo(() => {
@@ -81,7 +97,8 @@ export function useViewedLearner(): ViewedLearner | null | undefined {
       const courses = coursesForLearner(learner, catalogue, sections, enrollments, terms, now);
       return {
         learner,
-        progress: all[learner.id] ?? EMPTY_PROGRESS,
+        // Released scores only, for the student and for a parent alike (US-17).
+        progress: forLearner(all[learner.id] ?? EMPTY_PROGRESS, setups),
         courses,
         quizzes: allQuizzes.filter(
           (quiz) => quiz.status === "published" && courses.some((course) => course.id === quiz.courseId),
@@ -97,7 +114,7 @@ export function useViewedLearner(): ViewedLearner | null | undefined {
     const child = children.find((candidate) => candidate.id === selection[actor.id]) ?? children[0];
     if (child && can(actor, "view", { type: "grades", ownerId: child.id })) return describe(child, true);
     return null;
-  }, [actor, users, all, selection, children, sections, enrollments, catalogue, terms, allQuizzes, now]);
+  }, [actor, users, all, selection, children, sections, enrollments, catalogue, terms, allQuizzes, setups, now]);
 }
 
 /** Parent only: switch which linked child is shown. */
@@ -111,8 +128,10 @@ export async function selectViewedChild(childId: string): Promise<void> {
  * another student's record is refused and the attempt is logged (US-03).
  */
 export async function getProgress(userId: string, courseId?: string): Promise<LearnerProgress> {
-  authorize("view", { type: "progress", ownerId: userId, courseId });
-  return progressRepo.get()[userId] ?? EMPTY_PROGRESS;
+  const actor = authorize("view", { type: "progress", ownerId: userId, courseId });
+  const progress = progressRepo.get()[userId] ?? EMPTY_PROGRESS;
+  // Staff see every score; the learner and a parent see only released ones.
+  return actor.role === "student" || actor.role === "parent" ? forLearner(progress, gradebookSetupsRepo.get()) : progress;
 }
 
 /** Changes the signed-in learner's own progress. Refused in an archived course (FR-1.8). */

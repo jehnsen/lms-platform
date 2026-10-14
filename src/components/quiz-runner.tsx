@@ -8,6 +8,7 @@ import { QuizPreview } from "@/components/quiz-preview";
 import { QuestionField, StatusIcon, describeAnswer, describeCorrect } from "@/components/quiz-questions";
 import { Badge, Button, ButtonLink, Card, Meter, PageContainer, PageSkeleton } from "@/components/ui";
 import { useCourseReadOnly } from "@/lib/api/courses";
+import { useCourseScale, useQuizGradesHeld } from "@/lib/api/grades";
 import { useMyProgress } from "@/lib/api/progress";
 import {
   QuizError,
@@ -27,9 +28,9 @@ import {
   startDecision,
   timerAnnouncement,
 } from "@/lib/domain/quizzes";
-import { gradeQuiz, isAnswered, isManuallyMarked, letterGrade, quizPoints } from "@/lib/grading";
+import { gradeBeside, gradeQuiz, isAnswered, isManuallyMarked, quizPoints } from "@/lib/grading";
 import { attemptsFor, bestAttempt } from "@/lib/progress";
-import type { Answer, AnswerSheet, Course, Quiz, QuizAttempt, QuizDraft } from "@/lib/types";
+import type { Answer, AnswerSheet, Course, GradingScale, Quiz, QuizAttempt, QuizDraft } from "@/lib/types";
 import { cn, formatDate, formatDateTime } from "@/lib/utils";
 
 function messagesOf(error: unknown) {
@@ -53,6 +54,8 @@ function StudentQuiz({ quiz, course }: { quiz: Quiz; course: Course | undefined 
   const draft = useMyDrafts()[quiz.id];
   // FR-1.8: in an archived course the quiz and past results can be seen, but not retaken.
   const archived = useCourseReadOnly(quiz.courseId);
+  const scale = useCourseScale(quiz.courseId);
+  const scoresHeld = useQuizGradesHeld(quiz.courseId, quiz.id);
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
@@ -113,10 +116,29 @@ function StudentQuiz({ quiz, course }: { quiz: Quiz; course: Course | undefined 
       {draft ? (
         // Keyed by the attempt, so a new attempt starts from its own saved answers.
         <TakingView key={draft.startedAt} quiz={quiz} draft={draft} onFinished={finish} />
+      ) : review?.status === "held" ? (
+        // FR-4.3: the teacher is holding this quiz's scores, so there is nothing to show yet.
+        <Card className="p-5 sm:p-6">
+          <h2 className="text-lg font-semibold tracking-tight">Handed in</h2>
+          <p className="mt-2 text-ink-2">
+            Your answers were handed in on {formatDateTime(review.submittedAt)}
+            {review.autoSubmitted ? ", at the time limit" : ""}. Your teacher has not released the scores for this
+            quiz yet. You will be notified when they do.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => setReviewId(null)}>
+              All attempts
+            </Button>
+            <ButtonLink variant="secondary" href="/grades">
+              View my grades
+            </ButtonLink>
+          </div>
+        </Card>
       ) : review ? (
         <ResultView
           quiz={quiz}
           attempt={review}
+          scale={scale}
           best={best}
           canRetake={decision.allowed && !archived}
           onRetake={() => void start()}
@@ -137,13 +159,13 @@ function StudentQuiz({ quiz, course }: { quiz: Quiz; course: Course | undefined 
 
           {archived ? (
             <p className="mt-5 rounded-lg bg-surface-2 p-4 text-sm text-ink-2">
-              This course was archived at the end of term, so the quiz is closed. Worth {quiz.weight}% of the
-              course grade; your best score counts.
+              This course was archived at the end of term, so the quiz is closed. It is worth{" "}
+              {quizPoints(quiz)} points; your best score counts.
             </p>
           ) : (
             <div className="mt-5 flex flex-col gap-2 text-sm text-ink-2">
               <p>
-                Worth {quiz.weight}% of the course grade · due {formatDate(quiz.due)}.{" "}
+                Worth {quizPoints(quiz)} points · due {formatDate(quiz.due)}.{" "}
                 {quiz.maxAttempts
                   ? `You have ${quiz.maxAttempts} ${quiz.maxAttempts === 1 ? "attempt" : "attempts"}; your best score counts.`
                   : "You can retake it; your best score counts."}
@@ -160,7 +182,12 @@ function StudentQuiz({ quiz, course }: { quiz: Quiz; course: Course | undefined 
               ) : (
                 <p>Your answers are saved as you go, so you can leave and come back.</p>
               )}
-              {quiz.questions.some(isManuallyMarked) ? (
+              {scoresHeld ? (
+                <p>
+                  Your teacher releases the scores for this quiz, so you will not see yours straight away. You will
+                  be notified when they are released.
+                </p>
+              ) : quiz.questions.some(isManuallyMarked) ? (
                 <p>Some answers are marked by your teacher, so your final score arrives once they have marked them.</p>
               ) : (
                 <p>Marked automatically as soon as you hand in.</p>
@@ -185,7 +212,7 @@ function StudentQuiz({ quiz, course }: { quiz: Quiz; course: Course | undefined 
                           {attempt.earned}/{attempt.possible} · {attempt.percent}%
                         </span>
                       ) : (
-                        <Badge tone="warn">Awaiting marking</Badge>
+                        <Badge tone="warn">{attempt.status === "held" ? "Grade not released yet" : "Awaiting marking"}</Badge>
                       )}
                       {attempt.answers ? (
                         <Button variant="ghost" size="sm" onClick={() => setReviewId(attempt.id)}>
@@ -423,6 +450,7 @@ function TakingView({ quiz, draft, onFinished }: { quiz: Quiz; draft: QuizDraft;
 function ResultView({
   quiz,
   attempt,
+  scale,
   best,
   canRetake,
   onRetake,
@@ -430,6 +458,8 @@ function ResultView({
 }: {
   quiz: Quiz;
   attempt: QuizAttempt;
+  /** The course's grading scale (FR-4.2). */
+  scale: GradingScale;
   best: QuizAttempt | undefined;
   canRetake: boolean;
   onRetake: () => void;
@@ -455,7 +485,7 @@ function ResultView({
                     {result.passed ? <CircleCheck aria-hidden className="size-3" /> : <CircleX aria-hidden className="size-3" />}
                     {result.passed ? "Passed" : "Below pass mark"}
                   </Badge>
-                  <Badge>Grade {letterGrade(result.percent)}</Badge>
+                  {gradeBeside(result.percent, scale) ? <Badge>{gradeBeside(result.percent, scale)}</Badge> : null}
                 </>
               ) : (
                 <Badge tone="warn">

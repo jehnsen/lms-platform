@@ -12,6 +12,7 @@ import type { AccountStatus, Role } from "@/lib/types";
 export type Action = "view" | "create" | "update" | "delete" | "submit" | "export";
 
 // Marking a submission is "update" on it; releasing grades is "update" on the assignment.
+// Setting up a course's categories, weights and scale, and holding or releasing quiz scores, is "update" on its gradebook.
 
 export type ResourceType =
   | "course"
@@ -24,6 +25,7 @@ export type ResourceType =
   | "similarity-report"
   | "grades"
   | "gradebook"
+  | "sis-export"
   | "content-library"
   | "lesson-plan"
   | "tutor"
@@ -111,6 +113,8 @@ export const PERMISSIONS: Record<Role, Grants> = {
     "similarity-report": { view: "any" },
     grades: { view: "any" },
     gradebook: { view: "any", export: "any" },
+    // US-18: sending final grades to the SIS is the administrator's job.
+    "sis-export": { create: "any" },
     "content-library": { view: "any" },
     user: { view: "any", create: "any", update: "any", delete: "any" },
     term: { view: "any", update: "any" },

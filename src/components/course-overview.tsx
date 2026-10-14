@@ -10,13 +10,13 @@ import { NotFoundView } from "@/components/not-found-view";
 import { Badge, ButtonLink, Card, Meter, PageContainer, PageSkeleton, fieldClass } from "@/components/ui";
 import { useAssignments, type AssignmentRow } from "@/lib/api/assignments";
 import { useCourse, useCourseRoster, useCourseSections, useMySections } from "@/lib/api/courses";
+import { useViewedGrades } from "@/lib/api/grades";
 import { useCanTrackProgress, useMyProgress } from "@/lib/api/progress";
-import { useQuizzes } from "@/lib/api/quizzes";
 import { courseForViewer } from "@/lib/domain/content-visibility";
 import { courseLessons, courseMinutes } from "@/lib/domain/course-outline";
 import { WEEKDAYS } from "@/lib/domain/course-rules";
-import { letterGrade } from "@/lib/grading";
-import { courseGrade, courseProgress, nextLesson } from "@/lib/progress";
+import { percentAndGrade } from "@/lib/grading";
+import { courseProgress, nextLesson } from "@/lib/progress";
 import type { Section } from "@/lib/types";
 import { useNow } from "@/lib/use-now";
 import { formatDate, formatDateTime, formatMinutes } from "@/lib/utils";
@@ -35,7 +35,8 @@ export function CourseOverview({ courseId }: { courseId: string }) {
   const roster = useCourseRoster(courseId);
   const allSections = useCourseSections(courseId);
   const mySections = useMySections(courseId);
-  const quizzes = useQuizzes();
+  // The student's own running total, from released grades only (US-17).
+  const myGrade = useViewedGrades()?.courses.find((entry) => entry.course.id === courseId);
   const assignments = useAssignments().filter((row) => row.assignment.courseId === courseId);
   const now = useNow();
   // Staff only: look at the course the way a student in one section sees it (US-09).
@@ -55,7 +56,7 @@ export function CourseOverview({ courseId }: { courseId: string }) {
 
   const progress = courseProgress(course, state);
   const upNext = nextLesson(course, state);
-  const grade = courseGrade(course, state, quizzes);
+  const grade = myGrade?.total.percent ?? null;
   // An archived course can only be looked back on (FR-1.8).
   const finished = progress.done === progress.total || archived;
   const lessonCount = courseLessons(course).length;
@@ -154,7 +155,7 @@ export function CourseOverview({ courseId }: { courseId: string }) {
               <div className="flex items-baseline justify-between text-sm">
                 <span className="text-ink-2">Course grade</span>
                 <span className="font-medium tabular-nums">
-                  {grade === null ? "Not graded yet" : `${grade}% · ${letterGrade(grade)}`}
+                  {grade === null || !myGrade ? "Not graded yet" : percentAndGrade(grade, myGrade.scale)}
                 </span>
               </div>
               {startHref && upNext ? (

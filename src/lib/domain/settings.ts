@@ -11,6 +11,7 @@ import {
   UPLOAD_FORMATS,
   UPLOAD_LIMIT_RANGE_MB,
 } from "@/lib/domain/uploads";
+import { DEFAULT_GRADING_SCALES, DEFAULT_SCALE_ID, scaleProblems } from "@/lib/grading";
 import type { SchoolSettings } from "@/lib/types";
 
 export const DEFAULT_SETTINGS: SchoolSettings = {
@@ -25,6 +26,9 @@ export const DEFAULT_SETTINGS: SchoolSettings = {
   submissionLimitMb: 25,
   // US-14: similarity reports are for faculty only unless the school decides otherwise.
   similarityVisibleToStudents: false,
+  // Q-17: the grading scales and their bands, and the one a course starts with.
+  gradingScales: DEFAULT_GRADING_SCALES,
+  defaultScaleId: DEFAULT_SCALE_ID,
 };
 
 export const RETENTION_YEARS_RANGE = { min: 1, max: 99 } as const;
@@ -66,6 +70,10 @@ export function settingsProblems(settings: SchoolSettings): string[] {
     problems.push(
       `The size limit for submitted files must be a whole number of megabytes from ${SUBMISSION_LIMIT_RANGE_MB.min} to ${SUBMISSION_LIMIT_RANGE_MB.max}.`,
     );
+  }
+  for (const scale of settings.gradingScales) problems.push(...scaleProblems(scale));
+  if (!settings.gradingScales.some((scale) => scale.id === settings.defaultScaleId)) {
+    problems.push("Choose the grading scale a course starts with.");
   }
   return problems;
 }

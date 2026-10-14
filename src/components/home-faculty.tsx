@@ -6,9 +6,8 @@ import { CourseCover } from "@/components/course-art";
 import { ButtonLink, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
 import { useCourses } from "@/lib/api/courses";
 import { useGradebook } from "@/lib/api/grades";
-import { useQuizzes } from "@/lib/api/quizzes";
 import { useActor } from "@/lib/api/session";
-import { bestAttempt, courseGrade, quizzesOf } from "@/lib/progress";
+import { averageOf } from "@/lib/domain/gradebook";
 import type { Course } from "@/lib/types";
 import { firstNameOf } from "@/lib/utils";
 
@@ -17,7 +16,7 @@ const TEACH_LINKS = [
     href: "/gradebook",
     icon: Table2,
     title: "Open the gradebook",
-    detail: "Auto-graded scores for each class.",
+    detail: "Scores, weights and totals for each class.",
   },
   {
     href: "/content",
@@ -89,21 +88,12 @@ export function FacultyHome() {
 }
 
 function TeachingCourseCard({ course }: { course: Course }) {
-  const entries = useGradebook(course.id) ?? [];
-  // Published quizzes only: a draft is not something students could have taken.
-  const quizzes = quizzesOf(course.id, useQuizzes()).filter((quiz) => quiz.status === "published");
-
-  const grades = entries
-    .map((entry) => courseGrade(course, entry.progress, quizzes))
-    .filter((grade): grade is number => grade !== null);
-  const average = grades.length
-    ? Math.round(grades.reduce((sum, grade) => sum + grade, 0) / grades.length)
-    : null;
-  const expected = entries.length * quizzes.length;
-  const submitted = entries.reduce(
-    (sum, entry) => sum + quizzes.filter((quiz) => bestAttempt(quiz.id, entry.progress.attempts)).length,
-    0,
-  );
+  const book = useGradebook(course.id);
+  const entries = book?.entries ?? [];
+  const average = averageOf(entries.map((entry) => entry.total.percent));
+  // Published quizzes and assignments, for the students each one applies to.
+  const expected = (book?.summaries ?? []).reduce((sum, summary) => sum + summary.expected, 0);
+  const submitted = (book?.summaries ?? []).reduce((sum, summary) => sum + summary.graded + summary.toMark, 0);
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-xs">
@@ -124,7 +114,7 @@ function TeachingCourseCard({ course }: { course: Course }) {
             <dd className="font-semibold tabular-nums">{average === null ? "—" : `${average}%`}</dd>
           </div>
           <div>
-            <dt className="text-xs text-ink-3">Quizzes submitted</dt>
+            <dt className="text-xs text-ink-3">Work handed in</dt>
             <dd className="font-semibold tabular-nums">
               {submitted}/{expected}
             </dd>

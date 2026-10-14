@@ -45,16 +45,42 @@ export function awaitingMarking(quizId: string, attempts: QuizAttempt[]) {
   return attemptsFor(quizId, attempts).some((attempt) => !isFinal(attempt));
 }
 
-/** Weighted average of the quizzes graded so far; null until one is graded. */
-export function weightedGrade(items: Array<{ weight: number; percent: number | null | undefined }>) {
+/** FR-4.3: what is holding up a quiz score, for the student it belongs to. `null` when nothing is. */
+export function pendingReason(quizId: string, attempts: QuizAttempt[]): "marking" | "release" | null {
+  const mine = attemptsFor(quizId, attempts);
+  if (mine.some((attempt) => attempt.status === "awaiting-marking")) return "marking";
+  if (mine.some((attempt) => attempt.status === "held")) return "release";
+  return null;
+}
+
+export interface WeightedItem {
+  weight: number;
+  /** `null` or `undefined`: nothing to count yet, so the item is left out. */
+  percent: number | null | undefined;
+}
+
+/**
+ * The weighted average of the items that have a score; `null` until one has.
+ * Weights are shares of whatever is graded so far, so they need not total 100:
+ * the same rule works out a category from its items (weighted by points) and a
+ * course from its categories (FR-4.1, FR-4.2).
+ */
+export function weightedAverage(items: WeightedItem[]): number | null {
   let weightSum = 0;
   let total = 0;
   for (const item of items) {
-    if (item.percent === null || item.percent === undefined) continue;
+    if (item.percent === null || item.percent === undefined || !(item.weight > 0)) continue;
     weightSum += item.weight;
     total += item.weight * item.percent;
   }
-  return weightSum === 0 ? null : Math.round(total / weightSum);
+  return weightSum === 0 ? null : total / weightSum;
+}
+
+/** `weightedAverage`, rounded to a whole percent for display. */
+export function weightedGrade(items: WeightedItem[]): number | null {
+  const average = weightedAverage(items);
+  // The small nudge keeps 89.5 from landing on 89 when the sum was a hair short in floating point.
+  return average === null ? null : Math.round(average + 1e-9);
 }
 
 /** The quizzes of one course, from a list the caller may see. */
@@ -62,27 +88,10 @@ export function quizzesOf(courseId: string, quizzes: Quiz[]) {
   return quizzes.filter((quiz) => quiz.courseId === courseId);
 }
 
-export function courseGrade(course: Course, state: LearnerProgress, quizzes: Quiz[]) {
-  return weightedGrade(
-    quizzesOf(course.id, quizzes).map((quiz) => ({
-      weight: quiz.weight,
-      percent: bestAttempt(quiz.id, state.attempts)?.percent,
-    })),
-  );
-}
-
 /** Quizzes belonging to the given courses (a learner only has the ones they take). */
 function quizzesIn(courseList: Course[], quizzes: Quiz[]) {
   const courseIds = courseList.map((course) => course.id);
   return quizzes.filter((quiz) => courseIds.includes(quiz.courseId));
-}
-
-export function overallGrade(state: LearnerProgress, courseList: Course[], quizzes: Quiz[]) {
-  const best = quizzesIn(courseList, quizzes)
-    .map((quiz) => bestAttempt(quiz.id, state.attempts)?.percent)
-    .filter((percent): percent is number => percent !== undefined);
-  if (best.length === 0) return null;
-  return Math.round(best.reduce((sum, percent) => sum + percent, 0) / best.length);
 }
 
 export function checkpointStats(state: LearnerProgress) {

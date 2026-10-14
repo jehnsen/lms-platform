@@ -24,6 +24,7 @@ import { useRepository } from "./_repository";
 import {
   coursesRepo,
   enrollmentsRepo,
+  gradebookSetupsRepo,
   materialsRepo,
   quizzesRepo,
   sectionsRepo,
@@ -337,6 +338,7 @@ export async function createCourse(input: NewCourseInput): Promise<string> {
   const target = { title, code, termId: input.termId, instructor: actor.name, facultyId: actor.id, shiftDays: input.shiftDays };
 
   let draft: CourseCopy;
+  let gradebook: CourseTemplate["gradebook"];
   if (input.source.kind === "blank") {
     const term = termsRepo.get().find((candidate) => candidate.id === input.termId);
     const courseId = makeId("course");
@@ -379,6 +381,7 @@ export async function createCourse(input: NewCourseInput): Promise<string> {
     const template = templatesRepo.get().find((candidate) => candidate.id === templateId);
     if (!template) throw new CourseError(["That template no longer exists."]);
     draft = copyCourse(template, target, makeId);
+    gradebook = template.gradebook;
   } else {
     const { courseId } = input.source;
     authorize("view", { type: "course", courseId });
@@ -393,6 +396,7 @@ export async function createCourse(input: NewCourseInput): Promise<string> {
       target,
       makeId,
     );
+    gradebook = gradebookSetupsRepo.get()[courseId];
   }
 
   const problems = courseProblems(draft.course, draft.sections, rulesContext(null));
@@ -401,6 +405,14 @@ export async function createCourse(input: NewCourseInput): Promise<string> {
   coursesRepo.update((courses) => [...courses, draft.course]);
   sectionsRepo.update((sections) => [...sections, ...draft.sections]);
   if (draft.quizzes.length > 0) quizzesRepo.update((quizzes) => [...quizzes, ...draft.quizzes]);
+  // US-08, US-16: a copy is graded the way its source was. Held quiz scores belong to the source's students.
+  if (gradebook) {
+    const { categories, scaleId, missingAsZero } = gradebook;
+    gradebookSetupsRepo.update((setups) => ({
+      ...setups,
+      [draft.course.id]: { courseId: draft.course.id, categories, scaleId, missingAsZero, heldQuizIds: [] },
+    }));
+  }
   recordAudit({
     action: "course.create",
     resource: `course:${draft.course.id}`,
@@ -476,6 +488,7 @@ export async function saveCourseAsTemplate(courseId: string, name: string): Prom
       .filter((section) => section.courseId === courseId)
       .map((section) => ({ id: section.id, name: section.name, meetings: section.meetings })),
     quizzes: quizzesRepo.get().filter((quiz) => quiz.courseId === courseId),
+    gradebook: gradebookSetupsRepo.get()[courseId],
   };
   templatesRepo.update((templates) => [...templates, template]);
   recordAudit({ action: "template.create", resource: `template:${template.id}`, outcome: "allowed", detail: template.name });

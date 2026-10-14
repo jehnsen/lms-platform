@@ -25,6 +25,7 @@ import {
 } from "@/components/ui";
 import { useAssignments } from "@/lib/api/assignments";
 import { useCourses } from "@/lib/api/courses";
+import { useViewedGrades } from "@/lib/api/grades";
 import { useMyProgress } from "@/lib/api/progress";
 import { useQuizzes } from "@/lib/api/quizzes";
 import { useActor } from "@/lib/api/session";
@@ -35,7 +36,6 @@ import {
   checkpointStats,
   courseProgress,
   nextLesson,
-  overallGrade,
   pendingQuizzes,
 } from "@/lib/progress";
 import { dateParts, firstNameOf, formatMinutes } from "@/lib/utils";
@@ -49,6 +49,7 @@ export function DashboardView() {
   const state = useMyProgress();
   const assignments = useAssignments();
   const quizzes = useQuizzes();
+  const grades = useViewedGrades();
   // Archived courses are read-only (FR-1.8), so there is nothing in them to resume or to do.
   const open = courses.filter((course) => course.status !== "archived");
   const active = activeCourses(state, open);
@@ -74,7 +75,7 @@ export function DashboardView() {
 
   const resumeProgress = courseProgress(resume, state);
   const started = resumeProgress.done > 0;
-  const average = overallGrade(state, courses, quizzes);
+  const average = grades?.overall ?? null;
   const checkpoints = checkpointStats(state);
   const pending = pendingQuizzes(state, open, quizzes);
   // Everything still to hand in or take, soonest first: quizzes and assignments together.
@@ -213,9 +214,9 @@ export function DashboardView() {
         />
         <StatTile
           icon={Target}
-          label="Average quiz score"
+          label="Average grade"
           value={average === null ? "—" : `${average}%`}
-          hint="Best attempt per quiz"
+          hint="Across your courses, released grades only"
         />
         <StatTile
           icon={CircleCheckBig}

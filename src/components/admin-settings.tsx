@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { GradingScaleFields } from "@/components/grading-scale-fields";
 import { LatePolicyFields } from "@/components/late-policy-fields";
 import { Button, Card, PageContainer, PageHeader, fieldClass } from "@/components/ui";
 import { SettingsError, updateSettings, useSettings } from "@/lib/api/settings";
@@ -51,6 +52,8 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
     lateDefault: draft.lateDefault,
     submissionLimitMb: Number(submissionLimit),
     similarityVisibleToStudents: draft.similarityVisibleToStudents,
+    gradingScales: draft.gradingScales,
+    defaultScaleId: draft.defaultScaleId,
   };
   const changed = JSON.stringify(next) !== JSON.stringify(saved);
 
@@ -299,6 +302,24 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
                 </span>
               </span>
             </label>
+          </fieldset>
+        </Card>
+
+        <Card className="p-5">
+          <fieldset className="min-w-0">
+            <legend className="text-lg font-semibold tracking-tight">Grading scales</legend>
+            <p className="mt-1 mb-4 text-sm text-ink-2">
+              How a course total is reported: as a percentage, a letter or grade points. Teachers choose a scale
+              for each course; the grades of each scale are set here.
+            </p>
+            <GradingScaleFields
+              scales={draft.gradingScales}
+              defaultScaleId={draft.defaultScaleId}
+              onChange={(gradingScales, defaultScaleId) => {
+                setSavedNote(false);
+                setDraft((current) => ({ ...current, gradingScales, defaultScaleId }));
+              }}
+            />
           </fieldset>
         </Card>
 

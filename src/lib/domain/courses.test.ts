@@ -193,7 +193,6 @@ describe("US-08: copy a course or start from a template", () => {
       description: "",
       minutes: 10,
       passMark: 70,
-      weight: 40,
       due: "2026-10-20",
       status: "published",
       questions: [{ id: "q1", kind: "boolean", prompt: "True?", points: 1, explanation: "", answer: true }],

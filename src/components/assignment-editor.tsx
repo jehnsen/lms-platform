@@ -19,8 +19,10 @@ import {
   useMarkingStarted,
 } from "@/lib/api/assignments";
 import { useCourseSections, useCourses } from "@/lib/api/courses";
+import { useGradeCategories } from "@/lib/api/grades";
 import { useActor } from "@/lib/api/session";
 import { useSettings } from "@/lib/api/settings";
+import { categoryIdFor } from "@/lib/domain/gradebook";
 import { can } from "@/lib/domain/permissions";
 import type { Assignment, SubmissionKind } from "@/lib/types";
 import { cn, fromLocalInput, toLocalInput } from "@/lib/utils";
@@ -117,6 +119,8 @@ function EditorForm({
   const [problems, setProblems] = useState<string[]>([]);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const sections = useCourseSections(draft.courseId);
+  // FR-4.1: the gradebook category the assignment counts in. Its weight is set in the gradebook.
+  const categories = useGradeCategories(draft.courseId);
   const { submissionLimitMb } = useSettings();
 
   const published = saved.status === "published" && !isNew;
@@ -262,6 +266,23 @@ function EditorForm({
                 aria-describedby={markingStarted ? "asg-locked" : undefined}
                 className={cn(fieldClass, "w-full")}
               />
+            </div>
+            <div className="sm:col-span-3">
+              <label htmlFor="asg-category" className={LABEL_CLASS}>
+                Gradebook category
+              </label>
+              <select
+                id="asg-category"
+                value={categoryIdFor("assignment", draft.categoryId, categories)}
+                onChange={(event) => set({ categoryId: event.target.value })}
+                className={cn(fieldClass, "w-full")}
+              >
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name} ({category.weight}% of the grade)
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

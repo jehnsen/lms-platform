@@ -8,6 +8,7 @@ import {
   CalendarRange,
   Clapperboard,
   ClipboardCheck,
+  FileText,
   GraduationCap,
   LayoutDashboard,
   ListChecks,
@@ -36,6 +37,7 @@ import { cn, initialsOf } from "@/lib/utils";
 
 interface NavItem {
   href: string;
+  /** One label for every role, or a label for each role that sees the entry here. */
   label: string | Partial<Record<Role, string>>;
   icon: LucideIcon;
 }
@@ -63,6 +65,7 @@ const NAV: NavGroup[] = [
     heading: { student: "Learn", parent: "Your child" },
     items: [
       { href: "/grades", label: { student: "My grades", parent: "Grades" }, icon: GraduationCap },
+      { href: "/reports", label: { student: "Progress report", parent: "Progress report" }, icon: FileText },
       { href: "/tutor", label: "AI tutor", icon: Sparkles },
     ],
   },
@@ -71,6 +74,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/grading", label: "Grading queue", icon: PenLine },
       { href: "/gradebook", label: "Gradebook", icon: Table2 },
+      { href: "/reports", label: { faculty: "Progress reports", admin: "Progress reports" }, icon: FileText },
       { href: "/content", label: "Content library", icon: Clapperboard },
       { href: "/lesson-planner", label: "Lesson planner", icon: WandSparkles },
     ],
@@ -106,7 +110,9 @@ function NavLinks({
 }) {
   const groups = NAV.map((group) => ({
     heading: textFor(group.heading, role),
-    items: group.items.filter((item) => canAccessRoute(role, item.href)),
+    items: group.items.filter(
+      (item) => canAccessRoute(role, item.href) && textFor(item.label, role) !== undefined,
+    ),
   })).filter((group) => group.items.length > 0);
 
   return (
@@ -241,12 +247,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-1">
-      <aside className="sticky top-0 z-30 hidden h-dvh w-60 shrink-0 border-r border-line bg-surface lg:block">
+      <aside className="sticky top-0 z-30 hidden h-dvh w-60 shrink-0 border-r border-line bg-surface lg:block print:hidden!">
         <Sidebar />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line bg-surface px-4 lg:hidden">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line bg-surface px-4 lg:hidden print:hidden!">
           <Brand />
           <div className="flex items-center">
             <NotificationBell panelClassName="fixed inset-x-3 top-16" />

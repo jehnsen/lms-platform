@@ -43,6 +43,8 @@ const ROUTE_RULES: RouteRule[] = [
   },
   // The learner's own grades page: students for themselves, parents for a child.
   { prefix: "/grades", action: "view", resource: "grades", scopes: ["own", "child"] },
+  // FR-4.4: progress reports. Every role has some; which students it covers is decided when the report is built.
+  { prefix: "/reports", action: "view", resource: "grades" },
   { prefix: "/tutor", action: "view", resource: "tutor" },
   { prefix: "/gradebook", action: "view", resource: "gradebook" },
   { prefix: "/content", action: "view", resource: "content-library" },

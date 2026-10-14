@@ -21,6 +21,7 @@ import {
   fieldClass,
 } from "@/components/ui";
 import { useCourses } from "@/lib/api/courses";
+import { useGradeCategories } from "@/lib/api/grades";
 import {
   QuizError,
   addToBank,
@@ -34,6 +35,7 @@ import {
 } from "@/lib/api/quizzes";
 import { useActor } from "@/lib/api/session";
 import { moveItem } from "@/lib/domain/course-outline";
+import { categoryIdFor } from "@/lib/domain/gradebook";
 import { can } from "@/lib/domain/permissions";
 import { QUESTION_KINDS, QUESTION_KIND_LABELS, blankQuestion } from "@/lib/domain/quizzes";
 import { quizPoints } from "@/lib/grading";
@@ -83,7 +85,6 @@ export function QuizNew() {
         description: "",
         minutes: 10,
         passMark: 70,
-        weight: 0,
         due: "",
         questions: [],
         status: "draft",
@@ -144,6 +145,8 @@ function BuilderForm({
 
   const published = saved.status === "published" && !isNew;
   const course = courses.find((candidate) => candidate.id === draft.courseId);
+  // FR-4.1: the gradebook category the quiz counts in. Its weight is set in the gradebook.
+  const categories = useGradeCategories(draft.courseId);
   const set = (changes: Partial<Quiz>) => setDraft((current) => ({ ...current, ...changes }));
   const setQuestion = (next: Question) =>
     set({ questions: draft.questions.map((question) => (question.id === next.id ? next : question)) });
@@ -296,19 +299,21 @@ function BuilderForm({
               />
             </div>
             <div className="sm:col-span-2">
-              <label htmlFor="quiz-weight" className={LABEL_CLASS}>
-                Share of course grade (%)
+              <label htmlFor="quiz-category" className={LABEL_CLASS}>
+                Gradebook category
               </label>
-              <input
-                id="quiz-weight"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={100}
-                value={toField(draft.weight)}
-                onChange={(event) => set({ weight: toNumber(event.target.value) })}
+              <select
+                id="quiz-category"
+                value={categoryIdFor("quiz", draft.categoryId, categories)}
+                onChange={(event) => set({ categoryId: event.target.value })}
                 className={cn(fieldClass, "w-full")}
-              />
+              >
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name} ({category.weight}% of the grade)
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

@@ -99,9 +99,6 @@ export function quizProblems(quiz: Quiz): string[] {
   if (!Number.isFinite(quiz.passMark) || quiz.passMark < 0 || quiz.passMark > 100) {
     problems.push("The pass mark must be from 0 to 100 percent.");
   }
-  if (!Number.isFinite(quiz.weight) || quiz.weight < 0 || quiz.weight > 100) {
-    problems.push("The share of the course grade must be from 0 to 100 percent.");
-  }
   if (!Number.isInteger(quiz.minutes) || quiz.minutes < 1) problems.push("The estimated time must be at least 1 minute.");
   if (quiz.timeLimitMinutes !== undefined && (!Number.isInteger(quiz.timeLimitMinutes) || quiz.timeLimitMinutes < 1)) {
     problems.push("The time limit must be a whole number of minutes, at least 1.");
@@ -213,9 +210,13 @@ export function buildAttempt(
   };
 }
 
-/** True when the attempt's score is final. Attempts from before manual marking existed are always final. */
+/**
+ * True when the attempt has a score that counts: not waiting for a teacher's
+ * marks, and not held back from the student (FR-4.3). Attempts from before
+ * manual marking existed have no status and are always final.
+ */
 export function isFinal(attempt: QuizAttempt) {
-  return attempt.status !== "awaiting-marking";
+  return attempt.status === undefined || attempt.status === "graded";
 }
 
 /** The ids of the answers in this attempt that still wait for a teacher. */

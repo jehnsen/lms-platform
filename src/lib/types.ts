@@ -46,6 +46,10 @@ export interface SchoolSettings {
   submissionLimitMb: number;
   /** US-14: similarity reports are for faculty only unless the school turns this on. */
   similarityVisibleToStudents: boolean;
+  /** FR-4.2: the scales a course's grade can be reported on. The bands are school policy. */
+  gradingScales: GradingScale[];
+  /** The scale a course uses until its teacher picks one, and the one used for averages across courses. */
+  defaultScaleId: string;
 }
 
 export interface Term {
@@ -137,9 +141,21 @@ export interface NotificationPref {
 /** FR-4.1: a weighted group of grade items. A course's weights must total 100. */
 export interface GradeCategory {
   id: string;
-  courseId: string;
   name: string;
+  /** Share of the course grade, in percent. */
   weight: number;
+}
+
+/** FR-4.1, FR-4.2: how one course's final grade is worked out. Set by its teachers. */
+export interface GradebookSetup {
+  courseId: string;
+  categories: GradeCategory[];
+  /** Which of the school's grading scales the course reports on. */
+  scaleId: string;
+  /** When on, work not handed in by its due date counts as zero. Off: it is left out of the total. */
+  missingAsZero: boolean;
+  /** FR-4.3: quizzes whose scores are held back from students until the teacher releases them. */
+  heldQuizIds: string[];
 }
 
 export type GradingScaleKind = "percentage" | "letter" | "gpa";
@@ -152,7 +168,11 @@ export interface GradingScaleBand {
   points?: number;
 }
 
-/** FR-4.2: how a percentage is reported. Bands are school policy, so they are data. */
+/**
+ * FR-4.2: how a percentage is reported. Bands are school policy, so they are
+ * data. A percentage scale has no bands; letter and GPA scales list theirs
+ * from the highest down, ending with one that starts at 0.
+ */
 export interface GradingScale {
   id: string;
   name: string;
@@ -304,8 +324,8 @@ export interface Quiz {
   minutes: number;
   /** Percent needed to pass. */
   passMark: number;
-  /** Share of the course grade, in percent. */
-  weight: number;
+  /** FR-4.1: the gradebook category it counts in. Absent: the course's category for quizzes. */
+  categoryId?: string;
   due: string;
   questions: Question[];
   /** FR-3.7: minutes allowed per attempt. Absent means untimed. */
@@ -335,8 +355,13 @@ export interface QuizAttempt {
   answers?: AnswerSheet;
   /** Marks given by hand, by question id. */
   manual?: Record<string, ManualMark>;
-  /** `awaiting-marking` until every manually marked answer has a mark; then the score is final and counts. */
-  status?: "graded" | "awaiting-marking";
+  /**
+   * `awaiting-marking` until every manually marked answer has a mark; then the
+   * score is final and counts. `held` is what a student is given in place of an
+   * attempt whose score the teacher has not released (FR-4.3): it has no score
+   * and no answers.
+   */
+  status?: "graded" | "awaiting-marking" | "held";
   startedAt?: string;
   /** FR-3.7: handed in by the system because the time limit was reached. */
   autoSubmitted?: boolean;
@@ -420,6 +445,8 @@ export interface Assignment {
   title: string;
   instructions: string;
   points: number;
+  /** FR-4.1: the gradebook category it counts in. Absent: the course's category for assignments. */
+  categoryId?: string;
   /** ISO date-time. */
   dueAt: string;
   /** FR-3.1: the sections the assignment is set for. Never empty. */
@@ -575,4 +602,6 @@ export interface CourseTemplate {
   sections: Array<Pick<Section, "id" | "name" | "meetings">>;
   /** The course's quizzes, copied with it (US-08). Templates saved before quizzes could be copied have none. */
   quizzes?: Quiz[];
+  /** The course's grade categories, scale and missing-work rule (US-16). Older templates have none. */
+  gradebook?: Pick<GradebookSetup, "categories" | "scaleId" | "missingAsZero">;
 }

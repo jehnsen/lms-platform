@@ -8,6 +8,7 @@
  * Only admins may change it.
  */
 import { settingsProblems } from "@/lib/domain/settings";
+import { tidyScale } from "@/lib/grading";
 import type { SchoolSettings } from "@/lib/types";
 import { useRepository } from "./_repository";
 import { settingsRepo } from "./_stores";
@@ -38,11 +39,18 @@ function describeChanges(before: SchoolSettings, after: SchoolSettings) {
   if (before.similarityVisibleToStudents !== after.similarityVisibleToStudents) {
     changed.push("who sees similarity reports");
   }
+  if (
+    JSON.stringify(before.gradingScales) !== JSON.stringify(after.gradingScales) ||
+    before.defaultScaleId !== after.defaultScaleId
+  ) {
+    changed.push("grading scales");
+  }
   return changed;
 }
 
-export async function updateSettings(next: SchoolSettings): Promise<void> {
+export async function updateSettings(input: SchoolSettings): Promise<void> {
   authorize("update", { type: "settings" });
+  const next: SchoolSettings = { ...input, gradingScales: input.gradingScales.map(tidyScale) };
   const problems = settingsProblems(next);
   if (problems.length > 0) throw new SettingsError(problems);
   const changed = describeChanges(settingsRepo.get(), next);
