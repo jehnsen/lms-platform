@@ -1,7 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Eye, EyeOff, LoaderCircle, Lock, Mail, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  GraduationCap,
+  KeyRound,
+  LoaderCircle,
+  Lock,
+  Mail,
+  Presentation,
+  ShieldCheck,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui";
 import {
   MFA_DEMO_CODE,
@@ -19,7 +33,14 @@ import type { Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const INPUT_CLASS =
-  "h-11 w-full rounded-lg border border-line-strong bg-surface pr-3 pl-10 text-sm outline-none transition-colors placeholder:text-ink-3 focus:border-primary focus:ring-3 focus:ring-primary-soft aria-invalid:border-bad";
+  "h-11 w-full rounded-lg border border-line-strong bg-surface pr-3 pl-10 text-sm shadow-card outline-none transition-colors placeholder:text-ink-3 focus:border-primary focus:ring-3 focus:ring-primary-soft aria-invalid:border-bad";
+
+const ROLE_ICONS: Record<Role, LucideIcon> = {
+  student: GraduationCap,
+  faculty: Presentation,
+  admin: ShieldCheck,
+  parent: UsersRound,
+};
 
 /** Where to go after signing in: the page that was asked for, if it is a local path. */
 function destination() {
@@ -105,11 +126,11 @@ export function LoginForm() {
 
   if (mfaMethod) {
     return (
-      <div className="w-full max-w-sm">
-        <span className="grid size-12 place-items-center rounded-full bg-primary-soft text-primary-ink">
+      <div className="w-full">
+        <span className="grid size-12 place-items-center rounded-2xl bg-primary-soft text-primary-ink">
           <ShieldCheck aria-hidden className="size-6" />
         </span>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Confirm it&apos;s you</h1>
+        <h1 className="mt-5 text-3xl font-semibold tracking-[-0.025em]">Confirm it&apos;s you</h1>
         <p className="mt-2 text-ink-2">
           Administrator accounts need a second step. Enter the 6-digit code from your {mfaMethod}.
         </p>
@@ -166,28 +187,32 @@ export function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-sm">
-      <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
+    <div className="w-full">
+      <h1 className="text-3xl font-semibold tracking-[-0.025em]">Welcome back</h1>
       <p className="mt-2 text-ink-2">Sign in to pick up where you left off.</p>
 
-      <fieldset className="mt-8">
+      <fieldset className="mt-7">
         <legend className="mb-1.5 text-sm font-medium">Demo account</legend>
-        <div className="grid grid-cols-4 gap-1 rounded-xl bg-surface-2 p-1">
-          {ROLES.map((option) => (
-            <label
-              key={option}
-              className="relative flex h-9 cursor-pointer items-center justify-center rounded-lg text-sm font-medium text-ink-2 transition-colors hover:text-ink has-checked:bg-surface has-checked:text-ink has-checked:shadow-xs has-focus-visible:outline-2 has-focus-visible:outline-primary"
-            >
-              <input
-                type="radio"
-                name="demo-role"
-                className="sr-only"
-                checked={role === option}
-                onChange={() => chooseRole(option)}
-              />
-              {ROLE_LABELS[option]}
-            </label>
-          ))}
+        <div className="grid grid-cols-4 gap-1 rounded-xl border border-line bg-surface-2 p-1">
+          {ROLES.map((option) => {
+            const Icon = ROLE_ICONS[option];
+            return (
+              <label
+                key={option}
+                className="group relative flex h-14 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg text-xs font-medium text-ink-2 transition-colors hover:text-ink has-checked:bg-surface has-checked:text-ink has-checked:shadow-card has-focus-visible:outline-2 has-focus-visible:outline-primary"
+              >
+                <input
+                  type="radio"
+                  name="demo-role"
+                  className="sr-only"
+                  checked={role === option}
+                  onChange={() => chooseRole(option)}
+                />
+                <Icon aria-hidden className="size-4 text-ink-3 group-has-checked:text-primary-ink" />
+                {ROLE_LABELS[option]}
+              </label>
+            );
+          })}
         </div>
       </fieldset>
 
@@ -296,8 +321,12 @@ export function LoginForm() {
       </div>
 
       <Button variant="secondary" size="lg" disabled={pending} onClick={continueWithSso} className="w-full">
-        Continue with school account (SSO)
+        <KeyRound aria-hidden className="size-4 text-ink-3" />
+        {/* The full label does not fit beside the icon on the narrowest phones. */}
+        <span className="max-[400px]:hidden">Continue with school account (SSO)</span>
+        <span className="min-[400px]:hidden">School account (SSO)</span>
       </Button>
+
 
       <p className="mt-6 text-center text-sm text-ink-2">
         New here?{" "}

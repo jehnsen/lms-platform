@@ -42,6 +42,10 @@
   --elevation-card: 0 1px 2px rgb(21 20 15 / 0.04), 0 1px 3px rgb(21 20 15 / 0.05);
   --elevation-raised: 0 2px 4px rgb(21 20 15 / 0.04), 0 8px 24px -6px rgb(21 20 15 / 0.1);
   --elevation-button: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(21 20 15 / 0.16);
+
+  /* The public pages' hero: a blue-to-violet sweep for one emphasised phrase and the background glows. */
+  --hero-from: #1f5fc2;
+  --hero-to: #6d3fd6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -81,6 +85,9 @@
     --elevation-card: 0 1px 2px rgb(0 0 0 / 0.3);
     --elevation-raised: 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 24px -6px rgb(0 0 0 / 0.5);
     --elevation-button: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 1px 2px rgb(0 0 0 / 0.4);
+
+    --hero-from: #6da7ec;
+    --hero-to: #b49cf5;
   }
 }
 
@@ -121,6 +128,9 @@
   --shadow-card: var(--elevation-card);
   --shadow-raised: var(--elevation-raised);
   --shadow-button: var(--elevation-button);
+
+  --color-hero-from: var(--hero-from);
+  --color-hero-to: var(--hero-to);
 }
 
 body {
@@ -131,7 +141,45 @@ body {
 }
 
 /* A quiet scrollbar for panes that scroll inside the page, such as the sidebar. */
+/* Faint graph-paper lines behind the public pages' heroes. Fade it out with a mask. */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+/* Entrance for hero content. Stagger with an inline `animation-delay`. */
+@utility animate-rise {
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -10px;
+  }
+}
+/* A slow bob for the floating cards around the product preview. */
+@utility animate-drift {
+  animation: drift 7s ease-in-out infinite;
+}
+
 @utility scrollbar-thin {
+
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
 }

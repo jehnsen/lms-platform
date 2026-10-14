@@ -66,8 +66,11 @@ const ROUTE_RULES: RouteRule[] = [
   { prefix: "/admin/audit", action: "view", resource: "audit-log" },
 ];
 
+/** The public homepage. Signed-out visitors to `/` see it in place of the dashboard (see `src/proxy.ts`). */
+export const LANDING_PATH = "/welcome";
+
 /** Reachable without a session. */
-export const PUBLIC_PATHS = ["/login"];
+export const PUBLIC_PATHS = ["/login", LANDING_PATH];
 
 export const SIGN_IN_PATH = "/login";
 export const FORBIDDEN_PATH = "/forbidden";
