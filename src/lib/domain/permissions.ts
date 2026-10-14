@@ -29,6 +29,10 @@ export type ResourceType =
   | "attendance"
   | "calendar"
   | "calendar-event"
+  | "announcement"
+  | "message"
+  | "forum"
+  | "live-session"
   | "content-library"
   | "lesson-plan"
   | "tutor"
@@ -69,6 +73,8 @@ export interface Actor {
 type Grants = Partial<Record<ResourceType, Partial<Record<Action, Scope>>>>;
 
 const OWN_NOTIFICATIONS = { view: "own", update: "own" } as const;
+// FR-6.2: everyone reads and sends their own messages. Who may write to whom is decided by `messageDecision()`.
+const OWN_MESSAGES = { view: "own", create: "own" } as const;
 
 /** Default permissions per role. Anything not listed is denied. */
 export const PERMISSIONS: Record<Role, Grants> = {
@@ -83,6 +89,11 @@ export const PERMISSIONS: Record<Role, Grants> = {
     // US-20, US-21: a student sees their own attendance and their own calendar.
     attendance: { view: "own" },
     calendar: { view: "any" },
+    // US-22, US-23, US-24: students read announcements, take part in their courses' forums and join live classes.
+    announcement: { view: "course" },
+    message: OWN_MESSAGES,
+    forum: { view: "course", create: "course" },
+    "live-session": { view: "course" },
     tutor: { view: "any" },
     notification: OWN_NOTIFICATIONS,
   },
@@ -107,6 +118,11 @@ export const PERMISSIONS: Record<Role, Grants> = {
     attendance: { view: "course", create: "course", update: "course" },
     calendar: { view: "any" },
     "calendar-event": { create: "course", update: "course", delete: "course" },
+    // US-22 to US-24: faculty post announcements, moderate forums ("update") and run live classes in their courses.
+    announcement: { view: "course", create: "course", delete: "course" },
+    message: OWN_MESSAGES,
+    forum: { view: "course", create: "course", update: "course" },
+    "live-session": { view: "course", create: "course", update: "course" },
     "content-library": { view: "any", create: "any", update: "any", delete: "any" },
     "lesson-plan": { view: "own", create: "own", delete: "own" },
     notification: OWN_NOTIFICATIONS,
@@ -129,6 +145,11 @@ export const PERMISSIONS: Record<Role, Grants> = {
     attendance: { view: "any" },
     calendar: { view: "any" },
     "calendar-event": { create: "any", update: "any", delete: "any" },
+    // Admins see every course's announcements, forums and live classes, and can hide a forum post or remove an announcement.
+    announcement: { view: "any", delete: "any" },
+    message: OWN_MESSAGES,
+    forum: { view: "any", update: "any" },
+    "live-session": { view: "any" },
     "content-library": { view: "any" },
     user: { view: "any", create: "any", update: "any", delete: "any" },
     term: { view: "any", update: "any" },
@@ -142,6 +163,9 @@ export const PERMISSIONS: Record<Role, Grants> = {
     grades: { view: "child" },
     attendance: { view: "child" },
     calendar: { view: "any" },
+    // US-05: a parent sees the announcements of a linked child's courses.
+    announcement: { view: "child" },
+    message: OWN_MESSAGES,
     notification: OWN_NOTIFICATIONS,
   },
 };

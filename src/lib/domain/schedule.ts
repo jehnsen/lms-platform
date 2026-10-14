@@ -8,7 +8,7 @@
  * "HH:MM" on the school's clock (Q-34).
  */
 import { daysBetween, shiftDate } from "@/lib/domain/course-copy";
-import type { Assignment, CalendarEvent, Course, Quiz, Section, Term } from "@/lib/types";
+import type { Assignment, CalendarEvent, Course, LiveSession, Quiz, Section, Term } from "@/lib/types";
 
 // --- Plain dates -------------------------------------------------------------------
 
@@ -188,6 +188,8 @@ export interface CalendarSource {
   quizzes: Quiz[];
   assignments: Assignment[];
   events: CalendarEvent[];
+  /** The live classes this person can attend or runs (FR-6.4). */
+  liveSessions?: LiveSession[];
   /** Where a moment falls on this person's calendar: its date and time of day. */
   toLocal: (iso: string) => { date: string; time: string };
 }
@@ -218,6 +220,25 @@ export function calendarItems(source: CalendarSource, range: DateRange): Calenda
         href: `/courses/${section.courseId}`,
       });
     }
+  }
+
+  for (const live of source.liveSessions ?? []) {
+    if (live.status === "cancelled" || !courseIds.has(live.courseId)) continue;
+    const starts = source.toLocal(live.startsAt);
+    if (!inRange(starts.date)) continue;
+    const ends = source.toLocal(new Date(Date.parse(live.startsAt) + live.durationMinutes * 60 * 1000).toISOString());
+    items.push({
+      id: `live:${live.id}`,
+      kind: "class",
+      title: `Live class: ${live.title}`,
+      date: starts.date,
+      start: starts.time,
+      // A class that runs past midnight is shown without an end time rather than with one before its start.
+      end: ends.date === starts.date ? ends.time : undefined,
+      courseId: live.courseId,
+      detail: [courseOf(live.courseId)?.title, "Online"].filter(Boolean).join(" · "),
+      href: `/courses/${live.courseId}`,
+    });
   }
 
   for (const quiz of source.quizzes) {

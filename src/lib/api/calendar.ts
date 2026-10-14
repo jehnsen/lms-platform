@@ -13,6 +13,7 @@
 import { useMemo } from "react";
 import { localParts } from "@/lib/clock";
 import { isSetFor } from "@/lib/domain/assignments";
+import { isForSections } from "@/lib/domain/community";
 import { can } from "@/lib/domain/permissions";
 import { calendarItems, eventProblems, type CalendarItem, type DateRange } from "@/lib/domain/schedule";
 import type { CalendarEvent, Course, User } from "@/lib/types";
@@ -22,12 +23,14 @@ import {
   calendarEventsRepo,
   coursesRepo,
   enrollmentsRepo,
+  liveSessionsRepo,
   quizzesRepo,
   sectionsRepo,
   termsRepo,
   usersRepo,
   viewedChildRepo,
 } from "./_stores";
+import { notify } from "./notifications";
 import { authorize, recordAudit, useActor } from "./session";
 import { useLinkedChildren } from "./users";
 
@@ -70,6 +73,7 @@ export function useCalendar(range: DateRange): CalendarView | null | undefined {
   const quizzes = useRepository(quizzesRepo);
   const assignments = useRepository(assignmentsRepo);
   const events = useRepository(calendarEventsRepo);
+  const liveSessions = useRepository(liveSessionsRepo);
   const selection = useRepository(viewedChildRepo);
   const children = useLinkedChildren();
   const { from, to } = range;
@@ -105,6 +109,16 @@ export function useCalendar(range: DateRange): CalendarView | null | undefined {
         // A student has only the assignments set for their sections.
         assignments: asStudent ? assignments.filter((assignment) => isSetFor(assignment, enrolled)) : assignments,
         events,
+        // A student has only the live classes for their sections.
+        liveSessions: asStudent
+          ? liveSessions.filter((live) =>
+              isForSections(
+                live,
+                sections.filter((section) => section.courseId === live.courseId).map((section) => section.id),
+                enrolled,
+              ),
+            )
+          : liveSessions,
         toLocal: localParts,
       },
       { from, to },
@@ -122,7 +136,7 @@ export function useCalendar(range: DateRange): CalendarView | null | undefined {
       canAddSchoolWide: can(actor, "create", { type: "calendar-event" }),
       editableEventIds: events.filter((event) => mayChange(event.courseId)).map((event) => event.id),
     };
-  }, [actor, users, courses, sections, enrollments, terms, quizzes, assignments, events, selection, children, from, to]);
+  }, [actor, users, courses, sections, enrollments, terms, quizzes, assignments, events, liveSessions, selection, children, from, to]);
 }
 
 /** One stored event, for the form that edits it. */
@@ -132,6 +146,40 @@ export function useCalendarEvent(eventId: string | undefined): CalendarEvent | u
 }
 
 let idCounter = 0;
+
+/** An exam, or a day without classes, is a change people must hear about (US-25). Other events are only on the calendar. */
+function isCritical(event: Pick<CalendarEvent, "kind" | "noClasses"> | undefined) {
+  return event !== undefined && (event.kind === "exam" || event.noClasses === true);
+}
+
+/**
+ * Tells the students an exam or a day without classes concerns, and their
+ * parents: those of the course, or everyone for a school-wide one. The
+ * "schedule" kind is mandatory unless the school changes that (Q-21).
+ */
+function announceChange(event: CalendarEvent, change: "new" | "changed" | "cancelled") {
+  const users = usersRepo.get();
+  const sectionIds = event.courseId
+    ? sectionsRepo.get().filter((section) => section.courseId === event.courseId).map((section) => section.id)
+    : sectionsRepo.get().map((section) => section.id);
+  const enrolled = new Set(enrollmentsRepo.get().filter((entry) => sectionIds.includes(entry.sectionId)).map((entry) => entry.userId));
+  const students = users.filter((user) => user.role === "student" && user.status === "active" && enrolled.has(user.id));
+  const parents = users.filter(
+    (user) => user.role === "parent" && user.status === "active" && user.childIds?.some((childId) => students.some((student) => student.id === childId)),
+  );
+  const course = coursesRepo.get().find((candidate) => candidate.id === event.courseId);
+  const what = event.kind === "exam" ? "Exam" : "No classes";
+  const when = `${event.date}${event.endDate ? ` to ${event.endDate}` : ""}${event.start ? `, ${event.start}${event.end ? ` to ${event.end}` : ""}` : ""}`;
+  const title =
+    change === "cancelled" ? `${what} cancelled: ${event.title}` : change === "changed" ? `${what} changed: ${event.title}` : `${what}: ${event.title}`;
+  const body =
+    change === "cancelled"
+      ? `${course?.title ?? "The school"}: this is no longer on the calendar. It was planned for ${when}.`
+      : `${course?.title ?? "The whole school"}, ${when}${event.room ? `, ${event.room}` : ""}.`;
+  for (const person of [...students, ...parents]) {
+    notify({ userId: person.id, category: "schedule", title, body, href: "/calendar" });
+  }
+}
 
 export interface CalendarEventInput {
   /** Absent: a new event. */
@@ -187,6 +235,9 @@ export async function saveCalendarEvent(input: CalendarEventInput): Promise<stri
     outcome: "allowed",
     detail: `${event.title}, ${event.date}${event.endDate ? ` to ${event.endDate}` : ""}${event.noClasses ? ", no classes" : ""}`,
   });
+  // US-25: an exam change is a critical alert. A change that only fixes the wording of the same exam still counts.
+  if (isCritical(event)) announceChange(event, existing ? "changed" : "new");
+  else if (isCritical(existing)) announceChange(existing!, "cancelled");
   return event.id;
 }
 
@@ -196,4 +247,5 @@ export async function deleteCalendarEvent(eventId: string): Promise<void> {
   authorize("delete", { type: "calendar-event", courseId: event.courseId });
   calendarEventsRepo.update((events) => events.filter((candidate) => candidate.id !== eventId));
   recordAudit({ action: "calendar.event-delete", resource: `calendar-event:${eventId}`, outcome: "allowed", detail: event.title });
+  if (isCritical(event)) announceChange(event, "cancelled");
 }

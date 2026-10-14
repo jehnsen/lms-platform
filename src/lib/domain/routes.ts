@@ -48,6 +48,11 @@ const ROUTE_RULES: RouteRule[] = [
   // FR-5.3: the timetable and calendar, for every role. FR-5.1: attendance, each role for the students it may see.
   { prefix: "/calendar", action: "view", resource: "calendar" },
   { prefix: "/attendance", action: "view", resource: "attendance" },
+  // Epic F: announcements and messages for every role, forums for the people in a course, and everyone's own notifications.
+  { prefix: "/announcements", action: "view", resource: "announcement" },
+  { prefix: "/messages", action: "view", resource: "message" },
+  { prefix: "/forums", action: "view", resource: "forum" },
+  { prefix: "/notifications", action: "view", resource: "notification" },
   { prefix: "/tutor", action: "view", resource: "tutor" },
   { prefix: "/gradebook", action: "view", resource: "gradebook" },
   { prefix: "/content", action: "view", resource: "content-library" },

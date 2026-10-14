@@ -47,6 +47,8 @@ function describeChanges(before: SchoolSettings, after: SchoolSettings) {
     changed.push("grading scales");
   }
   if (JSON.stringify(before.attendance) !== JSON.stringify(after.attendance)) changed.push("attendance policy");
+  if (JSON.stringify(before.notifications) !== JSON.stringify(after.notifications)) changed.push("required notifications");
+  if (JSON.stringify(before.messaging) !== JSON.stringify(after.messaging)) changed.push("messaging rules");
   return changed;
 }
 

@@ -2,7 +2,7 @@
 
 Points the BRD and the BA deliverables leave open, or where the two disagree. Nothing here has been decided on the client's behalf: each row records the **default the app uses for now**, and every default is either configurable or isolated in one place so it can change without rework.
 
-**Last updated:** 2026-10-14, after Phase 5 and the Q-25 change. New in Phase 5: Q-56 to Q-62; defaults recorded for Q-04 and Q-19, and Q-34 extended to class times. Q-25 was decided on 2026-10-14 and built; what it left open is now Q-63. **Q-18 (the SIS export format) is needed before go-live.**
+**Last updated:** 2026-10-14, after Phase 6. New in Phase 6: Q-64 to Q-70; defaults recorded for Q-20 and Q-21, and Q-62 revised. **Q-18 (the SIS export format) is needed before go-live.**
 
 Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row), `Deferred` (not needed until a later phase).
 
@@ -71,8 +71,17 @@ Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row
 | Q-59 | When the attendance policy changes, should students the new rule puts below the threshold be alerted straight away? | FR-5.4, FR-5.5 | Yes. Saving a new threshold or counting rule re-checks everyone at once; raising the threshold can send many alerts in one go. | Open |
 | Q-60 | What is an "exam" on the calendar, and who keeps the academic calendar? | FR-5.3, US-20 | Exams, holidays and other events are calendar entries. An admin adds them for the whole school; faculty add them for the courses they teach (an exam, a cancelled class). Quizzes and assignments appear as due dates, not as exams. An entry marked "no classes" takes classes off the timetable for the school, or for its course. | Open |
 | Q-61 | If a holiday or a cancelled class is added for a day on which attendance was already taken, what happens to that record? | FR-5.1, FR-5.3 | The record is kept and still counts towards the rate; the session just no longer appears in the list. | Open |
-| Q-62 | Should people be told when the calendar changes (a new exam, a cancelled class, a moved deadline), and should the calendar be available as a feed for phone and desktop calendar apps? | FR-5.3, FR-6.6 | No notification and no feed. The calendar itself is always current. | Open |
+| Q-62 | Should people be told when the calendar changes (a new exam, a cancelled class, a moved deadline), and should the calendar be available as a feed for phone and desktop calendar apps? | FR-5.3, FR-6.6, US-25 | Revised in Phase 6, because US-25 names exam changes as a critical alert: a new, changed or removed exam, and a day without classes, are sent to the students concerned and their parents as mandatory "Exams and timetable" alerts; so are new and cancelled live classes. Other events, and moved deadlines, are not notified. No calendar feed. | Open |
 | Q-63 | What else should an import or SIS sync do to an existing account: move a student to another section of the same course, take someone out of a section, update a changed name or email, change a role, or deactivate people who have left? | US-01, US-04, FR-1.6, FR-8.1 | None of these. A row that would move a student between sections of one course, or that gives a different role, is reported as an error and changes nothing. A deactivated or archived account is not placed in sections until an admin reactivates it. Names, emails and statuses are only changed on the Users page. | Open |
+| Q-20 | Who may message whom? Child-safety rules apply. | FR-6.2, US-22 | Fixed: an admin may write to anyone; staff to each other; a teacher to the students they teach and to those students' parents; anyone may answer a message they were sent. School settings, with these defaults: students may write to their own teachers (on), to students in their own section (off), and parents to their children's teachers (on). Students may not write to admins, parents or other parents' children; parents may write to an admin. | Open |
+| Q-21 | Which alerts are mandatory and cannot be switched off? | FR-6.7, US-25 | An admin setting. By default: exams and timetable changes (exams, cancelled classes, live classes), attendance alerts, and account and school notices. A mandatory alert goes out on every channel, in-app, email and push, whatever the person chose. | Open |
+| Q-64 | Should parents be notified of their child's course announcements, or only see them in the app? And should a parent's reading count? | FR-6.1, US-05, US-22 | Parents see them on `/announcements` and the parent home page and are not notified. Only the students an announcement was sent to count towards "read by". | Open |
+| Q-65 | May an admin post an announcement to the whole school, or to several courses at once? May a teacher edit one after posting? | FR-6.1 | No school-wide announcements, and no editing: a teacher or an admin can remove one. Notifications already sent are not recalled. | Open |
+| Q-66 | May anyone other than the two people read a direct message, for example a safeguarding lead? How long are messages kept, and can they be deleted? | FR-6.2, NFR-3 | Nobody else can read them in the app, and they cannot be deleted. Keeping and reviewing them is a decision for the school's safeguarding and privacy policy. | Open |
+| Q-67 | How are forums moderated: only by the course's teachers, or also by admins or students; is a post hidden automatically after several reports; may people edit or delete their own posts? | FR-6.3, US-23 | The course's teachers and admins moderate. Reports go to the teachers and nothing is hidden automatically. Posts cannot be edited or deleted; a moderator hides one instead. | Open |
+| Q-68 | Which video conferencing service, how early may people join, who may see recordings and for how long are they kept? | FR-6.4, FR-6.5, US-24 | A mock service. The join button shows from 10 minutes before the start until the class ends. Recordings are linked for the students of the course, kept as long as the course. | Open |
+| Q-69 | What do new accounts receive by default, and should the school be able to edit the wording of each kind of notification (FR-6.6 says "configurable templates")? | FR-6.6, FR-6.7, US-25 | Every kind on every channel until the person changes it. One email layout for every kind, and the wording of each kind is fixed in the app. | Open |
+| Q-70 | Push notifications need the app installed or the browser's permission. Should the app ask for permission, and when? | FR-6.6, US-31 | Push is sent to a mock service and reaches no device. Asking for permission comes with the installable app in Phase 8. | Open |
 
 ## Policies needed by later phases
 
@@ -80,8 +89,6 @@ Each becomes a configurable setting with a default when its phase is built.
 
 | # | Question | Affects | Phase |
 | --- | --- | --- | --- |
-| Q-20 | Who may message whom (for example, may students message each other; may parents message faculty)? Child-safety rules apply. | FR-6.2 | 6 |
-| Q-21 | Which alerts are mandatory and cannot be switched off. | FR-6.7 | 6 |
 | Q-22 | At-risk rules and their thresholds. | FR-7.3 | 7 |
 
 ## Platform and scope

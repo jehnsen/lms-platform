@@ -11,6 +11,13 @@ import {
   seedAttendanceSheets,
   seedCalendarEvents,
 } from "@/lib/data/attendance";
+import {
+  seedAnnouncements,
+  seedForumPosts,
+  seedForumThreads,
+  seedLiveSessions,
+  seedMessages,
+} from "@/lib/data/communication";
 import { courses as seedCourses } from "@/lib/data/courses";
 import {
   DEMO_USER_IDS,
@@ -26,6 +33,7 @@ import { materials as seedMaterials } from "@/lib/data/people";
 import { quizzes as seedQuizzes } from "@/lib/data/quizzes";
 import { DEFAULT_SETTINGS } from "@/lib/domain/settings";
 import type {
+  Announcement,
   Assignment,
   AttendanceAlertState,
   AttendanceSheet,
@@ -34,12 +42,18 @@ import type {
   CalendarEvent,
   Course,
   CourseTemplate,
+  DeliveryRecord,
   Enrollment,
+  ForumPost,
+  ForumThread,
   GradebookSetup,
   LearnerProgress,
   LessonPlan,
+  LiveSession,
   Material,
+  Message,
   Notification,
+  NotificationPrefs,
   Quiz,
   QuizDraft,
   SchoolSettings,
@@ -131,7 +145,33 @@ export const viewedChildRepo = createRepository<Record<string, string>>(
 );
 
 /** School-wide policy set by admins. One record, not a list. */
-export const settingsRepo = createRepository<SchoolSettings>("settings", 5, DEFAULT_SETTINGS);
+export const settingsRepo = createRepository<SchoolSettings>("settings", 6, DEFAULT_SETTINGS);
+
+const NO_PREFS: Record<string, NotificationPrefs> = {};
+
+/** FR-6.7: each person's notification preferences, by user id. Nobody listed: every channel is on. */
+export const notificationPrefsRepo = createRepository<Record<string, NotificationPrefs>>("notification-prefs", 1, NO_PREFS);
+
+const NO_DELIVERIES: DeliveryRecord[] = [];
+
+/**
+ * FR-6.6: what the email and push adapters were asked to send, newest first.
+ * MOCK: nothing is really sent, so this log is how the demo shows it.
+ */
+export const deliveriesRepo = createRepository<DeliveryRecord[]>("deliveries", 1, NO_DELIVERIES);
+
+/** FR-6.1: course announcements, with who has read each. */
+export const announcementsRepo = createRepository<Announcement[]>("announcements", 1, seedAnnouncements);
+
+/** FR-6.2: every direct message. */
+export const messagesRepo = createRepository<Message[]>("messages", 1, seedMessages);
+
+/** FR-6.3: forum threads and their posts. */
+export const forumThreadsRepo = createRepository<ForumThread[]>("forum-threads", 1, seedForumThreads);
+export const forumPostsRepo = createRepository<ForumPost[]>("forum-posts", 1, seedForumPosts);
+
+/** FR-6.4, FR-6.5: live classes, scheduled, running and ended, with their recordings. */
+export const liveSessionsRepo = createRepository<LiveSession[]>("live-sessions", 1, seedLiveSessions);
 
 /** FR-5.1: the attendance taken for each class session. One sheet per session, keyed by the session's id. */
 export const attendanceRepo = createRepository<AttendanceSheet[]>("attendance", 1, seedAttendanceSheets);

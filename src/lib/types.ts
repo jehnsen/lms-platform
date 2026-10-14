@@ -52,6 +52,94 @@ export interface SchoolSettings {
   defaultScaleId: string;
   /** FR-5.2, FR-5.4: how attendance is counted, when it can be corrected and who is alerted. */
   attendance: AttendancePolicy;
+  /** FR-6.7: the notifications nobody can switch off. */
+  notifications: NotificationPolicy;
+  /** FR-6.2: the role rules for direct messages. */
+  messaging: MessagingPolicy;
+}
+
+// ---------------------------------------------------------------------------
+// Communication (BR-20 to BR-22)
+// ---------------------------------------------------------------------------
+
+/** FR-6.1: a notice from a teacher to a course, or to some of its sections. */
+export interface Announcement {
+  id: string;
+  courseId: string;
+  /** The sections it is for. Empty: every section of the course. */
+  sectionIds: string[];
+  title: string;
+  body: string;
+  authorId: string;
+  postedAt: string;
+  /** The channels the teacher chose to send it through (US-22). */
+  channels: NotificationChannel[];
+  /** When each person opened it, by user id. Only students in its audience count as readers. */
+  readBy: Record<string, string>;
+}
+
+/** FR-6.2: one direct message between two people. */
+export interface Message {
+  id: string;
+  fromId: string;
+  toId: string;
+  body: string;
+  sentAt: string;
+  readAt?: string;
+  /** Set when a teacher sent the same message to a whole section; each student still gets a private thread. */
+  broadcastSectionId?: string;
+}
+
+/** FR-6.3: a discussion in a course's forum. */
+export interface ForumThread {
+  id: string;
+  courseId: string;
+  title: string;
+  authorId: string;
+  createdAt: string;
+  /** Set by a moderator: the thread can be read but not replied to. */
+  locked?: boolean;
+}
+
+export interface ForumReport {
+  byId: string;
+  at: string;
+  reason: string;
+}
+
+/** One post in a thread. The first post of a thread is the question or topic itself. */
+export interface ForumPost {
+  id: string;
+  threadId: string;
+  courseId: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+  /** FR-6.3: reports that it is inappropriate, waiting for a moderator. */
+  reports: ForumReport[];
+  /** Set by a moderator: students no longer see what it says. */
+  hidden?: { byId: string; at: string };
+}
+
+/** FR-6.4, FR-6.5: a live online class held through the video conferencing service. */
+export interface LiveSession {
+  id: string;
+  courseId: string;
+  /** The sections it is for. Empty: every section of the course. */
+  sectionIds: string[];
+  title: string;
+  /** ISO date-time. */
+  startsAt: string;
+  durationMinutes: number;
+  createdById: string;
+  /** The video conferencing service and its own id and address for the meeting. */
+  provider: string;
+  meetingId: string;
+  joinUrl: string;
+  status: "scheduled" | "ended" | "cancelled";
+  endedAt?: string;
+  /** FR-6.5: where the recording can be watched, once the service has produced it. */
+  recording?: { url: string; label: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -186,11 +274,14 @@ export interface AuditEvent {
 export type NotificationChannel = "in-app" | "email" | "push";
 
 export type NotificationCategory =
+  | "announcements"
+  | "messages"
+  | "discussions"
   | "grades"
   | "deadlines"
-  | "announcements"
+  /** Exams, live classes, cancelled classes and other changes to the timetable. */
+  | "schedule"
   | "attendance"
-  | "messages"
   | "system";
 
 export interface Notification {
@@ -206,11 +297,37 @@ export interface Notification {
   mandatory?: boolean;
 }
 
-/** FR-6.7: which channels a user wants for one category. */
-export interface NotificationPref {
+/** FR-6.7: which channels one person wants for each kind of notification. A kind with no entry uses the defaults. */
+export type NotificationPrefs = Partial<Record<NotificationCategory, Record<NotificationChannel, boolean>>>;
+
+/** FR-6.6: one email or push message handed to a delivery adapter. */
+export interface DeliveryRecord {
+  id: string;
   userId: string;
+  channel: Exclude<NotificationChannel, "in-app">;
+  /** The address or device it went to. */
+  to: string;
   category: NotificationCategory;
-  channels: Record<NotificationChannel, boolean>;
+  subject: string;
+  body: string;
+  sentAt: string;
+  /** Sent although the person had switched this channel off, because the alert is mandatory. */
+  mandatory?: boolean;
+}
+
+/** FR-6.7: which kinds of notification nobody can switch off. School policy (Q-21). */
+export interface NotificationPolicy {
+  mandatoryCategories: NotificationCategory[];
+}
+
+/** FR-6.2: who may start a conversation with whom, beyond the fixed rules (Q-20). */
+export interface MessagingPolicy {
+  /** Students may message the teachers of their sections. */
+  studentsToTeachers: boolean;
+  /** Students may message other students in the same section. */
+  studentsToClassmates: boolean;
+  /** Parents may message the teachers of their linked children. */
+  parentsToTeachers: boolean;
 }
 
 // ---------------------------------------------------------------------------

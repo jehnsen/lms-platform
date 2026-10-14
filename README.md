@@ -57,10 +57,14 @@ Each role sees only its own menu and pages. Opening a page the role may not see 
 | Marking: inline comments, rubric scoring, feedback, grade release, similarity report | `/assignments/[assignmentId]/submissions/[studentId]` | faculty; admin read-only | `src/components/submission-marking.tsx`, `annotated-text.tsx`, `src/lib/adapters/plagiarism.ts` |
 | Lesson planner (simulated AI) | `/lesson-planner` | faculty | `src/components/lesson-plan-generator.tsx`, `src/lib/mock-ai/lesson-plan.ts` |
 | AI tutor (simulated) | `/tutor`, panel beside each lesson | student | `src/components/tutor-chat.tsx`, `src/lib/mock-ai/tutor.ts` |
-| Notifications | bell in the sidebar or top bar | all | `src/components/notification-bell.tsx`, `src/lib/api/notifications.ts` |
+| Notifications: the bell, the full list, and email, push and in-app chosen for each kind; required alerts locked on | bell in the sidebar or top bar, `/notifications` | all | `src/components/notification-bell.tsx`, `notification-centre.tsx`, `src/lib/api/notifications.ts`, `src/lib/domain/notifications.ts` |
+| Announcements: posted to a course or some sections, sent through the channels chosen, with read counts | `/announcements`, and on each course page | faculty post; students, parents and admins read | `src/components/announcements-view.tsx`, `src/lib/api/announcements.ts` |
+| Messages: private conversations within role rules, and a message to a whole section | `/messages` | all | `src/components/messages-view.tsx`, `src/lib/api/messages.ts`, `src/lib/domain/messaging.ts` |
+| Discussions: a forum for each course, with reporting and moderation | `/forums`, `/forums/[threadId]` | student, faculty, admin | `src/components/forum-view.tsx`, `src/lib/api/forums.ts` |
+| Live classes: scheduled on the course page, joined there when they open, recordings linked afterwards | on each course page | faculty schedule; students join | `src/components/live-classes.tsx`, `src/lib/api/live.ts`, `src/lib/adapters/video-conferencing.ts` |
 | Users: CSV import, SIS sync, roles, statuses, parent–child links, passwords | `/admin/users` | admin | `src/components/admin-users.tsx`, `user-import.tsx`, `user-edit-dialog.tsx`, `src/lib/api/users.ts`, `src/lib/domain/user-import.ts` |
 | Terms: term-end archive, export of a term's final grades to the SIS | `/admin/terms` | admin | `src/components/admin-terms.tsx`, `src/lib/api/courses.ts`, `src/lib/domain/terms.ts` |
-| School settings: password policy, data retention, upload size limits, default late rule, submission size limit, who sees similarity reports, grading scales, attendance policy and coordinators | `/admin/settings` | admin | `src/components/admin-settings.tsx`, `src/lib/api/settings.ts`, `src/lib/domain/settings.ts` |
+| School settings: password policy, data retention, upload size limits, default late rule, submission size limit, who sees similarity reports, grading scales, attendance policy and coordinators, required notifications, messaging rules | `/admin/settings` | admin | `src/components/admin-settings.tsx`, `src/lib/api/settings.ts`, `src/lib/domain/settings.ts` |
 | Audit log | `/admin/audit` | admin | `src/components/admin-audit.tsx`, `audit-table.tsx`, `src/lib/api/audit.ts` |
 | No-access page | `/forbidden` | all | `src/components/forbidden-view.tsx` |
 
@@ -92,6 +96,14 @@ In the seeded demo, "Unit 2 quiz: Training models" has a 10-minute limit, a matc
 
 **The calendar.** `/calendar` shows a week (the timetable) or a month, with classes, quiz and assignment due dates, exams, holidays and school events, filtered by course and by kind. Classes come from each section's weekly schedule and the course's dates, and due dates from the quizzes and assignments themselves, so a change to any of them is on the calendar at once. An admin adds events for the whole school and faculty for the courses they teach with **Add event**; an event marked "no classes" removes those classes from the timetable and from the attendance list.
 
+**Announcements and messages.** A teacher posts an announcement from the course page or `/announcements`: to the whole course or some sections, sent in-app, by email or by push as they choose. It shows on the course page at once, and the teacher sees how many of the students it was sent to have opened it, and who has not. On `/messages` everyone sees their own conversations; **New message** lists only the people the role rules allow (set on `/admin/settings`), and a teacher can also message a whole section, which reaches each student in a private conversation.
+
+**Discussions.** Each course has a forum on `/forums`. Anyone in the course can start a thread, reply and report a post with a reason; the course's teachers are told. A teacher hides a reported post (students then see only that it was hidden), dismisses the reports, or locks a thread. The seeded Machine Learning forum has one post waiting for a moderator and one already hidden.
+
+**Live classes.** On a course page a teacher presses **Schedule live class**; the students are told and it shows on the calendar. The **Join** button appears 10 minutes before the start and goes when the class ends. When the teacher presses **End class**, or the time runs out, the recording is linked under the class.
+
+**Notification settings.** On `/notifications` each person switches email, push and in-app on or off for each kind of notification. The kinds the school requires (exams and timetable changes, attendance and account notices, by default; an admin setting) are locked on and go out on every channel whatever was chosen. Nothing is really emailed or pushed in the demo: a log at the bottom of the page shows what would have been sent.
+
 **Archiving a term.** On `/admin/terms`, archiving a term makes every course in it read-only for all roles: no quiz attempts, no progress, no edits. Grades stay viewable and gradebooks can still be exported. A term can be reopened.
 
 ## How the code is layered
@@ -122,9 +134,11 @@ src/proxy.ts       Redirects before a page is served (signed out, or wrong role)
 - **CSV import** — the file is read and validated in the browser and never leaves it.
 - **Term archive and data retention** — an admin starts the archive by hand; nothing runs on the term's end date. The retention period is stored but nothing is ever deleted.
 - **Permission enforcement** — done in the browser by `can()`, the route guard and `src/proxy.ts`.
-- **All data** — users, terms, sections, enrollments, courses, course templates, library items, assignments, submissions, school settings, gradebook setups, attendance sheets, calendar events, learner progress, lesson plans, notifications and the audit log are kept in `localStorage` by the repositories in `src/lib/api/_stores.ts`, under versioned keys such as `lms:progress:v1`. The admin home page has **Reset demo data**; the student grades page has **Reset demo progress**.
+- **All data** — users, terms, sections, enrollments, courses, course templates, library items, assignments, submissions, school settings, gradebook setups, attendance sheets, calendar events, announcements, messages, forum posts, live classes, notification preferences, learner progress, lesson plans, notifications and the audit log are kept in `localStorage` by the repositories in `src/lib/api/_stores.ts`, under versioned keys such as `lms:progress:v1`. The admin home page has **Reset demo data**; the student grades page has **Reset demo progress**.
 - **The audit log** — written by the browser, editable by the user, capped at 500 events.
-- **Notifications** — in-app only. Nothing is emailed or pushed.
+- **Notifications** — in-app notifications are stored in the browser. Email and push go to `mockEmailProvider` and `mockPushProvider` (`src/lib/adapters/email.ts`, `push.ts`), which send nothing; what they were given is listed on `/notifications`. Every email uses one layout, and push reaches no device.
+- **Messages, forums and announcements** — every conversation, post and read is in the browser's storage. The role rules for messages and the hiding of moderated posts are applied by the screens, not withheld by a server.
+- **Live classes** — `mockVideoConferencing` (`src/lib/adapters/video-conferencing.ts`) makes up a meeting address that opens nothing, and every recording is the same sample clip. A class whose time has run out is ended, and its recording linked, when a course page is next opened.
 - **Quizzes** — a quiz reaches the browser with its answer key and is marked there. The time limit runs on the browser's clock; answers are saved to local storage as they are given; and an attempt whose time runs out while the app is closed is handed in the next time the student opens the quizzes page or the quiz. Courses and quizzes start from the seeds in `src/lib/data/` and are then edited in the browser.
 - **Who sees which lesson** — release times and section limits are applied in the browser by `courseForViewer()`. The whole course is in the browser's storage, so this hides lessons from the screen, not from someone who inspects storage.
 - **Study time and streak on the student dashboard** — fixed sample numbers in `src/lib/data/people.ts`.
@@ -155,7 +169,11 @@ The service layer is the seam: replace the body of each module in `src/lib/api/`
 | `api/reports.ts` | Progress report for a student and term, and the export of final grades to the SIS: a dry run that lists failed records, then the send, which the server performs and audit-logs. |
 | `api/attendance.ts` | A section's sessions and rosters, submitting and correcting attendance (the server stamps the time, enforces the correction window and keeps the trail), attendance rates, and one student's record. The server runs the threshold check and sends each alert once per breach. |
 | `api/calendar.ts` | The calendar for the caller, or for a parent's child, and the calendar events. |
-| `api/notifications.ts` | Notification list and read state. |
+| `api/notifications.ts` | Notification list, read state and each person's preferences. Sending moves to the server, which applies the same channel rules and calls the mail and push services. |
+| `api/announcements.ts` | Announcements, posting (the server sends them) and reads (the server records them and returns counts to staff only). |
+| `api/messages.ts` | Conversations and contacts, sending (the server applies the role rules to every message) and read state. |
+| `api/forums.ts` | Threads, posts, reports and moderation (the server strips hidden posts and other people's reports for students). |
+| `api/live.ts` | Live classes: scheduling, the join address, ending, and the recording the video service sends back. |
 | `api/lesson-plans.ts` | Saved lesson plans. |
 | `api/audit.ts` | Audit log reads. |
 | `api/_repository.ts`, `api/_stores.ts`, `api/_credentials.ts`, `api/_files.ts` | Delete: these are the mock database, the mock password store and the mock file store. |
@@ -167,6 +185,9 @@ Adapters for outside systems. Each is an interface with a mock; implement the in
 | `IdentityProvider` | `src/lib/adapters/identity-provider.ts` | SAML 2.0 or OIDC sign-in with the school identity provider (FR-1.3). |
 | `SisAdapter` | `src/lib/adapters/sis.ts` | `fetchRoster()` reads the roster from the Student Information System (FR-1.5, FR-1.6). `exportGrades()` sends final grades in the SIS's format and returns the records it turned down, each with a reason (FR-4.5). A connection test joins it later. |
 | `PlagiarismProvider` | `src/lib/adapters/plagiarism.ts` | Sends a submission to the similarity-checking service and returns its report (FR-3.8). |
+| `EmailProvider` | `src/lib/adapters/email.ts` | Sends a notification by email through the school's mail system (FR-6.6). |
+| `PushProvider` | `src/lib/adapters/push.ts` | Sends a push notification to the person's registered devices (FR-6.6). |
+| `VideoConferencingProvider` | `src/lib/adapters/video-conferencing.ts` | Creates a meeting for a live class, ends it, and returns its recording (FR-6.4, FR-6.5). |
 
 Other single-function seams:
 

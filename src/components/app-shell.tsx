@@ -15,6 +15,9 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
+  Megaphone,
+  MessageSquare,
+  MessagesSquare,
   PenLine,
   Menu,
   ScrollText,
@@ -62,6 +65,14 @@ const NAV: NavGroup[] = [
       { href: "/assignments", label: "Assignments", icon: ClipboardCheck },
       { href: "/quizzes", label: "Quizzes", icon: ListChecks },
       { href: "/calendar", label: "Calendar", icon: CalendarDays },
+    ],
+  },
+  {
+    heading: "Communicate",
+    items: [
+      { href: "/announcements", label: "Announcements", icon: Megaphone },
+      { href: "/messages", label: "Messages", icon: MessageSquare },
+      { href: "/forums", label: "Discussions", icon: MessagesSquare },
     ],
   },
   {

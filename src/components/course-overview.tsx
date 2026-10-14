@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Captions, ChevronRight, ListChecks, Pencil, Play, Sparkles, Star, TimerReset } from "lucide-react";
+import { CourseAnnouncements } from "@/components/announcements-view";
 import { CourseCover } from "@/components/course-art";
 import { ForbiddenView } from "@/components/forbidden-view";
 import { Curriculum } from "@/components/curriculum";
+import { LiveClasses } from "@/components/live-classes";
 import { NotFoundView } from "@/components/not-found-view";
 import { Badge, ButtonLink, Card, Meter, PageContainer, PageSkeleton, fieldClass } from "@/components/ui";
 import { useAssignments, type AssignmentRow } from "@/lib/api/assignments";
@@ -200,6 +202,12 @@ export function CourseOverview({ courseId }: { courseId: string }) {
         </div>
       </Card>
 
+      {/* US-22, US-24: announcements and live classes are on the course page itself. */}
+      <div className="mt-8 grid gap-8 lg:grid-cols-2">
+        <CourseAnnouncements courseId={courseId} />
+        <LiveClasses courseId={courseId} />
+      </div>
+
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <section>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -240,6 +248,14 @@ export function CourseOverview({ courseId }: { courseId: string }) {
         <div className="flex flex-col gap-8">
           <AssignmentsSection rows={assignments} staff={staff} canEdit={canEdit} />
           <ScheduleSection sections={staff ? allSections : mySections} />
+
+          <section>
+            <h2 className="mb-3 text-lg font-semibold tracking-tight">Discussion</h2>
+            <p className="text-sm text-ink-2">Ask a question or help a classmate in this course&apos;s forum.</p>
+            <ButtonLink href="/forums" variant="secondary" size="sm" className="mt-3">
+              Open the forum
+            </ButtonLink>
+          </section>
 
           <section>
             <h2 className="mb-3 text-lg font-semibold tracking-tight">How you&apos;ll learn</h2>

@@ -2,7 +2,7 @@
 
 Everything that must be real on a server before go-live. This phase of the project is frontend-first: each item below has a typed interface and a mock in the browser, and this file records what has to replace the mock.
 
-**Last updated:** 2026-10-14, after Phase 5. Items are added as each phase introduces a new mock.
+**Last updated:** 2026-10-14, after Phase 6. Items are added as each phase introduces a new mock.
 
 ## How the frontend is prepared for it
 
@@ -16,6 +16,9 @@ Everything that must be real on a server before go-live. This phase of the proje
 | School identity provider | `IdentityProvider` in `adapters/identity-provider.ts` | `createMockIdentityProvider`: asserts the email it is given if the directory has it. | `signInWithSso()` |
 | Student Information System | `SisAdapter` in `adapters/sis.ts`: `fetchRoster()`, `exportGrades()` | `mockSis`: a fixed roster of seven records; for grades, it accepts every record whose student ID looks like `S-` and digits and turns the rest down. Nothing is sent. | `syncFromSis()`, `exportGradesToSis()` |
 | Plagiarism checking service | `PlagiarismProvider` in `adapters/plagiarism.ts` | `mockPlagiarismProvider`: a score derived from the text; nothing is compared. | `submitAssignment()`, `runSimilarityCheck()` |
+| School email system | `EmailProvider` in `adapters/email.ts` | `mockEmailProvider`: accepts every message and sends nothing. | `notify()` |
+| Push notifications | `PushProvider` in `adapters/push.ts` | `mockPushProvider`: reports one device and sends nothing. | `notify()` |
+| Video conferencing service | `VideoConferencingProvider` in `adapters/video-conferencing.ts` | `mockVideoConferencing`: makes up a meeting id and address, ends nothing, and returns a sample clip as every recording. | `scheduleLiveClass()`, `endLiveClass()`, `settleLiveClasses()` |
 
 ## 1. Authentication and sessions (BR-02, FR-1.3, FR-1.4, FR-1.7)
 
@@ -52,14 +55,18 @@ Replace each mock repository with database tables and API endpoints.
 | `api/courses.ts` | Courses with units and lessons, sections and schedules, enrollments, course visibility, rosters, templates, terms, term archive | `GET /courses`, `GET /courses/:id`, `POST /courses` (blank, from a template, or a copy with a date shift), `PUT /courses/:id`, `GET /courses/:id/roster`, `GET`, `POST` and `DELETE /course-templates`, `GET /terms`, `POST /terms/:id/archive`, `POST /terms/:id/reopen` |
 | `api/materials.ts` | Content library items, captions, and the files behind them | `GET /materials`, `POST /materials` (upload), `PATCH /materials/:id`, `DELETE /materials/:id`, `GET /courses/:id/lessons/:lessonId/file` |
 | `api/assignments.ts` | Assignments with rubrics and attachments, submissions with files, inline comments, grades and their release, similarity reports | `GET` and `POST /assignments`, `GET`, `PUT` and `DELETE /assignments/:id`, `GET` and `POST /assignments/:id/submissions`, `PUT /submissions/:id/grade`, `POST` and `DELETE /submissions/:id/comments`, `POST /assignments/:id/release`, `POST /submissions/:id/similarity`, file downloads |
-| `api/settings.ts` | School settings: password policy, retention period, upload size limits, default late rule, submission size limit, who sees similarity reports, grading scales and the default scale, attendance policy and coordinators | `GET /settings`, `PUT /settings` |
+| `api/settings.ts` | School settings: password policy, retention period, upload size limits, default late rule, submission size limit, who sees similarity reports, grading scales and the default scale, attendance policy and coordinators, required notifications, messaging rules | `GET /settings`, `PUT /settings` |
 | `api/progress.ts` | Completed lessons, checkpoint answers, and reading a learner's attempts | `GET /users/:id/progress`, `POST /lessons/:id/completion`, `POST /checkpoints/:id/answers` |
 | `api/quizzes.ts` | Quizzes and questions, the question bank, attempts in progress, handed-in attempts, the grading queue | `GET` and `POST /quizzes`, `GET`, `PUT` and `DELETE /quizzes/:id`, `POST /quizzes/:id/attempts`, `PATCH /attempts/:id`, `POST /attempts/:id/submit`, `GET /grading-queue`, `PUT /attempts/:id/marks/:questionId`, `GET`, `POST` and `DELETE /question-bank` |
 | `api/grades.ts` | Class gradebook with totals, each course's grading setup (categories, weights, scale, missing-work rule), held quiz scores, a learner's released grades | `GET /courses/:id/gradebook`, `GET` and `PUT /courses/:id/gradebook/setup`, `POST /quizzes/:id/grades/hold`, `POST /quizzes/:id/grades/release`, `GET /users/:id/grades`, `POST /courses/:id/gradebook/exports` |
 | `api/reports.ts` | Progress reports, and the export of final grades to the SIS | `GET /reports/progress?studentId=&termId=`, `POST /reports/progress/exports`, `POST /sis/grade-exports` (dry run and send), `GET /sis/grade-exports/:id` |
 | `api/attendance.ts` | Attendance sheets (one per class session) with their corrections, each student's rate, and whether each student is currently below the threshold | `GET /sections/:id/sessions`, `GET` and `PUT /sessions/:id/attendance`, `GET /sections/:id/attendance`, `GET /users/:id/attendance` |
 | `api/calendar.ts` | Exams, holidays and other calendar events; the calendar built for the caller | `GET /calendar?from=&to=` (and `&studentId=` for a parent), `GET` and `POST /calendar-events`, `PUT` and `DELETE /calendar-events/:id` |
-| `api/notifications.ts` | In-app notifications | `GET /notifications`, `POST /notifications/:id/read` |
+| `api/announcements.ts` | Course announcements, with who has read each | `GET /announcements`, `POST /courses/:id/announcements`, `POST /announcements/:id/read`, `DELETE /announcements/:id` |
+| `api/messages.ts` | Direct messages | `GET /messages/conversations`, `GET /messages/contacts`, `POST /messages`, `POST /sections/:id/messages`, `POST /messages/conversations/:userId/read` |
+| `api/forums.ts` | Forum threads and posts, reports and moderation | `GET` and `POST /courses/:id/forum/threads`, `GET /forum/threads/:id`, `POST /forum/threads/:id/posts`, `POST /forum/posts/:id/reports`, `PUT /forum/posts/:id/hidden`, `DELETE /forum/posts/:id/reports`, `PUT /forum/threads/:id/locked` |
+| `api/live.ts` | Live classes and their recordings | `GET` and `POST /courses/:id/live-sessions`, `POST /live-sessions/:id/join`, `POST /live-sessions/:id/end`, `DELETE /live-sessions/:id`, and the video service's webhook |
+| `api/notifications.ts` | In-app notifications, each person's channel preferences, the delivery log | `GET /notifications`, `POST /notifications/:id/read`, `GET` and `PUT /me/notification-preferences`; sending is internal to the server |
 | `api/lesson-plans.ts` | Saved lesson plans | `GET/POST/DELETE /lesson-plans` |
 | `api/audit.ts` | Audit log reads | `GET /audit-events` |
 
@@ -106,6 +113,14 @@ Bulk import: the CSV file is parsed and validated in the browser (`previewUserIm
 - **Time zone.** Class times are plain times and "today" is the device's date (Q-34). The server needs the school's time zone as a setting.
 - **What a parent or student receives.** The whole attendance table is in the browser's storage; the screens show only one student's. The API must return only that student's marks.
 
+**Communication (Epic F).** Everything the browser decides today must be decided by the server:
+
+- **Who may message whom.** `messageDecision()` and `sendDecision()` in `src/lib/domain/messaging.ts` run in the browser, and every message is in the same storage. The API must apply the rules to each message and return only the caller's own conversations.
+- **Forums.** `postFor()` strips a hidden post's words and other people's reports in the browser. The API must do this before a student receives a post.
+- **Announcement reads.** A read is recorded by the reader's browser. The server records it, and returns read counts to staff only.
+- **Notification fan-out.** `notify()` runs in the browser of whoever caused the notification and calls the mock adapters directly. On the server it becomes a queue: one job per recipient and channel, with retries, bounce handling and per-kind templates (Q-69).
+- **Live classes.** The meeting is created by the browser through the mock adapter. The server creates it with the service's credentials, gives each person their own join address, and receives the end of the meeting and the recording by webhook.
+
 ### Scheduled jobs
 
 None of these can run in a browser. Each has a manual stand-in or a recorded setting today.
@@ -116,6 +131,7 @@ None of these can run in a browser. Each has a manual stand-in or a recorded set
 | Scheduled SIS sync (FR-1.6) | An admin presses "Sync from SIS". |
 | Delete data when the retention period ends (US-04, Q-12) | The period is stored in settings; nothing is deleted. |
 | Check attendance against the threshold and send the alerts (FR-5.5) | Runs in the browser when attendance or the attendance policy is saved. |
+| End a live class whose time has run out and link its recording (FR-6.5) | `settleLiveClasses()` runs when a course page is opened. |
 
 ## 4. Audit storage (FR-1.2, NFR-3)
 
@@ -129,9 +145,10 @@ None of these can run in a browser. Each has a manual stand-in or a recorded set
 
 | Needed | Mock today |
 | --- | --- |
-| Email through the school email system | None. In-app only. |
-| Push notifications (web push and mobile) | None. |
-| Server-side fan-out, templates and delivery tracking | `notify()` in `src/lib/api/notifications.ts` writes one in-app record. |
+| Email through the school email system | `mockEmailProvider` accepts the message; a demo log on `/notifications` shows it. |
+| Push notifications (web push and mobile) | `mockPushProvider` accepts the message; no device is registered. Registration comes with the installable app (Phase 8). |
+| Server-side fan-out, templates and delivery tracking | `notify()` in `src/lib/api/notifications.ts` works out each person's channels (`channelsFor()`), writes the in-app record and calls the adapters from the browser. One email layout for every kind. |
+| Preferences that cannot be bypassed for mandatory alerts | `withPref()` refuses to switch a mandatory kind off, and `channelsFor()` ignores preferences for it, both in the browser. |
 
 ## 6. Integrations (BR-12, BR-21, BR-26, BR-27)
 
@@ -142,8 +159,8 @@ Each gets an adapter interface and a mock in the phase shown.
 | Student Information System: roster import (mock built in Phase 1: `src/lib/adapters/sis.ts`) and final-grade export (mock built in Phase 4, same adapter; the real format is Q-18). A sync adds existing users to sections (Q-25, decided). Still to come: moving, removing and deactivating existing users (Q-63), connection test | 1, 4, 8 |
 | School identity provider (mock built in Phase 1: `src/lib/adapters/identity-provider.ts`) | 1 |
 | Plagiarism service (mock built in Phase 3a: `src/lib/adapters/plagiarism.ts`). The real one is asynchronous: submit, then receive the report by callback or polling. Student work may only be sent once the school has agreed terms with the provider (Q-42) | 3a |
-| Video conferencing: live sessions and recordings | 6 |
-| School email system | 6, 8 |
+| Video conferencing: live sessions and recordings (mock built in Phase 6: `src/lib/adapters/video-conferencing.ts`) | 6 |
+| School email system (mock built in Phase 6: `src/lib/adapters/email.ts`), and push (`src/lib/adapters/push.ts`). Connection test in Phase 8 | 6, 8 |
 | Open REST API: authentication, rate limiting, call logging | 8 |
 
 ## 7. Files and media (BR-06)

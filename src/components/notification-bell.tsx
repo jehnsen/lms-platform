@@ -11,8 +11,8 @@ import {
 import { cn, formatDate } from "@/lib/utils";
 
 /**
- * In-app notifications (FR-6.6, in-app channel). The full notification
- * centre and per-channel preferences arrive in Phase 6.
+ * The newest in-app notifications (FR-6.6). The full list and the choice of
+ * channels for each kind of notification are on `/notifications` (US-25).
  */
 export function NotificationBell({ panelClassName }: { panelClassName: string }) {
   const notifications = useMyNotifications();
@@ -126,6 +126,13 @@ export function NotificationBell({ panelClassName }: { panelClassName: string })
               })}
             </ul>
           )}
+          <Link
+            href="/notifications"
+            onClick={() => setOpen(false)}
+            className="block border-t border-line px-4 py-2.5 text-center text-sm font-medium text-primary-ink hover:bg-surface-2"
+          >
+            All notifications and settings
+          </Link>
         </section>
       ) : null}
     </div>

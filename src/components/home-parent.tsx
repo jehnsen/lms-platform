@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Badge, Card, ButtonLink, Meter, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
+import { useAnnouncements } from "@/lib/api/announcements";
 import { useViewedAttendance } from "@/lib/api/attendance";
 import { useViewedGrades } from "@/lib/api/grades";
 import { selectViewedChild } from "@/lib/api/progress";
@@ -13,13 +14,14 @@ import { courseProgress } from "@/lib/progress";
 import { firstNameOf, formatDate } from "@/lib/utils";
 
 /**
- * Parent home (US-05): one linked child's results and attendance, read-only.
- * Announcements join it when that feature exists (Phase 6).
+ * Parent home (US-05): one linked child's results, attendance and
+ * announcements, read-only.
  */
 export function ParentHome() {
   const actor = useActor();
   const grades = useViewedGrades();
   const attendance = useViewedAttendance();
+  const announcements = useAnnouncements();
   const greeting = `Welcome, ${actor ? firstNameOf(actor.name) : ""}`;
 
   if (!grades) {
@@ -149,6 +151,37 @@ export function ParentHome() {
                       <span className="flex shrink-0 items-center gap-2 text-sm font-semibold tabular-nums">
                         {entry.below ? <Badge tone="bad">Below {attendance.policy.thresholdPercent}%</Badge> : null}
                         {formatRate(entry.summary.rate)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </section>
+
+          <section>
+            <SectionTitle
+              action={
+                <Link href="/announcements" className="text-sm font-medium text-primary-ink hover:underline">
+                  All
+                </Link>
+              }
+            >
+              Announcements
+            </SectionTitle>
+            <Card>
+              {!announcements || announcements.rows.length === 0 ? (
+                <p className="p-4 text-sm text-ink-2">No announcements yet.</p>
+              ) : (
+                <ul>
+                  {announcements.rows.slice(0, 3).map(({ announcement, course, unread }) => (
+                    <li key={announcement.id} className="border-t border-line p-3.5 first:border-t-0">
+                      <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                        {announcement.title}
+                        {unread ? <Badge tone="primary">New</Badge> : null}
+                      </span>
+                      <span className="block text-xs text-ink-3">
+                        {course?.title} · {formatDate(announcement.postedAt)}
                       </span>
                     </li>
                   ))}

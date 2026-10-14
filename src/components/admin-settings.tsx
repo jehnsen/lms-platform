@@ -8,10 +8,21 @@ import { Button, Card, PageContainer, PageHeader, fieldClass } from "@/component
 import { SettingsError, updateSettings, useSettings } from "@/lib/api/settings";
 import { useUsers } from "@/lib/api/users";
 import { ATTENDANCE_RANGES } from "@/lib/domain/attendance";
+import { CATEGORY_LABELS, NOTIFICATION_CATEGORIES } from "@/lib/domain/notifications";
 import { MIN_LENGTH_RANGE } from "@/lib/domain/password-policy";
 import { RETENTION_YEARS_RANGE, SUBMISSION_LIMIT_RANGE_MB } from "@/lib/domain/settings";
 import { MATERIAL_KINDS, UPLOAD_FORMATS, UPLOAD_LIMIT_RANGE_MB } from "@/lib/domain/uploads";
-import type { AttendancePolicy, MaterialKind, PasswordPolicy, SchoolSettings } from "@/lib/types";
+import type { AttendancePolicy, MaterialKind, MessagingPolicy, PasswordPolicy, SchoolSettings } from "@/lib/types";
+
+const MESSAGING_RULES: Array<{ key: keyof MessagingPolicy; label: string; detail: string }> = [
+  { key: "studentsToTeachers", label: "Students may message their teachers", detail: "The teachers of the sections they are in." },
+  {
+    key: "studentsToClassmates",
+    label: "Students may message each other",
+    detail: "Only students in the same section. Off: a student can write to teachers only.",
+  },
+  { key: "parentsToTeachers", label: "Parents may message their children's teachers", detail: "The teachers of a linked child's sections." },
+];
 import { cn } from "@/lib/utils";
 
 const CHARACTER_RULES: Array<{ key: keyof Omit<PasswordPolicy, "minLength">; label: string }> = [
@@ -69,6 +80,8 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
       minSessions: minSessions.trim() === "" ? Number.NaN : Number(minSessions),
       editWindowHours: editWindow.trim() === "" ? Number.NaN : Number(editWindow),
     },
+    notifications: draft.notifications,
+    messaging: draft.messaging,
   };
   const setAttendance = (changes: Partial<AttendancePolicy>) => {
     setSavedNote(false);
@@ -485,6 +498,72 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
                 ))}
               </div>
             </fieldset>
+          </fieldset>
+        </Card>
+
+        <Card className="p-5">
+          <fieldset className="min-w-0">
+            <legend className="text-lg font-semibold tracking-tight">Notifications</legend>
+            <p className="mt-1 text-sm text-ink-2">
+              Everyone chooses email, push and in-app for each kind of notification. The kinds ticked here are
+              required: they go out on every channel and nobody can switch them off.
+            </p>
+            <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+              {NOTIFICATION_CATEGORIES.map((category) => (
+                <label key={category} className="flex cursor-pointer items-start gap-2.5 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={draft.notifications.mandatoryCategories.includes(category)}
+                    onChange={(event) => {
+                      setSavedNote(false);
+                      setDraft((current) => ({
+                        ...current,
+                        notifications: {
+                          mandatoryCategories: NOTIFICATION_CATEGORIES.filter((item) =>
+                            item === category ? event.target.checked : current.notifications.mandatoryCategories.includes(item),
+                          ),
+                        },
+                      }));
+                    }}
+                    className="mt-0.5 size-4 accent-primary"
+                  />
+                  <span>
+                    {CATEGORY_LABELS[category].label}
+                    <span className="block text-xs text-ink-3">{CATEGORY_LABELS[category].detail}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </Card>
+
+        <Card className="p-5">
+          <fieldset className="min-w-0">
+            <legend className="text-lg font-semibold tracking-tight">Messages</legend>
+            <p className="mt-1 text-sm text-ink-2">
+              Teachers can always message the students they teach and those students&apos; parents, staff can
+              message each other, and an administrator can message anyone. Anyone can answer a message they were
+              sent. The rest is the school&apos;s choice.
+            </p>
+            <div className="mt-4 flex flex-col gap-2.5">
+              {MESSAGING_RULES.map((rule) => (
+                <label key={rule.key} className="flex cursor-pointer items-start gap-2.5 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={draft.messaging[rule.key]}
+                    onChange={(event) => {
+                      setSavedNote(false);
+                      setDraft((current) => ({ ...current, messaging: { ...current.messaging, [rule.key]: event.target.checked } }));
+                    }}
+                    className="mt-0.5 size-4 accent-primary"
+                  />
+                  <span>
+                    {rule.label}
+                    <span className="block text-xs text-ink-3">{rule.detail}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
           </fieldset>
         </Card>
 

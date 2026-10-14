@@ -5,6 +5,8 @@
  */
 import { DEFAULT_LATE_POLICY, latePolicyProblems } from "@/lib/domain/assignments";
 import { DEFAULT_ATTENDANCE_POLICY, attendancePolicyProblems } from "@/lib/domain/attendance";
+import { DEFAULT_MESSAGING_POLICY } from "@/lib/domain/messaging";
+import { DEFAULT_NOTIFICATION_POLICY, notificationPolicyProblems } from "@/lib/domain/notifications";
 import { DEFAULT_PASSWORD_POLICY, MIN_LENGTH_RANGE } from "@/lib/domain/password-policy";
 import {
   DEFAULT_UPLOAD_LIMITS_MB,
@@ -32,6 +34,10 @@ export const DEFAULT_SETTINGS: SchoolSettings = {
   defaultScaleId: DEFAULT_SCALE_ID,
   // Q-19, Q-04: the attendance threshold, how marks count, the correction window and who is alerted.
   attendance: DEFAULT_ATTENDANCE_POLICY,
+  // Q-21: which notifications nobody can switch off.
+  notifications: DEFAULT_NOTIFICATION_POLICY,
+  // Q-20: who may message whom.
+  messaging: DEFAULT_MESSAGING_POLICY,
 };
 
 export const RETENTION_YEARS_RANGE = { min: 1, max: 99 } as const;
@@ -79,5 +85,6 @@ export function settingsProblems(settings: SchoolSettings): string[] {
     problems.push("Choose the grading scale a course starts with.");
   }
   problems.push(...attendancePolicyProblems(settings.attendance));
+  problems.push(...notificationPolicyProblems(settings.notifications));
   return problems;
 }
