@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { LatePolicyFields } from "@/components/late-policy-fields";
 import { Button, Card, PageContainer, PageHeader, fieldClass } from "@/components/ui";
 import { SettingsError, updateSettings, useSettings } from "@/lib/api/settings";
 import { MIN_LENGTH_RANGE } from "@/lib/domain/password-policy";
-import { RETENTION_YEARS_RANGE } from "@/lib/domain/settings";
+import { RETENTION_YEARS_RANGE, SUBMISSION_LIMIT_RANGE_MB } from "@/lib/domain/settings";
 import { MATERIAL_KINDS, UPLOAD_FORMATS, UPLOAD_LIMIT_RANGE_MB } from "@/lib/domain/uploads";
 import type { MaterialKind, PasswordPolicy, SchoolSettings } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
   const [uploadLimits, setUploadLimits] = useState(() =>
     Object.fromEntries(MATERIAL_KINDS.map((kind) => [kind, String(saved.uploadLimitsMb[kind])])) as Record<MaterialKind, string>,
   );
+  const [submissionLimit, setSubmissionLimit] = useState(String(saved.submissionLimitMb));
   const [busy, setBusy] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
   const [savedNote, setSavedNote] = useState(false);
@@ -46,6 +48,9 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
     uploadLimitsMb: Object.fromEntries(
       MATERIAL_KINDS.map((kind) => [kind, Number(uploadLimits[kind])]),
     ) as Record<MaterialKind, number>,
+    lateDefault: draft.lateDefault,
+    submissionLimitMb: Number(submissionLimit),
+    similarityVisibleToStudents: draft.similarityVisibleToStudents,
   };
   const changed = JSON.stringify(next) !== JSON.stringify(saved);
 
@@ -234,6 +239,66 @@ function SettingsForm({ saved }: { saved: SchoolSettings }) {
               In this demo files are kept in the browser, which has its own storage limit. A server must enforce
               these limits again.
             </p>
+          </fieldset>
+        </Card>
+
+        <Card className="p-5">
+          <fieldset>
+            <legend className="text-lg font-semibold tracking-tight">Assignments</legend>
+            <p className="mt-1 text-sm text-ink-2">
+              The late rule a new assignment starts with. Teachers can change it for each assignment, and students
+              are shown the rule before they hand in.
+            </p>
+            <div className="mt-4">
+              <LatePolicyFields
+                idPrefix="settings-late"
+                value={draft.lateDefault}
+                onChange={(lateDefault) => {
+                  setSavedNote(false);
+                  setDraft((current) => ({ ...current, lateDefault }));
+                }}
+              />
+            </div>
+
+            <div className="mt-5">
+              <label htmlFor="settings-submission-limit" className="mb-1 block text-sm font-medium">
+                Largest file a student may hand in
+              </label>
+              <div className="flex items-center gap-2 text-sm">
+                <input
+                  id="settings-submission-limit"
+                  type="number"
+                  inputMode="numeric"
+                  min={SUBMISSION_LIMIT_RANGE_MB.min}
+                  max={SUBMISSION_LIMIT_RANGE_MB.max}
+                  value={submissionLimit}
+                  onChange={(event) => {
+                    setSavedNote(false);
+                    setSubmissionLimit(event.target.value);
+                  }}
+                  className={cn(fieldClass, "w-28")}
+                />
+                <span>MB for each file</span>
+              </div>
+            </div>
+
+            <label className="mt-5 flex cursor-pointer items-start gap-2.5 text-sm">
+              <input
+                type="checkbox"
+                checked={draft.similarityVisibleToStudents}
+                onChange={(event) => {
+                  setSavedNote(false);
+                  setDraft((current) => ({ ...current, similarityVisibleToStudents: event.target.checked }));
+                }}
+                className="mt-0.5 size-4 accent-primary"
+              />
+              <span>
+                Let students see the similarity report for their own work
+                <span className="block text-xs text-ink-3">
+                  Off: only faculty and administrators see similarity reports.
+                </span>
+              </span>
+            </label>
           </fieldset>
         </Card>
 

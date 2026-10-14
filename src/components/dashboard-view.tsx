@@ -23,6 +23,7 @@ import {
   SectionTitle,
   StatTile,
 } from "@/components/ui";
+import { useAssignments } from "@/lib/api/assignments";
 import { useCourses } from "@/lib/api/courses";
 import { useMyProgress } from "@/lib/api/progress";
 import { useActor } from "@/lib/api/session";
@@ -45,6 +46,7 @@ export function DashboardView() {
   const actor = useActor();
   const courses = useCourses();
   const state = useMyProgress();
+  const assignments = useAssignments();
   // Archived courses are read-only (FR-1.8), so there is nothing in them to resume or to do.
   const open = courses.filter((course) => course.status !== "archived");
   const active = activeCourses(state, open);
@@ -73,6 +75,25 @@ export function DashboardView() {
   const average = overallGrade(state, courses);
   const checkpoints = checkpointStats(state);
   const pending = pendingQuizzes(state, open);
+  // Everything still to hand in or take, soonest first: quizzes and assignments together.
+  const upNext = [
+    ...pending.map((quiz) => ({
+      id: quiz.id,
+      href: `/quizzes/${quiz.id}`,
+      title: quiz.title,
+      due: quiz.due,
+      detail: `${courses.find((course) => course.id === quiz.courseId)?.title ?? ""} · ${quiz.questions.length} questions`,
+    })),
+    ...assignments
+      .filter((row) => !row.mine && open.some((course) => course.id === row.assignment.courseId))
+      .map((row) => ({
+        id: row.assignment.id,
+        href: `/assignments/${row.assignment.id}`,
+        title: row.assignment.title,
+        due: row.assignment.dueAt,
+        detail: `${row.courseTitle} · assignment · ${row.assignment.points} points`,
+      })),
+  ].sort((a, b) => a.due.localeCompare(b.due));
 
   const weekMinutes = weeklyActivity.reduce((sum, entry) => sum + entry.minutes, 0);
   const busiest = weeklyActivity.reduce((best, entry) => (entry.minutes > best.minutes ? entry : best));
@@ -85,7 +106,7 @@ export function DashboardView() {
             Welcome back, {actor ? firstNameOf(actor.name) : ""}
           </h1>
           <p className="mt-2 max-w-2xl text-ink-2 text-pretty">
-            You have {pending.length} {pending.length === 1 ? "quiz" : "quizzes"} coming up and one
+            You have {upNext.length} {upNext.length === 1 ? "piece of work" : "pieces of work"} coming up and one
             lesson waiting. Here&apos;s where you left off.
           </p>
         </div>
@@ -202,9 +223,9 @@ export function DashboardView() {
         />
         <StatTile
           icon={ClipboardList}
-          label="Quizzes to do"
-          value={pending.length}
-          hint={pending[0] ? `Next due ${dateParts(pending[0].due).month} ${dateParts(pending[0].due).day}` : "All caught up"}
+          label="Work to do"
+          value={upNext.length}
+          hint={upNext[0] ? `Next due ${dateParts(upNext[0].due).month} ${dateParts(upNext[0].due).day}` : "All caught up"}
         />
       </div>
 
@@ -267,18 +288,15 @@ export function DashboardView() {
               Up next
             </SectionTitle>
             <Card>
-              {pending.length === 0 ? (
-                <p className="p-4 text-sm text-ink-2">You&apos;ve taken every quiz. Nice work.</p>
+              {upNext.length === 0 ? (
+                <p className="p-4 text-sm text-ink-2">Nothing to hand in and every quiz taken. Nice work.</p>
               ) : (
                 <ul>
-                  {pending.slice(0, 4).map((quiz) => {
-                    const due = dateParts(quiz.due);
+                  {upNext.slice(0, 5).map((item) => {
+                    const due = dateParts(item.due);
                     return (
-                      <li key={quiz.id} className="border-t border-line first:border-t-0">
-                        <Link
-                          href={`/quizzes/${quiz.id}`}
-                          className="flex items-center gap-3 p-3.5 transition-colors hover:bg-surface-2"
-                        >
+                      <li key={item.id} className="border-t border-line first:border-t-0">
+                        <Link href={item.href} className="flex items-center gap-3 p-3.5 transition-colors hover:bg-surface-2">
                           <span
                             aria-hidden
                             className="grid size-11 shrink-0 place-items-center rounded-lg bg-surface-2 text-center leading-none"
@@ -289,12 +307,12 @@ export function DashboardView() {
                             </span>
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-medium">{quiz.title}</span>
+                            <span className="block truncate text-sm font-medium">{item.title}</span>
                             <span className="block truncate text-xs text-ink-3">
                               <span className="sr-only">
                                 Due {due.month} {due.day} ·{" "}
                               </span>
-                              {courses.find((course) => course.id === quiz.courseId)?.title} · {quiz.questions.length} questions
+                              {item.detail}
                             </span>
                           </span>
                           <ArrowRight aria-hidden className="size-4 shrink-0 text-ink-3" />

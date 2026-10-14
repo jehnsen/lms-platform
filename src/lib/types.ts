@@ -40,6 +40,12 @@ export interface SchoolSettings {
   retentionYears: number | null;
   /** FR-2.3: largest file, in megabytes, accepted for each kind of material. */
   uploadLimitsMb: Record<MaterialKind, number>;
+  /** FR-3.4: the late rule a new assignment starts with. Teachers can change it per assignment. */
+  lateDefault: LatePolicy;
+  /** FR-3.3: largest file, in megabytes, a student may attach to a submission. */
+  submissionLimitMb: number;
+  /** US-14: similarity reports are for faculty only unless the school turns this on. */
+  similarityVisibleToStudents: boolean;
 }
 
 export interface Term {
@@ -299,6 +305,132 @@ export interface LearnerProgress {
   attempts: QuizAttempt[];
   /** In-video checkpoint id -> whether the first answer was correct. */
   checkpoints: Record<string, boolean>;
+}
+
+// ---------------------------------------------------------------------------
+// Assignments (BR-09, BR-10, BR-12, BR-13)
+// ---------------------------------------------------------------------------
+
+/** FR-3.4: what happens to work handed in after the due time. */
+export interface LatePolicy {
+  /** `block` refuses it, `flag` accepts and marks it late, `penalty` accepts it and deducts marks. */
+  rule: "block" | "flag" | "penalty";
+  /** Penalty: percent of the mark deducted, once or for each day late. */
+  penaltyPercent: number;
+  penaltyPer: "submission" | "day";
+  /** Penalty per day: the most that can ever be deducted, in percent. */
+  maxPenaltyPercent: number;
+}
+
+export interface RubricLevel {
+  id: string;
+  label: string;
+  points: number;
+}
+
+/** One row of a rubric. Its `points` are its weight: the most it can contribute. */
+export interface RubricCriterion {
+  id: string;
+  title: string;
+  description: string;
+  points: number;
+  levels: RubricLevel[];
+}
+
+/** FR-3.2: criteria, levels and weighted points. The criteria's points add up to the assignment's. */
+export interface Rubric {
+  criteria: RubricCriterion[];
+}
+
+/** A file kept in the file store under `id`: an assignment attachment or part of a submission. */
+export interface AttachedFile {
+  id: string;
+  name: string;
+  sizeLabel: string;
+  mimeType?: string;
+}
+
+export type SubmissionKind = "text" | "file";
+
+export interface Assignment {
+  id: string;
+  courseId: string;
+  title: string;
+  instructions: string;
+  points: number;
+  /** ISO date-time. */
+  dueAt: string;
+  /** FR-3.1: the sections the assignment is set for. Never empty. */
+  sectionIds: string[];
+  attachments: AttachedFile[];
+  /** How students hand work in: typed text, files, or either. */
+  accepts: SubmissionKind[];
+  rubric?: Rubric;
+  late: LatePolicy;
+  /** US-11: students may hand in again only when this is on. */
+  allowResubmission: boolean;
+  /** Students see only published assignments. */
+  status: "draft" | "published";
+  createdById: string;
+  createdAt: string;
+  publishedAt?: string;
+}
+
+/** FR-3.9: where in the submission a comment points. */
+export type CommentAnchor =
+  /** A run of characters in the typed text. `quote` is that text, kept for display. */
+  | { kind: "text"; start: number; end: number; quote: string }
+  /** One of the submitted files, optionally a page in it. */
+  | { kind: "file"; fileId: string; page?: number };
+
+export interface InlineComment {
+  id: string;
+  anchor: CommentAnchor;
+  body: string;
+  authorId: string;
+  createdAt: string;
+}
+
+export interface SubmissionGrade {
+  /** Rubric assignments: the level chosen for each criterion, by criterion id. */
+  rubricLevels?: Record<string, string>;
+  /** The mark before any late penalty. */
+  rawPoints: number;
+  /** The mark that counts, after the late penalty. */
+  points: number;
+  feedback: string;
+  gradedById: string;
+  gradedAt: string;
+  /** FR-4.3: the student sees the grade, feedback and comments only once this is set. */
+  releasedAt?: string;
+}
+
+/** FR-3.8: the outcome of a plagiarism check. */
+export interface SimilarityReport {
+  provider: string;
+  checkedAt: string;
+  /** Share of the work that matches other sources, 0 to 100. */
+  percent: number;
+  matches: Array<{ source: string; percent: number }>;
+}
+
+/** One hand-in. A resubmission is a new record with the next attempt number. */
+export interface Submission {
+  id: string;
+  assignmentId: string;
+  courseId: string;
+  studentId: string;
+  attempt: number;
+  submittedAt: string;
+  /** FR-3.3: the reference shown to the student as proof of submission. */
+  receipt: string;
+  text?: string;
+  files: AttachedFile[];
+  /** Set when the work came in after the due time (FR-3.4). */
+  late?: { daysLate: number; penaltyPercent: number };
+  comments: InlineComment[];
+  grade?: SubmissionGrade;
+  similarity?: SimilarityReport;
 }
 
 export interface PlanSegment {

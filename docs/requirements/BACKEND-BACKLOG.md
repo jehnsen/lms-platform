@@ -2,7 +2,7 @@
 
 Everything that must be real on a server before go-live. This phase of the project is frontend-first: each item below has a typed interface and a mock in the browser, and this file records what has to replace the mock.
 
-**Last updated:** 2026-10-14, after Phase 2. Items are added as each phase introduces a new mock.
+**Last updated:** 2026-10-14, after Phase 3a. Items are added as each phase introduces a new mock.
 
 ## How the frontend is prepared for it
 
@@ -15,6 +15,7 @@ Everything that must be real on a server before go-live. This phase of the proje
 | --- | --- | --- | --- |
 | School identity provider | `IdentityProvider` in `adapters/identity-provider.ts` | `createMockIdentityProvider`: asserts the email it is given if the directory has it. | `signInWithSso()` |
 | Student Information System | `SisAdapter` in `adapters/sis.ts` | `mockSis`: a fixed roster of seven records. | `syncFromSis()` |
+| Plagiarism checking service | `PlagiarismProvider` in `adapters/plagiarism.ts` | `mockPlagiarismProvider`: a score derived from the text; nothing is compared. | `submitAssignment()`, `runSimilarityCheck()` |
 
 ## 1. Authentication and sessions (BR-02, FR-1.3, FR-1.4, FR-1.7)
 
@@ -50,7 +51,8 @@ Replace each mock repository with database tables and API endpoints.
 | `api/users.ts` | Users, roles, statuses, parent–child links, passwords, bulk import | `GET /users`, `GET /me/children`, `PATCH /users/:id`, `PUT /users/:id/password`, `PUT` and `DELETE /users/:id/children/:studentId`, `POST /users/imports` (dry run and commit) |
 | `api/courses.ts` | Courses with units and lessons, sections and schedules, enrollments, course visibility, rosters, templates, terms, term archive | `GET /courses`, `GET /courses/:id`, `POST /courses` (blank, from a template, or a copy with a date shift), `PUT /courses/:id`, `GET /courses/:id/roster`, `GET`, `POST` and `DELETE /course-templates`, `GET /terms`, `POST /terms/:id/archive`, `POST /terms/:id/reopen` |
 | `api/materials.ts` | Content library items, captions, and the files behind them | `GET /materials`, `POST /materials` (upload), `PATCH /materials/:id`, `DELETE /materials/:id`, `GET /courses/:id/lessons/:lessonId/file` |
-| `api/settings.ts` | School settings: password policy, retention period, upload size limits | `GET /settings`, `PUT /settings` |
+| `api/assignments.ts` | Assignments with rubrics and attachments, submissions with files, inline comments, grades and their release, similarity reports | `GET` and `POST /assignments`, `GET`, `PUT` and `DELETE /assignments/:id`, `GET` and `POST /assignments/:id/submissions`, `PUT /submissions/:id/grade`, `POST` and `DELETE /submissions/:id/comments`, `POST /assignments/:id/release`, `POST /submissions/:id/similarity`, file downloads |
+| `api/settings.ts` | School settings: password policy, retention period, upload size limits, default late rule, submission size limit, who sees similarity reports | `GET /settings`, `PUT /settings` |
 | `api/progress.ts` | Completed lessons, quiz attempts, checkpoint answers | `GET /users/:id/progress`, `POST /lessons/:id/completion`, `POST /quizzes/:id/attempts`, `POST /checkpoints/:id/answers` |
 | `api/grades.ts` | Class gradebook | `GET /courses/:id/gradebook`, `POST /courses/:id/gradebook/exports` |
 | `api/notifications.ts` | In-app notifications | `GET /notifications`, `POST /notifications/:id/read` |
@@ -68,6 +70,15 @@ Moved behind the service layer in Phase 2: the course catalogue with its units a
 Quiz grading currently runs in the browser (`src/lib/grading.ts`), which means the answers are shipped to the client. The server must grade attempts and never send answer keys.
 
 Bulk import: the CSV file is parsed and validated in the browser (`previewUserImport`). The server must parse the uploaded file and run the rules in `src/lib/domain/user-import.ts` itself, inside one transaction, and enforce unique email and SIS ID with database constraints.
+
+**Assignments (Epic C).** Everything the browser decides today must be decided by the server:
+
+- **Lateness.** `submitAssignment()` reads the browser's clock. The server must stamp the submission time and apply `lateOutcome()` from `src/lib/domain/assignments.ts` itself.
+- **Who may hand in.** Published, set for the student's section, resubmission allowed, course not archived: `submitDecision()` and `isSetFor()`.
+- **What a student receives.** `forStudent()` strips the unreleased mark, feedback, inline comments and the similarity report in the browser; the full record is in the same storage. The API must never send them.
+- **Marks.** `gradeFor()` totals the rubric and applies the late penalty; the server must recompute both rather than accept a total.
+- **Files.** Attachments and submitted files are in IndexedDB. The server needs storage, virus scanning, type and size checks, and downloads authorized per submission.
+- **Receipts.** `receiptCode()` is a readable checksum, not proof. A real receipt should be issued and stored by the server, and ideally emailed.
 
 ### Scheduled jobs
 
@@ -103,7 +114,7 @@ Each gets an adapter interface and a mock in the phase shown.
 | --- | --- |
 | Student Information System: roster import (mock built in Phase 1: `src/lib/adapters/sis.ts`). Still to come: updating and deactivating existing users (Q-25), grade export, connection test | 1, 4, 8 |
 | School identity provider (mock built in Phase 1: `src/lib/adapters/identity-provider.ts`) | 1 |
-| Plagiarism service | 3a |
+| Plagiarism service (mock built in Phase 3a: `src/lib/adapters/plagiarism.ts`). The real one is asynchronous: submit, then receive the report by callback or polling. Student work may only be sent once the school has agreed terms with the provider (Q-42) | 3a |
 | Video conferencing: live sessions and recordings | 6 |
 | School email system | 6, 8 |
 | Open REST API: authentication, rate limiting, call logging | 8 |

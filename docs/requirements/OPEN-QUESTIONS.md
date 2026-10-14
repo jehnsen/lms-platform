@@ -2,7 +2,7 @@
 
 Points the BRD and the BA deliverables leave open, or where the two disagree. Nothing here has been decided on the client's behalf: each row records the **default the app uses for now**, and every default is either configurable or isolated in one place so it can change without rework.
 
-**Last updated:** 2026-10-14, after Phase 2. New in Phase 2: Q-32 to Q-36; default recorded for Q-13; **Q-25 now blocks term rollover** (see its row). New in Phase 1: Q-25 to Q-31.
+**Last updated:** 2026-10-14, after Phase 3a. New in Phase 3a: Q-37 to Q-42; default recorded for Q-14. **Q-25 still blocks placing existing students in new courses** (see its row).
 
 Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row), `Deferred` (not needed until a later phase).
 
@@ -40,6 +40,13 @@ Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row
 | Q-34 | Which time zone do release times and deadlines use? | FR-2.7, FR-3.4, FR-5.3 | The person entering the time uses their own device's time zone; the moment is stored in UTC and shown to each viewer in theirs. Date-only values (term and course dates) are plain calendar dates. | Open |
 | Q-35 | Should a teacher be able to restrict or schedule a whole unit, or a quiz, and not only single lessons? | FR-2.7, FR-2.8, US-09 | Lessons only. Quizzes get a release time when they move into the service layer (Phase 3b). | Open |
 | Q-36 | May teachers use any content library item, or only items for their own courses? And who may remove an item? | FR-2.6 | Every faculty member sees and can use every item, and can remove any item that no lesson uses. | Open |
+| Q-14 | Default late rule (block, flag, or penalty and its percentage); whether a penalty is per day or flat. | FR-3.4, US-11 | Late work is accepted and marked late, with nothing deducted. Admins change the default under Admin → Settings (`DEFAULT_LATE_POLICY` in `src/lib/domain/assignments.ts`); teachers can set a different rule on each assignment, including a penalty once or per day with a cap. | Open |
+| Q-37 | What may students hand in: which file types, how large, how many? | FR-3.3 | PDF, DOC, DOCX, TXT, MD, PPT, PPTX, ODP, JPG and PNG; 25 MB each (an admin setting); at most 5 files per hand-in. | Open |
+| Q-38 | How is a late penalty worked out? | FR-3.4 | The percentage is taken off the mark the work earned, not off the total available. Any part of a day late counts as a whole day. There is no grace period. | Open |
+| Q-39 | When a student hands in again, which version counts? | FR-3.4, FR-4.2 | The latest. Earlier versions stay on record with their own receipts; a mark given to an earlier version stays with it and stops counting. | Open |
+| Q-40 | Can a teacher give one student an extension or a different due date? | FR-3.1, FR-3.4 | No. One due time for everyone the assignment is set for. | Open |
+| Q-41 | Are grades released for a whole assignment at once, or student by student? And may a released grade be changed? | FR-4.3, US-15 | "Release grades" releases every marked, unreleased hand-in of the assignment. A released mark can be changed and the student sees the change at once. | Open |
+| Q-42 | Which plagiarism service, may student work be sent to it under the applicable privacy law, and at what score should work be flagged? | FR-3.8, US-14, NFR-3 | A mock that compares nothing. Reports are for faculty and admins; an admin setting can show students their own percentage. Scores of 40% or more are shown in red. | Open |
 
 ## Policies needed by later phases
 
@@ -47,7 +54,6 @@ Each becomes a configurable setting with a default when its phase is built.
 
 | # | Question | Affects | Phase |
 | --- | --- | --- | --- |
-| Q-14 | Default late rule (block, flag, or penalty and its percentage); whether a penalty is per day or flat. | FR-3.4 | 3a |
 | Q-15 | Are short answers auto-marked by keyword (as the prototype does), always sent to manual marking, or auto-marked with manual override? FR-3.5 and US-12 disagree. | FR-3.5, FR-3.6, US-12 | 3b |
 | Q-16 | How many quiz attempts are allowed, and which one counts (best, last, average)? | FR-3.7, FR-4.2 | 3b |
 | Q-17 | Grading scale bands and the GPA mapping; default grade categories and weights. | FR-4.1, FR-4.2 | 4 |

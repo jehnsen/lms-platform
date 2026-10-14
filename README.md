@@ -47,12 +47,14 @@ Each role sees only its own menu and pages. Opening a page the role may not see 
 | Grades | `/grades` | student (own), parent (child) | `src/components/grades-view.tsx` |
 | Gradebook | `/gradebook` | faculty (own courses), admin (all, read-only) | `src/components/gradebook-view.tsx`, `src/lib/api/grades.ts` |
 | Content library: uploads within size limits, captions, preview | `/content` | faculty; admin read-only | `src/components/content-library.tsx`, `src/lib/api/materials.ts`, `src/lib/domain/uploads.ts` |
+| Assignments: set, hand in, receipt, late rules, resubmission | `/assignments`, `/assignments/new` (faculty), `/assignments/[assignmentId]`, `/assignments/[assignmentId]/edit` (faculty) | student, faculty; admin read-only | `src/components/assignment-list.tsx`, `assignment-editor.tsx`, `assignment-detail.tsx`, `rubric.tsx`, `late-policy-fields.tsx`, `src/lib/api/assignments.ts`, `src/lib/domain/assignments.ts` |
+| Marking: inline comments, rubric scoring, feedback, grade release, similarity report | `/assignments/[assignmentId]/submissions/[studentId]` | faculty; admin read-only | `src/components/submission-marking.tsx`, `annotated-text.tsx`, `src/lib/adapters/plagiarism.ts` |
 | Lesson planner (simulated AI) | `/lesson-planner` | faculty | `src/components/lesson-plan-generator.tsx`, `src/lib/mock-ai/lesson-plan.ts` |
 | AI tutor (simulated) | `/tutor`, panel beside each lesson | student | `src/components/tutor-chat.tsx`, `src/lib/mock-ai/tutor.ts` |
 | Notifications | bell in the sidebar or top bar | all | `src/components/notification-bell.tsx`, `src/lib/api/notifications.ts` |
 | Users: CSV import, SIS sync, roles, statuses, parent–child links, passwords | `/admin/users` | admin | `src/components/admin-users.tsx`, `user-import.tsx`, `user-edit-dialog.tsx`, `src/lib/api/users.ts`, `src/lib/domain/user-import.ts` |
 | Terms: term-end archive | `/admin/terms` | admin | `src/components/admin-terms.tsx`, `src/lib/api/courses.ts`, `src/lib/domain/terms.ts` |
-| School settings: password policy, data retention, upload size limits | `/admin/settings` | admin | `src/components/admin-settings.tsx`, `src/lib/api/settings.ts`, `src/lib/domain/settings.ts` |
+| School settings: password policy, data retention, upload size limits, default late rule, submission size limit, who sees similarity reports | `/admin/settings` | admin | `src/components/admin-settings.tsx`, `src/lib/api/settings.ts`, `src/lib/domain/settings.ts` |
 | Audit log | `/admin/audit` | admin | `src/components/admin-audit.tsx`, `audit-table.tsx`, `src/lib/api/audit.ts` |
 | No-access page | `/forbidden` | all | `src/components/forbidden-view.tsx` |
 
@@ -63,6 +65,10 @@ Pages behind sign-in live in `src/app/(app)/` and share the sidebar layout; `/lo
 **Building a course.** Faculty press **New course** on `/courses` to start blank, from a template, or as a copy of a course they teach (a copy takes units, lessons, sections and schedules, never students or their work, and can move every date by a number of days). The builder at `/courses/[courseId]/edit` holds the details, the sections with their weekly meeting times, and the units and lessons. Reorder by dragging the handle, by keyboard on the handle (Space, arrow keys, Space), or with the Move up and Move down buttons. Each lesson can have a release date and time and can be limited to sections; on the course page, staff can switch **Show** to see what one section's students see right now. Nothing is saved until **Save course**.
 
 A new course has no students: they are placed in sections by the CSV import or the SIS sync, and both currently skip people who already have an account (Q-25 in `OPEN-QUESTIONS.md`).
+
+**Setting and marking an assignment.** Faculty press **New assignment** on `/assignments`: instructions, due date and time, points, attached files, the sections it is for, how students hand in (typed text, files or both), the late rule, whether handing in again is allowed, and an optional rubric. It can be saved as a draft; publishing checks everything, including that the rubric adds up to the assignment's points. Students hand in on the assignment's page and get a receipt with the date, time and a code. On the marking page (`/assignments/[assignmentId]/submissions/[studentId]`) the teacher comments on selected text or on a file, picks rubric levels (the total and any late deduction update as they go) and writes feedback. Students see none of that until the teacher presses **Release grades** on the assignment page.
+
+The seeded demo has an assignment with marked, unmarked and late work (as faculty, open "Reflection: where have you met machine learning?") and one the student has still to do.
 
 **Archiving a term.** On `/admin/terms`, archiving a term makes every course in it read-only for all roles: no quiz attempts, no progress, no edits. Grades stay viewable and gradebooks can still be exported. A term can be reopened.
 
@@ -94,14 +100,16 @@ src/proxy.ts       Redirects before a page is served (signed out, or wrong role)
 - **CSV import** — the file is read and validated in the browser and never leaves it.
 - **Term archive and data retention** — an admin starts the archive by hand; nothing runs on the term's end date. The retention period is stored but nothing is ever deleted.
 - **Permission enforcement** — done in the browser by `can()`, the route guard and `src/proxy.ts`.
-- **All data** — users, terms, sections, enrollments, courses, course templates, library items, school settings, learner progress, lesson plans, notifications and the audit log are kept in `localStorage` by the repositories in `src/lib/api/_stores.ts`, under versioned keys such as `lms:progress:v1`. The admin home page has **Reset demo data**; the student grades page has **Reset demo progress**.
+- **All data** — users, terms, sections, enrollments, courses, course templates, library items, assignments, submissions, school settings, learner progress, lesson plans, notifications and the audit log are kept in `localStorage` by the repositories in `src/lib/api/_stores.ts`, under versioned keys such as `lms:progress:v1`. The admin home page has **Reset demo data**; the student grades page has **Reset demo progress**.
 - **The audit log** — written by the browser, editable by the user, capped at 500 events.
 - **Notifications** — in-app only. Nothing is emailed or pushed.
 - **Quiz content** — a static file, `src/lib/data/quizzes.ts`. Quizzes cannot be edited and are not copied with a course until Phase 3b. Courses start from the seed in `src/lib/data/courses.ts` and are then edited in the browser.
 - **Who sees which lesson** — release times and section limits are applied in the browser by `courseForViewer()`. The whole course is in the browser's storage, so this hides lessons from the screen, not from someone who inspects storage.
 - **Study time and streak on the student dashboard** — fixed sample numbers in `src/lib/data/people.ts`.
 - **AI tutor and lesson planner** — template-based, in `src/lib/mock-ai/`. No model is called.
-- **Uploads** — files are kept in the browser's IndexedDB (`src/lib/api/_files.ts`): they survive a reload but exist only on the device that uploaded them. Upload progress and auto-captioning are simulated. The size and format check runs in the browser.
+- **Assignments** — the submission time comes from the browser's clock, the late rule and rubric total are worked out in the browser, and a student's unreleased mark is hidden by the screen, not withheld by a server. The receipt code is a checksum, not proof.
+- **Similarity reports** — `mockPlagiarismProvider` in `src/lib/adapters/plagiarism.ts` compares nothing. It derives a low score from the text, and a high one when the work contains the sentence "Machine learning is a field of study in artificial intelligence", so a flagged report can be shown on purpose.
+- **Uploads** — library files, assignment attachments and submitted files are kept in the browser's IndexedDB (`src/lib/api/_files.ts`): they survive a reload but exist only on the device that uploaded them. Upload progress and auto-captioning are simulated. The size and format check runs in the browser.
 - **Lesson videos** — a video lesson plays a file uploaded to the content library, or one of two sample clips streamed from `media.w3.org` (`SAMPLE_VIDEOS` in `src/lib/sample-media.ts`), which need an internet connection. Captions come from each lesson's `transcript`.
 
 ## Connecting a backend
@@ -114,6 +122,7 @@ The service layer is the seam: replace the body of each module in `src/lib/api/`
 | `api/users.ts` | Users, role and status changes, parent–child links, password set, and the import: upload the file for a dry run, then commit. |
 | `api/courses.ts` | Courses as the caller may see them (the server leaves out unreleased and other-section lessons), course create, copy and save, templates, rosters, terms, term archive and reopen. |
 | `api/materials.ts` | Content library list, upload, captions, delete, and the file a lesson shows. |
+| `api/assignments.ts` | Assignments, submissions (the server stamps the time and applies the late rule), marking, inline comments, grade release (the server withholds unreleased marks), similarity checks, file downloads. |
 | `api/settings.ts` | School settings. |
 | `api/progress.ts` | Lesson completion, quiz attempts, checkpoint answers. |
 | `api/grades.ts` | Class gradebook and export logging. |
@@ -128,6 +137,7 @@ Adapters for outside systems. Each is an interface with a mock; implement the in
 | --- | --- | --- |
 | `IdentityProvider` | `src/lib/adapters/identity-provider.ts` | SAML 2.0 or OIDC sign-in with the school identity provider (FR-1.3). |
 | `SisAdapter` | `src/lib/adapters/sis.ts` | Reads the roster from the Student Information System (FR-1.5, FR-1.6). Grade export and a connection test join it later. |
+| `PlagiarismProvider` | `src/lib/adapters/plagiarism.ts` | Sends a submission to the similarity-checking service and returns its report (FR-3.8). |
 
 Other single-function seams:
 

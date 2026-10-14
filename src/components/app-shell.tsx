@@ -7,6 +7,7 @@ import {
   BookOpen,
   CalendarRange,
   Clapperboard,
+  ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
   ListChecks,
@@ -53,6 +54,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/", label: "Dashboard", icon: LayoutDashboard },
       { href: "/courses", label: "Courses", icon: BookOpen },
+      { href: "/assignments", label: "Assignments", icon: ClipboardCheck },
     ],
   },
   {

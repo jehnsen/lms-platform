@@ -8,27 +8,11 @@ import type { SectionDraft } from "@/lib/domain/course-rules";
 import { isWebUrl } from "@/lib/domain/links";
 import { SAMPLE_VIDEO_LABELS } from "@/lib/sample-media";
 import type { Lesson, LessonType, Material, VideoKey } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, fromLocalInput, toLocalInput } from "@/lib/utils";
 
 const TEXTAREA_CLASS = cn(fieldBaseClass, "w-full px-3 py-2 leading-relaxed");
 const LABEL_CLASS = "mb-1 block text-sm font-medium";
 const HINT_CLASS = "mt-1 text-xs text-ink-3";
-
-const pad = (value: number) => String(value).padStart(2, "0");
-
-/** An ISO date-time as the value of a `datetime-local` input, in the viewer's time zone. */
-function toLocalInput(iso: string | undefined) {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function fromLocalInput(value: string) {
-  if (!value) return undefined;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
-}
 
 const lines = (text: string) =>
   text

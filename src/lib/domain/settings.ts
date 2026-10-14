@@ -3,6 +3,7 @@
  * a change must pass. Every default here is an open question in
  * docs/requirements/OPEN-QUESTIONS.md.
  */
+import { DEFAULT_LATE_POLICY, latePolicyProblems } from "@/lib/domain/assignments";
 import { DEFAULT_PASSWORD_POLICY, MIN_LENGTH_RANGE } from "@/lib/domain/password-policy";
 import {
   DEFAULT_UPLOAD_LIMITS_MB,
@@ -18,9 +19,16 @@ export const DEFAULT_SETTINGS: SchoolSettings = {
   retentionYears: null,
   // Q-13: file size limits per kind of material.
   uploadLimitsMb: DEFAULT_UPLOAD_LIMITS_MB,
+  // Q-14: late work is accepted and marked late until the school sets its rule.
+  lateDefault: DEFAULT_LATE_POLICY,
+  // Q-37: the largest file a student may hand in.
+  submissionLimitMb: 25,
+  // US-14: similarity reports are for faculty only unless the school decides otherwise.
+  similarityVisibleToStudents: false,
 };
 
 export const RETENTION_YEARS_RANGE = { min: 1, max: 99 } as const;
+export const SUBMISSION_LIMIT_RANGE_MB = { min: 1, max: 500 } as const;
 
 /** Why these settings cannot be saved. Empty when they can. */
 export function settingsProblems(settings: SchoolSettings): string[] {
@@ -47,6 +55,17 @@ export function settingsProblems(settings: SchoolSettings): string[] {
         `The size limit for ${UPLOAD_FORMATS[kind].label.toLowerCase()} must be a whole number of megabytes from ${UPLOAD_LIMIT_RANGE_MB.min} to ${UPLOAD_LIMIT_RANGE_MB.max}.`,
       );
     }
+  }
+  problems.push(...latePolicyProblems(settings.lateDefault));
+  const submissionLimit = settings.submissionLimitMb;
+  if (
+    !Number.isInteger(submissionLimit) ||
+    submissionLimit < SUBMISSION_LIMIT_RANGE_MB.min ||
+    submissionLimit > SUBMISSION_LIMIT_RANGE_MB.max
+  ) {
+    problems.push(
+      `The size limit for submitted files must be a whole number of megabytes from ${SUBMISSION_LIMIT_RANGE_MB.min} to ${SUBMISSION_LIMIT_RANGE_MB.max}.`,
+    );
   }
   return problems;
 }

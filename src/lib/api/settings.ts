@@ -33,6 +33,11 @@ function describeChanges(before: SchoolSettings, after: SchoolSettings) {
   if (JSON.stringify(before.uploadLimitsMb) !== JSON.stringify(after.uploadLimitsMb)) {
     changed.push("upload size limits");
   }
+  if (JSON.stringify(before.lateDefault) !== JSON.stringify(after.lateDefault)) changed.push("default late rule");
+  if (before.submissionLimitMb !== after.submissionLimitMb) changed.push("submission size limit");
+  if (before.similarityVisibleToStudents !== after.similarityVisibleToStudents) {
+    changed.push("who sees similarity reports");
+  }
   return changed;
 }
 

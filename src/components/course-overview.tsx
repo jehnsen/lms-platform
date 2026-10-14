@@ -8,6 +8,7 @@ import { ForbiddenView } from "@/components/forbidden-view";
 import { Curriculum } from "@/components/curriculum";
 import { NotFoundView } from "@/components/not-found-view";
 import { Badge, ButtonLink, Card, Meter, PageContainer, PageSkeleton, fieldClass } from "@/components/ui";
+import { useAssignments, type AssignmentRow } from "@/lib/api/assignments";
 import { useCourse, useCourseRoster, useCourseSections, useMySections } from "@/lib/api/courses";
 import { useCanTrackProgress, useMyProgress } from "@/lib/api/progress";
 import { courseForViewer } from "@/lib/domain/content-visibility";
@@ -17,7 +18,7 @@ import { letterGrade } from "@/lib/grading";
 import { courseGrade, courseProgress, nextLesson } from "@/lib/progress";
 import type { Section } from "@/lib/types";
 import { useNow } from "@/lib/use-now";
-import { formatDate, formatMinutes } from "@/lib/utils";
+import { formatDate, formatDateTime, formatMinutes } from "@/lib/utils";
 
 const FEATURES = [
   { icon: Captions, title: "Captioned video", detail: "Every lesson has captions and a clickable transcript." },
@@ -33,6 +34,7 @@ export function CourseOverview({ courseId }: { courseId: string }) {
   const roster = useCourseRoster(courseId);
   const allSections = useCourseSections(courseId);
   const mySections = useMySections(courseId);
+  const assignments = useAssignments().filter((row) => row.assignment.courseId === courseId);
   const now = useNow();
   // Staff only: look at the course the way a student in one section sees it (US-09).
   const [previewSectionId, setPreviewSectionId] = useState("");
@@ -233,6 +235,7 @@ export function CourseOverview({ courseId }: { courseId: string }) {
         </section>
 
         <div className="flex flex-col gap-8">
+          <AssignmentsSection rows={assignments} staff={staff} canEdit={canEdit} />
           <ScheduleSection sections={staff ? allSections : mySections} />
 
           <section>
@@ -252,6 +255,46 @@ export function CourseOverview({ courseId }: { courseId: string }) {
         </div>
       </div>
     </PageContainer>
+  );
+}
+
+/** US-10: the course's assignments with their due dates. Students see the ones set for their section. */
+function AssignmentsSection({ rows, staff, canEdit }: { rows: AssignmentRow[]; staff: boolean; canEdit: boolean }) {
+  if (rows.length === 0 && !canEdit) return null;
+  return (
+    <section>
+      <h2 className="mb-3 text-lg font-semibold tracking-tight">Assignments</h2>
+      {rows.length === 0 ? (
+        <p className="text-sm text-ink-2">None set yet.</p>
+      ) : (
+        <ul className="flex flex-col gap-2 text-sm">
+          {rows.map(({ assignment, mine }) => (
+            <li key={assignment.id}>
+              <Link href={`/assignments/${assignment.id}`} className="font-medium text-primary-ink hover:underline">
+                {assignment.title || "Untitled assignment"}
+              </Link>
+              <div className="text-ink-2">
+                Due {formatDateTime(assignment.dueAt)}
+                {staff
+                  ? assignment.status === "draft"
+                    ? " · draft"
+                    : null
+                  : mine
+                    ? mine.grade
+                      ? ` · ${mine.grade.points}/${assignment.points}`
+                      : " · handed in"
+                    : " · to do"}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {canEdit ? (
+        <ButtonLink href="/assignments/new" variant="secondary" size="sm" className="mt-3">
+          New assignment
+        </ButtonLink>
+      ) : null}
+    </section>
   );
 }
 

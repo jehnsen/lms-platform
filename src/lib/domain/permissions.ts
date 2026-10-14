@@ -11,11 +11,16 @@ import type { AccountStatus, Role } from "@/lib/types";
 
 export type Action = "view" | "create" | "update" | "delete" | "submit" | "export";
 
+// Marking a submission is "update" on it; releasing grades is "update" on the assignment.
+
 export type ResourceType =
   | "course"
   | "course-template"
   | "progress"
   | "quiz"
+  | "assignment"
+  | "submission"
+  | "similarity-report"
   | "grades"
   | "gradebook"
   | "content-library"
@@ -65,6 +70,9 @@ export const PERMISSIONS: Record<Role, Grants> = {
     course: { view: "course" },
     progress: { view: "own", update: "own" },
     quiz: { view: "course", submit: "course" },
+    // US-11: students hand work in and see their own submissions, never anyone else's.
+    assignment: { view: "course", submit: "course" },
+    submission: { view: "own" },
     grades: { view: "own" },
     tutor: { view: "any" },
     notification: OWN_NOTIFICATIONS,
@@ -76,6 +84,11 @@ export const PERMISSIONS: Record<Role, Grants> = {
     "course-template": { view: "any", create: "any", delete: "own" },
     progress: { view: "course" },
     quiz: { view: "course" },
+    // US-10, US-15: faculty set and mark assignments in the courses they teach.
+    assignment: { view: "course", create: "course", update: "course", delete: "course" },
+    submission: { view: "course", update: "course" },
+    // US-14: similarity reports are for faculty.
+    "similarity-report": { view: "course", create: "course" },
     grades: { view: "course" },
     gradebook: { view: "course", update: "course", export: "course" },
     "content-library": { view: "any", create: "any", update: "any", delete: "any" },
@@ -87,6 +100,10 @@ export const PERMISSIONS: Record<Role, Grants> = {
     "course-template": { view: "any", delete: "any" },
     progress: { view: "any" },
     quiz: { view: "any" },
+    // Admins oversee assignments and marked work but do not mark it.
+    assignment: { view: "any" },
+    submission: { view: "any" },
+    "similarity-report": { view: "any" },
     grades: { view: "any" },
     gradebook: { view: "any", export: "any" },
     "content-library": { view: "any" },

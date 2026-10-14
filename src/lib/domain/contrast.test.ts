@@ -35,6 +35,8 @@ const TEXT_ON_SURFACE: Array<[text: string, surface: string]> = [
   ["bad", "surface"],
   // Unread count on the notification bell: bg-bad with text-surface.
   ["surface", "bad"],
+  // Text with an inline comment on it: bg-warn-soft with text-ink.
+  ["ink", "warn-soft"],
   // Tab bars and filters invert the page: bg-ink with text-bg.
   ["bg", "ink"],
 ];

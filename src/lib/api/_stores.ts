@@ -4,6 +4,7 @@
  * Every mock repository, in one place so services can share them without
  * importing each other. Each one stands in for a backend table.
  */
+import { seedAssignments, seedSubmissions } from "@/lib/data/assignments";
 import { courses as seedCourses } from "@/lib/data/courses";
 import {
   DEMO_USER_IDS,
@@ -17,6 +18,7 @@ import {
 import { materials as seedMaterials } from "@/lib/data/people";
 import { DEFAULT_SETTINGS } from "@/lib/domain/settings";
 import type {
+  Assignment,
   AuditEvent,
   Course,
   CourseTemplate,
@@ -27,6 +29,7 @@ import type {
   Notification,
   SchoolSettings,
   Section,
+  Submission,
   Term,
   User,
 } from "@/lib/types";
@@ -114,7 +117,13 @@ export const viewedChildRepo = createRepository<Record<string, string>>(
 );
 
 /** School-wide policy set by admins. One record, not a list. */
-export const settingsRepo = createRepository<SchoolSettings>("settings", 2, DEFAULT_SETTINGS);
+export const settingsRepo = createRepository<SchoolSettings>("settings", 3, DEFAULT_SETTINGS);
+
+/** FR-3.1: assignments, drafts included. */
+export const assignmentsRepo = createRepository<Assignment[]>("assignments", 1, seedAssignments);
+
+/** FR-3.3: every hand-in, with its inline comments, grade and similarity report. Attached files are in `_files.ts`. */
+export const submissionsRepo = createRepository<Submission[]>("submissions", 1, seedSubmissions);
 
 export interface MockCredential {
   digest: string;

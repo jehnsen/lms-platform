@@ -9,14 +9,15 @@
  * `DELETE /materials/:id`, and `GET /courses/:id/lessons/:lessonId/file` for
  * the file a lesson shows to someone who may open that lesson.
  */
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { nowIso } from "@/lib/clock";
 import { courseLessons } from "@/lib/domain/course-outline";
 import { can } from "@/lib/domain/permissions";
 import { checkUpload } from "@/lib/domain/uploads";
 import type { Lesson, Material } from "@/lib/types";
 import { formatBytes } from "@/lib/utils";
-import { deleteFile, getFile, putFile } from "./_files";
+import { useStoredFile, type StoredFile } from "./_file-url";
+import { deleteFile, putFile } from "./_files";
 import { useRepository } from "./_repository";
 import { coursesRepo, materialsRepo, settingsRepo } from "./_stores";
 import { authorize, recordAudit, useActor } from "./session";
@@ -121,46 +122,7 @@ export async function removeMaterial(materialId: string): Promise<void> {
 
 // --- The files themselves ------------------------------------------------------
 
-export type StoredFile =
-  /** No file was asked for. */
-  | { state: "none" }
-  | { state: "loading" }
-  /** The item has no file: a seeded sample, or one whose file is gone from this browser. */
-  | { state: "missing" }
-  /** `url` is an object URL that stays valid while the component is on screen. */
-  | { state: "ready"; url: string };
-
-function useStoredFile(fileId: string | undefined): StoredFile {
-  const [loaded, setLoaded] = useState<{ id: string; url: string | null } | null>(null);
-
-  useEffect(() => {
-    if (!fileId) return;
-    let cancelled = false;
-    let url: string | undefined;
-    getFile(fileId)
-      .then((blob) => {
-        if (cancelled) return;
-        url = blob ? URL.createObjectURL(blob) : undefined;
-        setLoaded({ id: fileId, url: url ?? null });
-      })
-      .catch(() => {
-        if (!cancelled) setLoaded({ id: fileId, url: null });
-      });
-    return () => {
-      cancelled = true;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [fileId]);
-
-  // Pages stay mounted when hidden: forget the revoked URL so it is loaded again on return.
-  useLayoutEffect(() => {
-    return () => setLoaded(null);
-  }, [fileId]);
-
-  if (!fileId) return { state: "none" };
-  if (!loaded || loaded.id !== fileId) return { state: "loading" };
-  return loaded.url ? { state: "ready", url: loaded.url } : { state: "missing" };
-}
+export type { StoredFile };
 
 /** The stored file of a library item, for people who may open the library. */
 export function useMaterialFile(material: Material | undefined): StoredFile {

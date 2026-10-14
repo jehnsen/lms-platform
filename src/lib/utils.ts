@@ -70,3 +70,19 @@ export function formatDateTime(iso: string) {
     minute: "2-digit",
   }).format(new Date(iso));
 }
+
+/** An ISO date-time as the value of a `datetime-local` input, in the viewer's time zone. */
+export function toLocalInput(iso: string | undefined) {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** The ISO date-time for the value of a `datetime-local` input, or `undefined` when it is empty or invalid. */
+export function fromLocalInput(value: string) {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}

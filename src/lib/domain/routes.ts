@@ -26,6 +26,17 @@ const ROUTE_RULES: RouteRule[] = [
   { prefix: "/courses/new", action: "create", resource: "course" },
   { prefix: "/courses", pattern: /^\/courses\/[^/]+\/edit$/, action: "update", resource: "course" },
   { prefix: "/quizzes", action: "submit", resource: "quiz" },
+  // Assignments: everyone who has them may list and open them; setting and marking are for staff.
+  { prefix: "/assignments", action: "view", resource: "assignment" },
+  { prefix: "/assignments/new", action: "create", resource: "assignment" },
+  { prefix: "/assignments", pattern: /^\/assignments\/[^/]+\/edit$/, action: "update", resource: "assignment" },
+  {
+    prefix: "/assignments",
+    pattern: /^\/assignments\/[^/]+\/submissions\/[^/]+$/,
+    action: "view",
+    resource: "submission",
+    scopes: ["course", "any"],
+  },
   // The learner's own grades page: students for themselves, parents for a child.
   { prefix: "/grades", action: "view", resource: "grades", scopes: ["own", "child"] },
   { prefix: "/tutor", action: "view", resource: "tutor" },
