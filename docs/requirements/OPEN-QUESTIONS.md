@@ -2,7 +2,7 @@
 
 Points the BRD and the BA deliverables leave open, or where the two disagree. Nothing here has been decided on the client's behalf: each row records the **default the app uses for now**, and every default is either configurable or isolated in one place so it can change without rework.
 
-**Last updated:** 2026-10-14, after Phase 3a. New in Phase 3a: Q-37 to Q-42; default recorded for Q-14. **Q-25 still blocks placing existing students in new courses** (see its row).
+**Last updated:** 2026-10-14, after Phase 3b. New in Phase 3b: Q-43 to Q-47; defaults recorded for Q-15 and Q-16. **Q-25 still blocks placing existing students in new courses** (see its row).
 
 Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row), `Deferred` (not needed until a later phase).
 
@@ -38,7 +38,7 @@ Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row
 | Q-32 | Who creates courses, and how do other teachers get onto one? | FR-2.1, US-06, BR-01 | Faculty create courses; the creator teaches every section of a new course. Admins can edit any course but not create one. Nobody can add a second teacher to a section yet. | Open |
 | Q-33 | Can a course be deleted, and does a course need a draft state before students see it? | FR-2.1 | No delete and no draft state. A new course is invisible to students anyway until they are placed in its sections; single lessons are held back with a release time. | Open |
 | Q-34 | Which time zone do release times and deadlines use? | FR-2.7, FR-3.4, FR-5.3 | The person entering the time uses their own device's time zone; the moment is stored in UTC and shown to each viewer in theirs. Date-only values (term and course dates) are plain calendar dates. | Open |
-| Q-35 | Should a teacher be able to restrict or schedule a whole unit, or a quiz, and not only single lessons? | FR-2.7, FR-2.8, US-09 | Lessons only. Quizzes get a release time when they move into the service layer (Phase 3b). | Open |
+| Q-35 | Should a teacher be able to restrict or schedule a whole unit, or a quiz, and not only single lessons? | FR-2.7, FR-2.8, US-09 | Lessons only. A quiz is a draft or published, for every section of its course, with no release time of its own. | Open |
 | Q-36 | May teachers use any content library item, or only items for their own courses? And who may remove an item? | FR-2.6 | Every faculty member sees and can use every item, and can remove any item that no lesson uses. | Open |
 | Q-14 | Default late rule (block, flag, or penalty and its percentage); whether a penalty is per day or flat. | FR-3.4, US-11 | Late work is accepted and marked late, with nothing deducted. Admins change the default under Admin → Settings (`DEFAULT_LATE_POLICY` in `src/lib/domain/assignments.ts`); teachers can set a different rule on each assignment, including a penalty once or per day with a cap. | Open |
 | Q-37 | What may students hand in: which file types, how large, how many? | FR-3.3 | PDF, DOC, DOCX, TXT, MD, PPT, PPTX, ODP, JPG and PNG; 25 MB each (an admin setting); at most 5 files per hand-in. | Open |
@@ -47,6 +47,13 @@ Status: `Open` (waiting for an answer), `Answered` (decision recorded in the row
 | Q-40 | Can a teacher give one student an extension or a different due date? | FR-3.1, FR-3.4 | No. One due time for everyone the assignment is set for. | Open |
 | Q-41 | Are grades released for a whole assignment at once, or student by student? And may a released grade be changed? | FR-4.3, US-15 | "Release grades" releases every marked, unreleased hand-in of the assignment. A released mark can be changed and the student sees the change at once. | Open |
 | Q-42 | Which plagiarism service, may student work be sent to it under the applicable privacy law, and at what score should work be flagged? | FR-3.8, US-14, NFR-3 | A mock that compares nothing. Reports are for faculty and admins; an admin setting can show students their own percentage. Scores of 40% or more are shown in red. | Open |
+| Q-15 | Are short answers auto-marked by keyword (as the prototype does), always sent to manual marking, or auto-marked with manual override? FR-3.5 and US-12 disagree. | FR-3.5, FR-3.6, US-12 | The teacher chooses for each question. A new short-answer question is marked by a teacher, which is what US-12 describes; the six keyword-marked questions in the original prototype stay automatic. | Open |
+| Q-16 | How many quiz attempts are allowed, and which one counts (best, last, average)? | FR-3.7, FR-4.2 | Unlimited unless the teacher sets a number on the quiz. The best attempt counts, as in the prototype. An attempt still waiting for a teacher's marks does not count yet but does use up an attempt. | Open |
+| Q-43 | Do some students get extra time on timed quizzes, and can a teacher reopen or extend one attempt? WCAG 2.2.1 asks for adjustable time limits unless the limit is essential, and schools usually have to grant accommodations. | FR-3.7, US-13, NFR-5 | No. One time limit for everyone; the clock cannot be paused, extended or restarted. | Open, needed before go-live |
+| Q-44 | May a teacher change a mark that was given automatically, for example after a wrong answer key? | FR-3.6, US-12 | No. Only teacher-marked answers can be marked or re-marked. Once any student has taken a quiz its questions are locked, so a wrong key cannot be corrected. | Open |
+| Q-45 | When do students see the correct answers and explanations? | FR-3.6 | Straight after handing in, as in the prototype, even while classmates may still be taking the quiz. Hand-marked answers show the sample answer once they are marked. | Open |
+| Q-46 | Who owns the question bank? | FR-3.5 | One bank shared by all faculty. Anyone on the faculty can add to it and copy from it; a teacher can remove only what they added, an admin anything. Copies are independent, so changing a question in a quiz never changes the bank. | Open |
+| Q-47 | Should assignments be copied when a course is copied or made from a template? | US-08, FR-2.5 | No. Units, lessons, quizzes, sections and schedules are copied; assignments are not. | Open |
 
 ## Policies needed by later phases
 
@@ -54,8 +61,6 @@ Each becomes a configurable setting with a default when its phase is built.
 
 | # | Question | Affects | Phase |
 | --- | --- | --- | --- |
-| Q-15 | Are short answers auto-marked by keyword (as the prototype does), always sent to manual marking, or auto-marked with manual override? FR-3.5 and US-12 disagree. | FR-3.5, FR-3.6, US-12 | 3b |
-| Q-16 | How many quiz attempts are allowed, and which one counts (best, last, average)? | FR-3.7, FR-4.2 | 3b |
 | Q-17 | Grading scale bands and the GPA mapping; default grade categories and weights. | FR-4.1, FR-4.2 | 4 |
 | Q-18 | The SIS export format. | FR-4.5, FR-8.1 | 4 |
 | Q-19 | Attendance threshold; how Late and Excused count towards it; the window in which attendance can be edited. | FR-5.2, FR-5.4 | 5 |

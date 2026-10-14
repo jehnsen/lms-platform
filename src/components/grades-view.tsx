@@ -12,15 +12,16 @@ import {
   PageSkeleton,
 } from "@/components/ui";
 import { resetMyProgress, selectViewedChild, useViewedLearner } from "@/lib/api/progress";
-import { getQuiz, quizzes, quizzesForCourse } from "@/lib/data/quizzes";
 import { courseLessons } from "@/lib/domain/course-outline";
 import { letterGrade } from "@/lib/grading";
 import {
   attemptsFor,
+  awaitingMarking,
   bestAttempt,
   checkpointStats,
   courseGrade,
   overallGrade,
+  quizzesOf,
 } from "@/lib/progress";
 import { formatDate } from "@/lib/utils";
 
@@ -39,10 +40,9 @@ export function GradesView() {
     );
   }
 
-  const { learner, progress: state, courses, readOnly, children } = viewed;
+  const { learner, progress: state, courses, quizzes: learnerQuizzes, readOnly, children } = viewed;
   const firstName = learner.name.split(" ")[0];
-  const learnerQuizzes = quizzes.filter((quiz) => courses.some((course) => course.id === quiz.courseId));
-  const overall = overallGrade(state, courses);
+  const overall = overallGrade(state, courses, learnerQuizzes);
   const checkpoints = checkpointStats(state);
   const gradedCount = learnerQuizzes.filter((quiz) => bestAttempt(quiz.id, state.attempts)).length;
   const lessonTotal = courses.reduce((sum, course) => sum + courseLessons(course).length, 0);
@@ -51,7 +51,7 @@ export function GradesView() {
     .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
     .map((attempt) => ({
       id: attempt.id,
-      title: getQuiz(attempt.quizId)?.title ?? "Quiz",
+      title: learnerQuizzes.find((quiz) => quiz.id === attempt.quizId)?.title ?? "Quiz",
       dateLabel: formatDate(attempt.submittedAt),
       percent: attempt.percent,
     }));
@@ -129,8 +129,8 @@ export function GradesView() {
 
       <div className="mt-8 flex flex-col gap-6">
         {courses.map((course) => {
-          const grade = courseGrade(course, state);
-          const courseQuizzes = quizzesForCourse(course.id);
+          const grade = courseGrade(course, state, learnerQuizzes);
+          const courseQuizzes = quizzesOf(course.id, learnerQuizzes);
           return (
             <Card key={course.id} className="overflow-hidden">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
@@ -191,6 +191,8 @@ export function GradesView() {
                                 </Badge>
                                 <span className="font-medium">{best.percent}%</span>
                               </span>
+                            ) : awaitingMarking(quiz.id, state.attempts) ? (
+                              <Badge tone="warn">Awaiting marking</Badge>
                             ) : (
                               <span className="text-ink-3">Not taken</span>
                             )}

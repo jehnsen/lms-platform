@@ -1,5 +1,10 @@
 import type { Quiz } from "@/lib/types";
 
+/**
+ * Seed data: the quizzes the demo starts with. The app reads quizzes through
+ * `src/lib/api/quizzes.ts`, which loads these into its mock repository; only
+ * seeds and build-time `generateStaticParams` import this file directly.
+ */
 export const quizzes: Quiz[] = [
   {
     id: "ml-quiz-1",
@@ -10,6 +15,7 @@ export const quizzes: Quiz[] = [
     passMark: 70,
     weight: 40,
     due: "2026-10-20",
+    status: "published",
     questions: [
       {
         id: "q1",
@@ -79,6 +85,9 @@ export const quizzes: Quiz[] = [
     passMark: 70,
     weight: 60,
     due: "2026-10-27",
+    status: "published",
+    // FR-3.7: a timed quiz, so the timer, autosave and automatic submission can be seen.
+    timeLimitMinutes: 10,
     questions: [
       {
         id: "q1",
@@ -140,6 +149,32 @@ export const quizzes: Quiz[] = [
         sample: "Generalization.",
         explanation: "Generalization is the real goal of training.",
       },
+      {
+        id: "q6",
+        kind: "matching",
+        points: 4,
+        prompt: "Match each term to what it means.",
+        pairs: [
+          { left: "Loss", right: "How wrong the predictions are" },
+          { left: "Learning rate", right: "The size of each step downhill" },
+          { left: "Epoch", right: "One pass through the training data" },
+          { left: "Regularization", right: "A penalty that discourages over-complex models" },
+        ],
+        distractors: ["The number of examples in the test set"],
+        explanation: "These four ideas describe how a model is trained and kept from overfitting.",
+      },
+      {
+        id: "q7",
+        kind: "short",
+        // US-12: marked by the teacher, so answers go to the grading queue.
+        marking: "manual",
+        points: 3,
+        prompt: "In two or three sentences, explain why a validation set is kept separate from the training data.",
+        accept: [],
+        sample:
+          "The model never learns from the validation set, so its error there shows how the model does on data it has not seen. That lets us spot overfitting and choose settings honestly.",
+        explanation: "Validation data gives an honest estimate because the model was not fitted to it.",
+      },
     ],
   },
   {
@@ -151,6 +186,7 @@ export const quizzes: Quiz[] = [
     passMark: 70,
     weight: 50,
     due: "2026-10-18",
+    status: "published",
     questions: [
       {
         id: "q1",
@@ -212,6 +248,7 @@ export const quizzes: Quiz[] = [
     passMark: 70,
     weight: 50,
     due: "2026-11-01",
+    status: "published",
     questions: [
       {
         id: "q1",
@@ -278,6 +315,7 @@ export const quizzes: Quiz[] = [
     passMark: 70,
     weight: 100,
     due: "2026-10-24",
+    status: "published",
     questions: [
       {
         id: "q1",
@@ -339,6 +377,7 @@ export const quizzes: Quiz[] = [
     passMark: 70,
     weight: 100,
     due: "2026-10-30",
+    status: "published",
     questions: [
       {
         id: "q1",
@@ -392,15 +431,3 @@ export const quizzes: Quiz[] = [
     ],
   },
 ];
-
-export function getQuiz(quizId: string) {
-  return quizzes.find((quiz) => quiz.id === quizId);
-}
-
-export function quizzesForCourse(courseId: string) {
-  return quizzes.filter((quiz) => quiz.courseId === courseId);
-}
-
-export function quizPoints(quiz: Quiz) {
-  return quiz.questions.reduce((sum, question) => sum + question.points, 0);
-}

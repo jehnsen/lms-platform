@@ -9,6 +9,7 @@ import { courses as seedCourses } from "@/lib/data/courses";
 import {
   DEMO_USER_IDS,
   seedEnrollments,
+  seedQuestionBank,
   seedNotifications,
   seedProgress,
   seedSections,
@@ -16,10 +17,12 @@ import {
   seedUsers,
 } from "@/lib/data/directory";
 import { materials as seedMaterials } from "@/lib/data/people";
+import { quizzes as seedQuizzes } from "@/lib/data/quizzes";
 import { DEFAULT_SETTINGS } from "@/lib/domain/settings";
 import type {
   Assignment,
   AuditEvent,
+  BankQuestion,
   Course,
   CourseTemplate,
   Enrollment,
@@ -27,6 +30,8 @@ import type {
   LessonPlan,
   Material,
   Notification,
+  Quiz,
+  QuizDraft,
   SchoolSettings,
   Section,
   Submission,
@@ -66,7 +71,7 @@ export const enrollmentsRepo = createRepository<Enrollment[]>("enrollments", 1, 
 /** Learner progress keyed by user id. */
 export const progressRepo = createRepository<Record<string, LearnerProgress>>(
   "progress",
-  1,
+  2,
   seedProgress,
   () => {
     const legacy = readLegacyLearner();
@@ -157,3 +162,14 @@ export const sisSyncRepo = createRepository<SisSyncState>("sis-sync", 1, {
   skipped: 0,
   failed: 0,
 });
+
+/** FR-3.5: quizzes with their questions and answer keys, drafts included. */
+export const quizzesRepo = createRepository<Quiz[]>("quizzes", 1, seedQuizzes);
+
+const NO_DRAFTS: Record<string, QuizDraft> = {};
+
+/** FR-3.7: attempts in progress, keyed by `userId:quizId`. Answers are saved here as they are given. */
+export const quizDraftsRepo = createRepository<Record<string, QuizDraft>>("quiz-drafts", 1, NO_DRAFTS);
+
+/** FR-3.5: the question bank shared by all faculty. */
+export const questionBankRepo = createRepository<BankQuestion[]>("question-bank", 1, seedQuestionBank);

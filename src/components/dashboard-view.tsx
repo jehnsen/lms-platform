@@ -26,6 +26,7 @@ import {
 import { useAssignments } from "@/lib/api/assignments";
 import { useCourses } from "@/lib/api/courses";
 import { useMyProgress } from "@/lib/api/progress";
+import { useQuizzes } from "@/lib/api/quizzes";
 import { useActor } from "@/lib/api/session";
 import { studyStreakDays, weeklyActivity } from "@/lib/data/people";
 import { courseLessons } from "@/lib/domain/course-outline";
@@ -47,6 +48,7 @@ export function DashboardView() {
   const courses = useCourses();
   const state = useMyProgress();
   const assignments = useAssignments();
+  const quizzes = useQuizzes();
   // Archived courses are read-only (FR-1.8), so there is nothing in them to resume or to do.
   const open = courses.filter((course) => course.status !== "archived");
   const active = activeCourses(state, open);
@@ -72,9 +74,9 @@ export function DashboardView() {
 
   const resumeProgress = courseProgress(resume, state);
   const started = resumeProgress.done > 0;
-  const average = overallGrade(state, courses);
+  const average = overallGrade(state, courses, quizzes);
   const checkpoints = checkpointStats(state);
-  const pending = pendingQuizzes(state, open);
+  const pending = pendingQuizzes(state, open, quizzes);
   // Everything still to hand in or take, soonest first: quizzes and assignments together.
   const upNext = [
     ...pending.map((quiz) => ({

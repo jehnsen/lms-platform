@@ -16,7 +16,7 @@ import { Thumbnail } from "@/components/course-art";
 import { Badge } from "@/components/ui";
 import { useCourseSections } from "@/lib/api/courses";
 import { useCanTrackProgress, useMyProgress } from "@/lib/api/progress";
-import { getQuiz } from "@/lib/data/quizzes";
+import { useQuizzes } from "@/lib/api/quizzes";
 import { isRestricted, isScheduled } from "@/lib/domain/content-visibility";
 import { LESSON_TYPE_LABELS } from "@/lib/domain/course-outline";
 import { bestAttempt } from "@/lib/progress";
@@ -51,6 +51,7 @@ export function Curriculum({
   // Staff previewing a course have no progress and cannot take its quizzes.
   const tracking = useCanTrackProgress();
   const sections = useCourseSections(course.id);
+  const quizzes = useQuizzes();
   const now = useNow();
 
   if (course.modules.length === 0) {
@@ -63,7 +64,8 @@ export function Curriculum({
         const done = module.lessons.filter((lesson) =>
           state.completedLessons.includes(lesson.id),
         ).length;
-        const quiz = module.quizId ? getQuiz(module.quizId) : undefined;
+        // Students get published quizzes only, so a draft quiz simply is not listed for them.
+        const quiz = module.quizId ? quizzes.find((candidate) => candidate.id === module.quizId) : undefined;
         const best = quiz ? bestAttempt(quiz.id, state.attempts) : undefined;
 
         return (
@@ -144,7 +146,7 @@ export function Curriculum({
               ) : null}
               {quiz ? (
                 <li>
-                  <QuizRow href={tracking ? `/quizzes/${quiz.id}` : undefined}>
+                  <QuizRow href={`/quizzes/${quiz.id}`}>
                     <span className={cn(TILE, "grid place-items-center bg-surface-2 text-ink-2")}>
                       <ListChecks aria-hidden className="size-5" />
                     </span>
@@ -152,6 +154,8 @@ export function Curriculum({
                       <span className="block">Unit quiz</span>
                       <span className="mt-0.5 block text-xs text-ink-3">
                         Graded · {quiz.questions.length} questions
+                        {quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min limit` : null}
+                        {quiz.status === "draft" ? " · draft" : null}
                       </span>
                     </span>
                     {best ? (
@@ -170,14 +174,11 @@ export function Curriculum({
   );
 }
 
-/** A link for learners; plain text for staff, who manage quizzes elsewhere. */
-function QuizRow({ href, children }: { href: string | undefined; children: React.ReactNode }) {
-  const className = "flex items-center gap-3 rounded-lg p-2 text-sm";
-  return href ? (
-    <Link href={href} className={cn(className, "transition-colors hover:bg-surface-2")}>
+/** Learners take the quiz from here; staff open it to see its questions. */
+function QuizRow({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="flex items-center gap-3 rounded-lg p-2 text-sm transition-colors hover:bg-surface-2">
       {children}
     </Link>
-  ) : (
-    <div className={className}>{children}</div>
   );
 }

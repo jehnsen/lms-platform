@@ -11,6 +11,7 @@ import { Badge, ButtonLink, Card, Meter, PageContainer, PageSkeleton, fieldClass
 import { useAssignments, type AssignmentRow } from "@/lib/api/assignments";
 import { useCourse, useCourseRoster, useCourseSections, useMySections } from "@/lib/api/courses";
 import { useCanTrackProgress, useMyProgress } from "@/lib/api/progress";
+import { useQuizzes } from "@/lib/api/quizzes";
 import { courseForViewer } from "@/lib/domain/content-visibility";
 import { courseLessons, courseMinutes } from "@/lib/domain/course-outline";
 import { WEEKDAYS } from "@/lib/domain/course-rules";
@@ -23,7 +24,7 @@ import { formatDate, formatDateTime, formatMinutes } from "@/lib/utils";
 const FEATURES = [
   { icon: Captions, title: "Captioned video", detail: "Every lesson has captions and a clickable transcript." },
   { icon: TimerReset, title: "In-video checkpoints", detail: "Questions pause the video so ideas stick." },
-  { icon: ListChecks, title: "Auto-graded quizzes", detail: "Instant scores and explanations. Retake any time." },
+  { icon: ListChecks, title: "Quizzes", detail: "Instant scores for most questions, with explanations." },
   { icon: Sparkles, title: "AI tutor", detail: "Ask for help without leaving the lesson." },
 ];
 
@@ -34,6 +35,7 @@ export function CourseOverview({ courseId }: { courseId: string }) {
   const roster = useCourseRoster(courseId);
   const allSections = useCourseSections(courseId);
   const mySections = useMySections(courseId);
+  const quizzes = useQuizzes();
   const assignments = useAssignments().filter((row) => row.assignment.courseId === courseId);
   const now = useNow();
   // Staff only: look at the course the way a student in one section sees it (US-09).
@@ -53,7 +55,7 @@ export function CourseOverview({ courseId }: { courseId: string }) {
 
   const progress = courseProgress(course, state);
   const upNext = nextLesson(course, state);
-  const grade = courseGrade(course, state);
+  const grade = courseGrade(course, state, quizzes);
   // An archived course can only be looked back on (FR-1.8).
   const finished = progress.done === progress.total || archived;
   const lessonCount = courseLessons(course).length;

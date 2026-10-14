@@ -1,92 +1,92 @@
 "use client";
 
-import { useState } from "react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CircleCheck,
-  CircleMinus,
-  CircleX,
-  RotateCcw,
-  Sparkles,
-} from "lucide-react";
-import { Badge, Button, ButtonLink, Card, Meter, PageContainer } from "@/components/ui";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, CircleCheck, CircleX, Clock, Hourglass, LoaderCircle, RotateCcw, Sparkles } from "lucide-react";
 import { ForbiddenView } from "@/components/forbidden-view";
-import { useCourse, useCourseReadOnly } from "@/lib/api/courses";
-import { recordAttempt, useMyProgress } from "@/lib/api/progress";
-import { useActor } from "@/lib/api/session";
-import { now } from "@/lib/clock";
-import { getQuiz, quizPoints } from "@/lib/data/quizzes";
+import { NotFoundView } from "@/components/not-found-view";
+import { QuizPreview } from "@/components/quiz-preview";
+import { QuestionField, StatusIcon, describeAnswer, describeCorrect } from "@/components/quiz-questions";
+import { Badge, Button, ButtonLink, Card, Meter, PageContainer, PageSkeleton } from "@/components/ui";
+import { useCourseReadOnly } from "@/lib/api/courses";
+import { useMyProgress } from "@/lib/api/progress";
 import {
-  gradeQuiz,
-  isAnswered,
-  letterGrade,
-  type QuestionStatus,
-  type QuizResult,
-} from "@/lib/grading";
-import { can } from "@/lib/domain/permissions";
+  QuizError,
+  saveDraftAnswers,
+  settleExpiredAttempts,
+  startAttempt,
+  submitAttempt,
+  useMyDrafts,
+  useQuiz,
+} from "@/lib/api/quizzes";
+import {
+  attemptsUsed,
+  formatCountdown,
+  isFinal,
+  isRunningOut,
+  remainingMs,
+  startDecision,
+  timerAnnouncement,
+} from "@/lib/domain/quizzes";
+import { gradeQuiz, isAnswered, isManuallyMarked, letterGrade, quizPoints } from "@/lib/grading";
 import { attemptsFor, bestAttempt } from "@/lib/progress";
-import type { Answer, AnswerSheet, Question } from "@/lib/types";
-import { cn, formatDate } from "@/lib/utils";
+import type { Answer, AnswerSheet, Course, Quiz, QuizAttempt, QuizDraft } from "@/lib/types";
+import { cn, formatDate, formatDateTime } from "@/lib/utils";
 
-type Phase = "intro" | "taking" | "result";
+function messagesOf(error: unknown) {
+  if (error instanceof QuizError) return error.problems;
+  return [error instanceof Error ? error.message : "Something went wrong. Try again."];
+}
 
-const CHOICE_CLASS =
-  "flex cursor-pointer items-start gap-3 rounded-lg border border-line px-3.5 py-3 text-sm transition-colors hover:border-line-strong has-checked:border-primary has-checked:bg-primary-soft";
-
+/** `/quizzes/[quizId]`: a student takes the quiz; staff see its questions and answers. */
 export function QuizRunner({ quizId }: { quizId: string }) {
-  const state = useMyProgress();
-  const actor = useActor();
-  const [phase, setPhase] = useState<Phase>("intro");
-  const [answers, setAnswers] = useState<AnswerSheet>({});
-  const [index, setIndex] = useState(0);
-  const [result, setResult] = useState<QuizResult | null>(null);
-  const [confirming, setConfirming] = useState(false);
-
-  const quiz = getQuiz(quizId);
-  // FR-1.8: in an archived course the quiz and past results can be seen, but not retaken.
-  const archived = useCourseReadOnly(quiz?.courseId);
-  const courseAccess = useCourse(quiz?.courseId);
-  if (!quiz) return null;
+  const access = useQuiz(quizId);
+  if (access.status === "loading") return <PageSkeleton />;
+  if (access.status === "missing") return <NotFoundView message="This quiz doesn't exist, or it isn't open yet." />;
   // Only learners enrolled in the quiz's course may take it (FR-1.1).
-  const enrolled = can(actor, archived ? "view" : "submit", { type: "quiz", courseId: quiz.courseId });
-  if (actor && !enrolled) {
-    return <ForbiddenView resource={`quiz:${quiz.id}`} what="this quiz" />;
-  }
-  const course = courseAccess.status === "ok" ? courseAccess.course : undefined;
+  if (access.status === "forbidden") return <ForbiddenView resource={`quiz:${quizId}`} what="this quiz" />;
+  if (access.staff) return <QuizPreview quiz={access.quiz} course={access.course} canEdit={access.canEdit} />;
+  return <StudentQuiz quiz={access.quiz} course={access.course} />;
+}
+
+function StudentQuiz({ quiz, course }: { quiz: Quiz; course: Course | undefined }) {
+  const state = useMyProgress();
+  const draft = useMyDrafts()[quiz.id];
+  // FR-1.8: in an archived course the quiz and past results can be seen, but not retaken.
+  const archived = useCourseReadOnly(quiz.courseId);
+  const [reviewId, setReviewId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [problems, setProblems] = useState<string[]>([]);
+  const [timedOut, setTimedOut] = useState(false);
+
+  // An attempt whose time ran out while this page was closed is handed in as soon as it is opened again.
+  useEffect(() => {
+    void settleExpiredAttempts().then((settled) => {
+      if (settled.some((candidate) => candidate.id === quiz.id)) setTimedOut(true);
+    });
+  }, [quiz.id]);
+
   const attempts = attemptsFor(quiz.id, state.attempts);
   const best = bestAttempt(quiz.id, state.attempts);
-  const unanswered = quiz.questions.filter((question) => !isAnswered(answers[question.id])).length;
+  const decision = startDecision(quiz, attemptsUsed(quiz.id, state.attempts));
+  const review = reviewId === null ? undefined : attempts.find((attempt) => attempt.id === reviewId);
 
-  const start = () => {
-    setAnswers({});
-    setIndex(0);
-    setResult(null);
-    setConfirming(false);
-    setPhase("taking");
+  const start = async () => {
+    setBusy(true);
+    setProblems([]);
+    setReviewId(null);
+    setTimedOut(false);
+    try {
+      await startAttempt(quiz.id);
+    } catch (error) {
+      setProblems(messagesOf(error));
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const submit = () => {
-    const graded = gradeQuiz(quiz, answers);
-    const submittedAt = now();
-    void recordAttempt(
-      {
-        id: `attempt-${submittedAt.getTime()}`,
-        quizId: quiz.id,
-        earned: graded.earned,
-        possible: graded.possible,
-        percent: graded.percent,
-        submittedAt: submittedAt.toISOString(),
-      },
-      quiz.courseId,
-    );
-    setResult(graded);
-    setPhase("result");
-  };
-
-  const setAnswer = (questionId: string, answer: Answer) => {
-    setAnswers((previous) => ({ ...previous, [questionId]: answer }));
-    setConfirming(false);
+  const finish = (attempt: QuizAttempt) => {
+    setTimedOut(attempt.autoSubmitted === true);
+    setReviewId(attempt.id);
   };
 
   return (
@@ -98,30 +98,74 @@ export function QuizRunner({ quizId }: { quizId: string }) {
             {course.title}
           </ButtonLink>
         ) : null}
-        <h1 className="mt-2 text-3xl leading-tight font-semibold tracking-tight text-balance">
-          {quiz.title}
-        </h1>
+        <h1 className="mt-2 text-3xl leading-tight font-semibold tracking-tight text-balance">{quiz.title}</h1>
       </div>
 
-      {phase === "intro" ? (
+      {/* Always rendered, so the automatic submission is announced when it happens (NFR-5). */}
+      <div role="alert">
+        {timedOut && !draft ? (
+          <p className="mb-4 rounded-lg bg-warn-soft px-4 py-3 text-sm text-warn">
+            Time was up, so your answers were handed in automatically.
+          </p>
+        ) : null}
+      </div>
+
+      {draft ? (
+        // Keyed by the attempt, so a new attempt starts from its own saved answers.
+        <TakingView key={draft.startedAt} quiz={quiz} draft={draft} onFinished={finish} />
+      ) : review ? (
+        <ResultView
+          quiz={quiz}
+          attempt={review}
+          best={best}
+          canRetake={decision.allowed && !archived}
+          onRetake={() => void start()}
+          onBack={() => setReviewId(null)}
+        />
+      ) : (
         <Card className="p-5 sm:p-6">
-          <p className="text-ink-2">{quiz.description}</p>
+          {quiz.description ? <p className="text-ink-2">{quiz.description}</p> : null}
           <dl className="mt-5 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
             <Fact label="Questions" value={quiz.questions.length} />
             <Fact label="Points" value={quizPoints(quiz)} />
-            <Fact label="Time" value={`About ${quiz.minutes} min`} />
+            <Fact
+              label={quiz.timeLimitMinutes ? "Time limit" : "Time"}
+              value={quiz.timeLimitMinutes ? `${quiz.timeLimitMinutes} min` : `About ${quiz.minutes} min`}
+            />
             <Fact label="To pass" value={`${quiz.passMark}%`} />
           </dl>
+
           {archived ? (
             <p className="mt-5 rounded-lg bg-surface-2 p-4 text-sm text-ink-2">
-              This course was archived at the end of term, so the quiz is closed. Worth {quiz.weight}%
-              of the course grade; your best score counts.
+              This course was archived at the end of term, so the quiz is closed. Worth {quiz.weight}% of the
+              course grade; your best score counts.
             </p>
           ) : (
-            <p className="mt-5 text-sm text-ink-2">
-              Graded automatically as soon as you submit. Worth {quiz.weight}% of the course grade ·
-              due {formatDate(quiz.due)}. You can retake it; your best score counts.
-            </p>
+            <div className="mt-5 flex flex-col gap-2 text-sm text-ink-2">
+              <p>
+                Worth {quiz.weight}% of the course grade · due {formatDate(quiz.due)}.{" "}
+                {quiz.maxAttempts
+                  ? `You have ${quiz.maxAttempts} ${quiz.maxAttempts === 1 ? "attempt" : "attempts"}; your best score counts.`
+                  : "You can retake it; your best score counts."}
+              </p>
+              {quiz.timeLimitMinutes ? (
+                <p className="flex items-start gap-2 rounded-lg bg-surface-2 p-3 text-ink">
+                  <Clock aria-hidden className="mt-0.5 size-4 shrink-0" />
+                  <span>
+                    This quiz is timed. You have {quiz.timeLimitMinutes} minutes from the moment you start, and the
+                    clock keeps running if you leave the page. Your answers are saved as you go and handed in
+                    automatically when the time is up.
+                  </span>
+                </p>
+              ) : (
+                <p>Your answers are saved as you go, so you can leave and come back.</p>
+              )}
+              {quiz.questions.some(isManuallyMarked) ? (
+                <p>Some answers are marked by your teacher, so your final score arrives once they have marked them.</p>
+              ) : (
+                <p>Marked automatically as soon as you hand in.</p>
+              )}
+            </div>
           )}
 
           {attempts.length > 0 ? (
@@ -129,203 +173,378 @@ export function QuizRunner({ quizId }: { quizId: string }) {
               <h2 className="text-sm font-semibold">Your attempts</h2>
               <ul className="mt-2 flex flex-col gap-1.5 text-sm">
                 {attempts.map((attempt, attemptIndex) => (
-                  <li key={attempt.id} className="flex items-center justify-between gap-3">
+                  <li key={attempt.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                     <span className="text-ink-2">
                       Attempt {attemptIndex + 1} · {formatDate(attempt.submittedAt)}
+                      {attempt.autoSubmitted ? " · handed in at the time limit" : null}
                     </span>
                     <span className="flex items-center gap-2 tabular-nums">
                       {attempt.id === best?.id ? <Badge tone="primary">Best</Badge> : null}
-                      {attempt.earned}/{attempt.possible} · {attempt.percent}%
+                      {isFinal(attempt) ? (
+                        <span>
+                          {attempt.earned}/{attempt.possible} · {attempt.percent}%
+                        </span>
+                      ) : (
+                        <Badge tone="warn">Awaiting marking</Badge>
+                      )}
+                      {attempt.answers ? (
+                        <Button variant="ghost" size="sm" onClick={() => setReviewId(attempt.id)}>
+                          Review<span className="sr-only"> attempt {attemptIndex + 1}</span>
+                        </Button>
+                      ) : null}
                     </span>
                   </li>
                 ))}
               </ul>
             </div>
+          ) : archived ? (
+            <p className="mt-5 text-sm text-ink-2">You did not take this quiz.</p>
           ) : null}
 
-          {archived ? (
-            attempts.length === 0 ? (
-              <p className="mt-5 text-sm text-ink-2">You did not take this quiz.</p>
-            ) : null
-          ) : (
+          {problems.length > 0 ? (
+            <p role="alert" className="mt-4 rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad">
+              {problems.join(" ")}
+            </p>
+          ) : null}
+
+          {archived ? null : decision.allowed ? (
             <div className="mt-6">
-              <Button size="lg" onClick={start}>
+              <Button size="lg" onClick={() => void start()} disabled={busy}>
+                {busy ? <LoaderCircle aria-hidden className="size-4 animate-spin" /> : null}
                 {attempts.length > 0 ? "Retake quiz" : "Start quiz"}
-                <ArrowRight aria-hidden className="size-4" />
+                {busy ? null : <ArrowRight aria-hidden className="size-4" />}
               </Button>
             </div>
+          ) : (
+            <p className="mt-5 text-sm text-ink-2">{decision.reason}</p>
           )}
         </Card>
+      )}
+    </PageContainer>
+  );
+}
+
+/** US-13: the attempt in progress, with an always-visible timer, autosave and automatic submission. */
+function TakingView({ quiz, draft, onFinished }: { quiz: Quiz; draft: QuizDraft; onFinished: (attempt: QuizAttempt) => void }) {
+  const [answers, setAnswers] = useState<AnswerSheet>(draft.answers);
+  const [index, setIndex] = useState(0);
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [problems, setProblems] = useState<string[]>([]);
+  const [saveFailed, setSaveFailed] = useState(false);
+  // The clock: read once a second while the page is showing. `null` until the first reading.
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  const handingIn = useRef(false);
+
+  const timed = quiz.timeLimitMinutes !== undefined;
+  const left = nowMs === null ? null : remainingMs(quiz, draft.startedAt, nowMs);
+  const timeUp = left === 0;
+  const unanswered = quiz.questions.filter((question) => !isAnswered(answers[question.id])).length;
+  const question = quiz.questions[index];
+
+  // This effect stops when the page is hidden and starts again when it is shown, so on return
+  // the clock is read at once and an attempt that ran out meanwhile is handed in.
+  useEffect(() => {
+    if (!timed) return;
+    let previous = remainingMs(quiz, draft.startedAt, Date.now()) ?? 0;
+    const tick = () => {
+      const now = Date.now();
+      const current = remainingMs(quiz, draft.startedAt, now) ?? 0;
+      const message = timerAnnouncement(previous, current);
+      if (message) setAnnouncement(message);
+      previous = current;
+      setNowMs(now);
+    };
+    const first = setTimeout(tick, 0);
+    const timer = setInterval(tick, 1000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
+  }, [timed, quiz, draft.startedAt]);
+
+  const handIn = async (auto: boolean) => {
+    if (handingIn.current) return;
+    handingIn.current = true;
+    setBusy(true);
+    setProblems([]);
+    try {
+      onFinished(await submitAttempt(quiz.id, { auto }));
+    } catch (error) {
+      setProblems(messagesOf(error));
+      handingIn.current = false;
+      setBusy(false);
+    }
+  };
+
+  // US-13: when the time limit is reached the attempt is handed in for the student.
+  useEffect(() => {
+    if (!timeUp) return;
+    const timer = setTimeout(() => void handIn(true), 0);
+    return () => clearTimeout(timer);
+    // `handIn` guards itself against running twice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeUp]);
+
+  const setAnswer = (questionId: string, answer: Answer) => {
+    const next = { ...answers, [questionId]: answer };
+    setAnswers(next);
+    setConfirming(false);
+    // US-13: every change is saved, so nothing is lost on a reload or when the time runs out.
+    saveDraftAnswers(quiz.id, next).then(
+      () => setSaveFailed(false),
+      () => setSaveFailed(true),
+    );
+  };
+
+  return (
+    <div>
+      {timed ? (
+        <div
+          className={cn(
+            "sticky top-14 z-20 -mx-4 mb-4 flex items-center justify-between gap-3 border-b px-4 py-2.5 sm:mx-0 sm:rounded-lg sm:border lg:top-0",
+            left !== null && isRunningOut(quiz, left) ? "border-warn bg-warn-soft text-warn" : "border-line bg-surface",
+          )}
+        >
+          <span className="flex items-center gap-2 text-sm font-medium">
+            <Clock aria-hidden className="size-4" />
+            Time left
+          </span>
+          {/* Not a live region: it changes every second. Thresholds are announced separately below. */}
+          <span role="timer" aria-live="off" className="font-mono text-lg font-semibold tabular-nums">
+            {left === null ? "--:--" : formatCountdown(left)}
+          </span>
+        </div>
       ) : null}
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
 
-      {phase === "taking" ? (
-        <div>
-          <div className="mb-4">
-            <div className="mb-2 flex items-center justify-between text-sm text-ink-2">
-              <span>
-                Question {index + 1} of {quiz.questions.length}
-              </span>
-              <span>{quiz.questions.length - unanswered} answered</span>
-            </div>
-            <Meter
-              value={((quiz.questions.length - unanswered) / quiz.questions.length) * 100}
-              label="Questions answered"
-            />
-          </div>
+      <div className="mb-4">
+        <div className="mb-2 flex items-center justify-between text-sm text-ink-2">
+          <span>
+            Question {index + 1} of {quiz.questions.length}
+          </span>
+          <span>{quiz.questions.length - unanswered} answered</span>
+        </div>
+        <Meter value={((quiz.questions.length - unanswered) / quiz.questions.length) * 100} label="Questions answered" />
+      </div>
 
-          <Card className="p-5 sm:p-6">
-            <QuestionField
-              key={quiz.questions[index].id}
-              name={`${quiz.id}-${quiz.questions[index].id}`}
-              question={quiz.questions[index]}
-              answer={answers[quiz.questions[index].id]}
-              onAnswer={(answer) => setAnswer(quiz.questions[index].id, answer)}
-            />
-          </Card>
+      <Card className="p-5 sm:p-6">
+        <fieldset disabled={timeUp || busy} className="min-w-0">
+          <legend className="sr-only">Question {index + 1}</legend>
+          <QuestionField
+            key={question.id}
+            name={`${quiz.id}-${question.id}`}
+            question={question}
+            answer={answers[question.id]}
+            onAnswer={(answer) => setAnswer(question.id, answer)}
+          />
+        </fieldset>
+      </Card>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <Button variant="secondary" disabled={index === 0} onClick={() => setIndex(index - 1)}>
-              <ArrowLeft aria-hidden className="size-4" />
-              Previous
+      <p className={cn("mt-2 text-xs", saveFailed ? "text-bad" : "text-ink-3")}>
+        {saveFailed
+          ? "Your last change could not be saved. Check that this browser has storage space."
+          : "Your answers are saved as you go."}
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <Button variant="secondary" disabled={index === 0} onClick={() => setIndex(index - 1)}>
+          <ArrowLeft aria-hidden className="size-4" />
+          Previous
+        </Button>
+
+        <nav aria-label="Questions" className="flex flex-wrap gap-1.5">
+          {quiz.questions.map((item, questionIndex) => {
+            const answered = isAnswered(answers[item.id]);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setIndex(questionIndex)}
+                aria-current={questionIndex === index ? "step" : undefined}
+                aria-label={`Question ${questionIndex + 1}${answered ? ", answered" : ", not answered"}`}
+                className={cn(
+                  "grid size-8 place-items-center rounded-full border text-xs font-medium tabular-nums transition-colors",
+                  questionIndex === index
+                    ? "border-primary bg-primary text-on-primary"
+                    : answered
+                      ? "border-primary-soft bg-primary-soft text-primary-ink"
+                      : "border-line text-ink-2 hover:border-line-strong",
+                )}
+              >
+                {questionIndex + 1}
+              </button>
+            );
+          })}
+        </nav>
+
+        {index < quiz.questions.length - 1 ? (
+          <Button onClick={() => setIndex(index + 1)}>
+            Next
+            <ArrowRight aria-hidden className="size-4" />
+          </Button>
+        ) : (
+          <Button disabled={busy} onClick={() => (unanswered > 0 ? setConfirming(true) : void handIn(false))}>
+            {busy ? <LoaderCircle aria-hidden className="size-4 animate-spin" /> : null}
+            Submit quiz
+          </Button>
+        )}
+      </div>
+
+      {confirming ? (
+        <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-warn-soft p-4 text-sm text-warn">
+          <span>
+            {unanswered} {unanswered === 1 ? "question is" : "questions are"} unanswered and will score zero.
+          </span>
+          <span className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setConfirming(false)}>
+              Keep working
             </Button>
-
-            <nav aria-label="Questions" className="flex gap-1.5">
-              {quiz.questions.map((question, questionIndex) => {
-                const answered = isAnswered(answers[question.id]);
-                return (
-                  <button
-                    key={question.id}
-                    type="button"
-                    onClick={() => setIndex(questionIndex)}
-                    aria-current={questionIndex === index ? "step" : undefined}
-                    aria-label={`Question ${questionIndex + 1}${answered ? ", answered" : ", not answered"}`}
-                    className={cn(
-                      "grid size-8 place-items-center rounded-full border text-xs font-medium tabular-nums transition-colors",
-                      questionIndex === index
-                        ? "border-primary bg-primary text-on-primary"
-                        : answered
-                          ? "border-primary-soft bg-primary-soft text-primary-ink"
-                          : "border-line text-ink-2 hover:border-line-strong",
-                    )}
-                  >
-                    {questionIndex + 1}
-                  </button>
-                );
-              })}
-            </nav>
-
-            {index < quiz.questions.length - 1 ? (
-              <Button onClick={() => setIndex(index + 1)}>
-                Next
-                <ArrowRight aria-hidden className="size-4" />
-              </Button>
-            ) : (
-              <Button onClick={() => (unanswered > 0 ? setConfirming(true) : submit())}>
-                Submit quiz
-              </Button>
-            )}
-          </div>
-
-          {confirming ? (
-            <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-warn-soft p-4 text-sm text-warn">
-              <span>
-                {unanswered} {unanswered === 1 ? "question is" : "questions are"} unanswered and will
-                score zero.
-              </span>
-              <span className="flex gap-2">
-                <Button variant="secondary" size="sm" onClick={() => setConfirming(false)}>
-                  Keep working
-                </Button>
-                <Button size="sm" onClick={submit}>
-                  Submit anyway
-                </Button>
-              </span>
-            </div>
-          ) : null}
+            <Button size="sm" disabled={busy} onClick={() => void handIn(false)}>
+              Submit anyway
+            </Button>
+          </span>
         </div>
       ) : null}
 
-      {phase === "result" && result ? (
-        <div className="flex flex-col gap-6">
-          <Card className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-              <div>
-                <div className="text-sm text-ink-2">Your score</div>
-                <div className="text-5xl font-semibold tracking-tight">{result.percent}%</div>
-              </div>
-              <div className="flex flex-col gap-1.5 text-sm">
-                <div className="flex flex-wrap items-center gap-2">
+      {problems.length > 0 ? (
+        <p role="alert" className="mt-4 rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad">
+          {problems.join(" ")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** One attempt after it is handed in: the score, or what is still waiting for a teacher, and each answer. */
+function ResultView({
+  quiz,
+  attempt,
+  best,
+  canRetake,
+  onRetake,
+  onBack,
+}: {
+  quiz: Quiz;
+  attempt: QuizAttempt;
+  best: QuizAttempt | undefined;
+  canRetake: boolean;
+  onRetake: () => void;
+  onBack: () => void;
+}) {
+  const answers = attempt.answers ?? {};
+  const result = gradeQuiz(quiz, answers, attempt.manual);
+  const final = result.pending === 0;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Card className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+          <div>
+            <div className="text-sm text-ink-2">{final ? "Your score" : "Score so far"}</div>
+            <div className="text-5xl font-semibold tracking-tight">{result.percent}%</div>
+          </div>
+          <div className="flex flex-col gap-1.5 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              {final ? (
+                <>
                   <Badge tone={result.passed ? "good" : "bad"}>
                     {result.passed ? <CircleCheck aria-hidden className="size-3" /> : <CircleX aria-hidden className="size-3" />}
                     {result.passed ? "Passed" : "Below pass mark"}
                   </Badge>
                   <Badge>Grade {letterGrade(result.percent)}</Badge>
-                  <Badge>Auto-graded</Badge>
-                </div>
-                <p className="text-ink-2">
-                  {result.earned} of {result.possible} points · pass mark {quiz.passMark}%
-                </p>
-                {best && best.percent > result.percent ? (
-                  <p className="text-ink-2">Your best score of {best.percent}% still counts.</p>
-                ) : null}
-              </div>
+                </>
+              ) : (
+                <Badge tone="warn">
+                  <Hourglass aria-hidden className="size-3" />
+                  {result.pending} {result.pending === 1 ? "answer" : "answers"} waiting for your teacher
+                </Badge>
+              )}
+              {attempt.autoSubmitted ? <Badge>Handed in at the time limit</Badge> : null}
             </div>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={start}>
-                <RotateCcw aria-hidden className="size-4" />
-                Retake
-              </Button>
-              <ButtonLink variant="secondary" href="/grades">
-                View my grades
-              </ButtonLink>
-              <ButtonLink variant="spark" href="/tutor">
-                <Sparkles aria-hidden className="size-4" />
-                Review with the AI tutor
-              </ButtonLink>
-            </div>
-          </Card>
-
-          <section aria-label="Question review">
-            <h2 className="mb-3 text-lg font-semibold tracking-tight">Review</h2>
-            <ol className="flex flex-col gap-3">
-              {quiz.questions.map((question, questionIndex) => {
-                const graded = result.questions[questionIndex];
-                return (
-                  <li key={question.id}>
-                    <Card className="p-4 sm:p-5">
-                      <div className="flex items-start gap-3">
-                        <StatusIcon status={graded.status} />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                            <p className="font-medium text-pretty">
-                              {questionIndex + 1}. {question.prompt}
-                            </p>
-                            <span className="shrink-0 text-sm text-ink-2 tabular-nums">
-                              {graded.earned}/{graded.possible} pts
-                            </span>
-                          </div>
-                          <dl className="mt-3 grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-[8rem_1fr]">
-                            <dt className="text-ink-3">Your answer</dt>
-                            <dd>{describeAnswer(question, answers[question.id]) ?? "No answer"}</dd>
-                            {graded.status !== "correct" ? (
-                              <>
-                                <dt className="text-ink-3">Correct answer</dt>
-                                <dd>{describeCorrect(question)}</dd>
-                              </>
-                            ) : null}
-                          </dl>
-                          <p className="mt-3 text-sm text-ink-2">{question.explanation}</p>
-                        </div>
-                      </div>
-                    </Card>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
+            <p className="text-ink-2">
+              {result.earned} of {result.possible} points · pass mark {quiz.passMark}% · handed in{" "}
+              {formatDateTime(attempt.submittedAt)}
+            </p>
+            {final ? null : (
+              <p className="text-ink-2">This score does not count yet. You will be notified when the marking is done.</p>
+            )}
+            {final && best && best.percent > result.percent ? (
+              <p className="text-ink-2">Your best score of {best.percent}% still counts.</p>
+            ) : null}
+          </div>
         </div>
-      ) : null}
-    </PageContainer>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {canRetake ? (
+            <Button variant="secondary" onClick={onRetake}>
+              <RotateCcw aria-hidden className="size-4" />
+              Retake
+            </Button>
+          ) : null}
+          <Button variant="secondary" onClick={onBack}>
+            All attempts
+          </Button>
+          <ButtonLink variant="secondary" href="/grades">
+            View my grades
+          </ButtonLink>
+          <ButtonLink variant="spark" href="/tutor">
+            <Sparkles aria-hidden className="size-4" />
+            Review with the AI tutor
+          </ButtonLink>
+        </div>
+      </Card>
+
+      <section aria-label="Question review">
+        <h2 className="mb-3 text-lg font-semibold tracking-tight">Review</h2>
+        <ol className="flex flex-col gap-3">
+          {quiz.questions.map((question, questionIndex) => {
+            const graded = result.questions[questionIndex];
+            const mark = attempt.manual?.[question.id];
+            return (
+              <li key={question.id}>
+                <Card className="p-4 sm:p-5">
+                  <div className="flex items-start gap-3">
+                    <StatusIcon status={graded.status} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <p className="font-medium text-pretty">
+                          {questionIndex + 1}. {question.prompt}
+                        </p>
+                        <span className="shrink-0 text-sm text-ink-2 tabular-nums">
+                          {graded.status === "pending" ? `Not marked yet · ${graded.possible} pts` : `${graded.earned}/${graded.possible} pts`}
+                        </span>
+                      </div>
+                      <dl className="mt-3 grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-[8rem_1fr]">
+                        <dt className="text-ink-3">Your answer</dt>
+                        <dd className="whitespace-pre-wrap">{describeAnswer(question, answers[question.id]) ?? "No answer"}</dd>
+                        {graded.status !== "correct" && graded.status !== "pending" ? (
+                          <>
+                            <dt className="text-ink-3">{isManuallyMarked(question) ? "Sample answer" : "Correct answer"}</dt>
+                            <dd>{describeCorrect(question)}</dd>
+                          </>
+                        ) : null}
+                        {mark?.feedback ? (
+                          <>
+                            <dt className="text-ink-3">Teacher&apos;s comment</dt>
+                            <dd className="whitespace-pre-wrap">{mark.feedback}</dd>
+                          </>
+                        ) : null}
+                      </dl>
+                      {question.explanation && graded.status !== "pending" ? (
+                        <p className="mt-3 text-sm text-ink-2">{question.explanation}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                </Card>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+    </div>
   );
 }
 
@@ -335,144 +554,5 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
       <dt className="text-ink-3">{label}</dt>
       <dd className="mt-0.5 font-medium">{value}</dd>
     </div>
-  );
-}
-
-const STATUS_META: Record<QuestionStatus, { label: string; className: string; icon: typeof CircleCheck }> = {
-  correct: { label: "Correct", className: "text-good", icon: CircleCheck },
-  partial: { label: "Partly correct", className: "text-warn", icon: CircleMinus },
-  incorrect: { label: "Incorrect", className: "text-bad", icon: CircleX },
-  unanswered: { label: "Not answered", className: "text-ink-3", icon: CircleMinus },
-};
-
-function StatusIcon({ status }: { status: QuestionStatus }) {
-  const meta = STATUS_META[status];
-  return <meta.icon aria-label={meta.label} className={cn("mt-0.5 size-5 shrink-0", meta.className)} />;
-}
-
-function describeAnswer(question: Question, answer: Answer | undefined) {
-  if (!isAnswered(answer)) return undefined;
-  switch (question.kind) {
-    case "single":
-      return typeof answer === "number" ? question.options[answer] : undefined;
-    case "multi":
-      return Array.isArray(answer)
-        ? [...answer].sort((a, b) => a - b).map((choice) => question.options[choice]).join("; ")
-        : undefined;
-    case "boolean":
-      return answer ? "True" : "False";
-    case "short":
-      return typeof answer === "string" ? answer : undefined;
-  }
-}
-
-function describeCorrect(question: Question) {
-  switch (question.kind) {
-    case "single":
-      return question.options[question.answer];
-    case "multi":
-      return question.answer.map((choice) => question.options[choice]).join("; ");
-    case "boolean":
-      return question.answer ? "True" : "False";
-    case "short":
-      return question.sample;
-  }
-}
-
-function QuestionField({
-  name,
-  question,
-  answer,
-  onAnswer,
-}: {
-  name: string;
-  question: Question;
-  answer: Answer | undefined;
-  onAnswer: (answer: Answer) => void;
-}) {
-  const hint =
-    question.kind === "multi"
-      ? "Select all that apply. Partial credit is given."
-      : question.kind === "short"
-        ? "Type a short answer."
-        : "Select one answer.";
-
-  return (
-    <fieldset>
-      <legend className="text-lg font-medium text-pretty">{question.prompt}</legend>
-      <p className="mt-1 text-sm text-ink-3">
-        {hint} {question.points} {question.points === 1 ? "point" : "points"}.
-      </p>
-
-      <div className="mt-4 flex flex-col gap-2">
-        {question.kind === "single"
-          ? question.options.map((option, optionIndex) => (
-              <label key={option} className={CHOICE_CLASS}>
-                <input
-                  type="radio"
-                  name={name}
-                  checked={answer === optionIndex}
-                  onChange={() => onAnswer(optionIndex)}
-                  className="mt-0.5 size-4 accent-primary"
-                />
-                <span>{option}</span>
-              </label>
-            ))
-          : null}
-
-        {question.kind === "multi"
-          ? question.options.map((option, optionIndex) => {
-              const chosen = Array.isArray(answer) ? answer : [];
-              const checked = chosen.includes(optionIndex);
-              return (
-                <label key={option} className={CHOICE_CLASS}>
-                  <input
-                    type="checkbox"
-                    name={name}
-                    checked={checked}
-                    onChange={() =>
-                      onAnswer(
-                        checked
-                          ? chosen.filter((choice) => choice !== optionIndex)
-                          : [...chosen, optionIndex],
-                      )
-                    }
-                    className="mt-0.5 size-4 accent-primary"
-                  />
-                  <span>{option}</span>
-                </label>
-              );
-            })
-          : null}
-
-        {question.kind === "boolean"
-          ? [true, false].map((value) => (
-              <label key={String(value)} className={CHOICE_CLASS}>
-                <input
-                  type="radio"
-                  name={name}
-                  checked={answer === value}
-                  onChange={() => onAnswer(value)}
-                  className="mt-0.5 size-4 accent-primary"
-                />
-                <span>{value ? "True" : "False"}</span>
-              </label>
-            ))
-          : null}
-
-        {question.kind === "short" ? (
-          <input
-            type="text"
-            name={name}
-            aria-label="Your answer"
-            value={typeof answer === "string" ? answer : ""}
-            onChange={(event) => onAnswer(event.target.value)}
-            autoComplete="off"
-            placeholder="Your answer"
-            className="h-11 rounded-lg border border-line-strong bg-surface px-3 text-sm outline-none placeholder:text-ink-3 focus:border-primary"
-          />
-        ) : null}
-      </div>
-    </fieldset>
   );
 }

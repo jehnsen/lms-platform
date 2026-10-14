@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
+  PenLine,
   Menu,
   ScrollText,
   Settings,
@@ -55,12 +56,12 @@ const NAV: NavGroup[] = [
       { href: "/", label: "Dashboard", icon: LayoutDashboard },
       { href: "/courses", label: "Courses", icon: BookOpen },
       { href: "/assignments", label: "Assignments", icon: ClipboardCheck },
+      { href: "/quizzes", label: "Quizzes", icon: ListChecks },
     ],
   },
   {
     heading: { student: "Learn", parent: "Your child" },
     items: [
-      { href: "/quizzes", label: "Quizzes", icon: ListChecks },
       { href: "/grades", label: { student: "My grades", parent: "Grades" }, icon: GraduationCap },
       { href: "/tutor", label: "AI tutor", icon: Sparkles },
     ],
@@ -68,6 +69,7 @@ const NAV: NavGroup[] = [
   {
     heading: { faculty: "Teach", admin: "Oversight" },
     items: [
+      { href: "/grading", label: "Grading queue", icon: PenLine },
       { href: "/gradebook", label: "Gradebook", icon: Table2 },
       { href: "/content", label: "Content library", icon: Clapperboard },
       { href: "/lesson-planner", label: "Lesson planner", icon: WandSparkles },

@@ -39,6 +39,23 @@ describe("US-03: each person only sees what their role permits", () => {
     expect(can(faculty, "view", { type: "gradebook", courseId: "art" })).toBe(false);
   });
 
+  it("lets faculty build quizzes and mark answers only in the courses they teach", () => {
+    expect(can(faculty, "create", { type: "quiz", courseId: "math" })).toBe(true);
+    expect(can(faculty, "update", { type: "quiz", courseId: "math" })).toBe(true);
+    expect(can(faculty, "create", { type: "quiz", courseId: "art" })).toBe(false);
+    expect(can(faculty, "update", { type: "gradebook", courseId: "art" })).toBe(false);
+    expect(can(student, "create", { type: "quiz", courseId: "math" })).toBe(false);
+    expect(can(admin, "update", { type: "quiz", courseId: "math" })).toBe(false);
+  });
+
+  it("shares the question bank among faculty; each removes only what they added", () => {
+    expect(can(faculty, "view", { type: "question-bank" })).toBe(true);
+    expect(can(faculty, "create", { type: "question-bank" })).toBe(true);
+    expect(can(faculty, "delete", { type: "question-bank", ownerId: "f1" })).toBe(true);
+    expect(can(faculty, "delete", { type: "question-bank", ownerId: "f2" })).toBe(false);
+    expect(can(student, "view", { type: "question-bank" })).toBe(false);
+  });
+
   it("does not let faculty take quizzes or manage users", () => {
     expect(can(faculty, "submit", { type: "quiz", courseId: "math" })).toBe(false);
     expect(can(faculty, "update", { type: "user" })).toBe(false);
@@ -212,7 +229,7 @@ describe("page access by role", () => {
     expect(canAccessRoute("student", "/quizzes/ml-quiz-1")).toBe(true);
     expect(canAccessRoute("student", "/gradebook")).toBe(false);
     expect(canAccessRoute("faculty", "/gradebook")).toBe(true);
-    expect(canAccessRoute("faculty", "/quizzes")).toBe(false);
+    expect(canAccessRoute("faculty", "/tutor")).toBe(false);
     expect(canAccessRoute("admin", "/gradebook")).toBe(true);
     expect(canAccessRoute("admin", "/lesson-planner")).toBe(false);
     expect(canAccessRoute("parent", "/courses")).toBe(false);
@@ -235,6 +252,22 @@ describe("page access by role", () => {
     // The course page and its lessons stay open to students.
     expect(canAccessRoute("student", "/courses/math")).toBe(true);
     expect(canAccessRoute("student", "/courses/math/learn/edit")).toBe(true);
+  });
+
+  it("opens quizzes to students and staff, and building and marking to faculty", () => {
+    for (const role of ["student", "faculty", "admin"] as const) {
+      expect(canAccessRoute(role, "/quizzes")).toBe(true);
+      expect(canAccessRoute(role, "/quizzes/ml-quiz-1")).toBe(true);
+    }
+    expect(canAccessRoute("parent", "/quizzes")).toBe(false);
+    expect(canAccessRoute("faculty", "/quizzes/new")).toBe(true);
+    expect(canAccessRoute("student", "/quizzes/new")).toBe(false);
+    expect(canAccessRoute("admin", "/quizzes/new")).toBe(false);
+    expect(canAccessRoute("faculty", "/quizzes/ml-quiz-1/edit")).toBe(true);
+    expect(canAccessRoute("student", "/quizzes/ml-quiz-1/edit")).toBe(false);
+    expect(canAccessRoute("faculty", "/grading")).toBe(true);
+    expect(canAccessRoute("student", "/grading")).toBe(false);
+    expect(canAccessRoute("admin", "/grading")).toBe(false);
   });
 
   it("opens assignments to students and staff, and setting and marking to staff", () => {

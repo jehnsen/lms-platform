@@ -6,10 +6,10 @@ import { ColumnChart, type Column } from "@/components/charts";
 import { Badge, Button, Card, PageContainer, PageHeader, StatTile } from "@/components/ui";
 import { useCourses } from "@/lib/api/courses";
 import { logGradebookExport, useGradebook } from "@/lib/api/grades";
-import { quizzesForCourse } from "@/lib/data/quizzes";
+import { useQuizzes } from "@/lib/api/quizzes";
 import { downloadCsv } from "@/lib/download";
 import { letterGrade } from "@/lib/grading";
-import { bestAttempt, weightedGrade } from "@/lib/progress";
+import { awaitingMarking, bestAttempt, quizzesOf, weightedGrade } from "@/lib/progress";
 import type { Quiz } from "@/lib/types";
 
 interface Row {
@@ -17,6 +17,8 @@ interface Row {
   name: string;
   section: string;
   scores: Array<number | null>;
+  /** Per quiz: handed in, but a teacher has not finished marking it, so it has no score yet. */
+  awaiting: boolean[];
   overall: number | null;
   missing: number;
 }
@@ -31,20 +33,30 @@ const BANDS: Array<{ label: string; min: number; max: number }> = [
 
 const PASS_MARK = 70;
 
-function buildRow(id: string, name: string, section: string, quizzes: Quiz[], scoreFor: (quiz: Quiz) => number | null): Row {
+function buildRow(
+  id: string,
+  name: string,
+  section: string,
+  quizzes: Quiz[],
+  scoreFor: (quiz: Quiz) => number | null,
+  isAwaiting: (quiz: Quiz) => boolean,
+): Row {
   const scores = quizzes.map(scoreFor);
   return {
     id,
     name,
     section,
     scores,
+    awaiting: quizzes.map((quiz, index) => scores[index] === null && isAwaiting(quiz)),
     overall: weightedGrade(quizzes.map((quiz, index) => ({ weight: quiz.weight, percent: scores[index] }))),
-    missing: scores.filter((score) => score === null).length,
+    // Work that is handed in and waiting for a mark is not missing.
+    missing: quizzes.filter((quiz, index) => scores[index] === null && !isAwaiting(quiz)).length,
   };
 }
 
 export function GradebookView() {
   const courses = useCourses();
+  const allQuizzes = useQuizzes();
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [sectionId, setSectionId] = useState("all");
   const [query, setQuery] = useState("");
@@ -62,7 +74,7 @@ export function GradebookView() {
     );
   }
 
-  const quizzes = quizzesForCourse(course.id);
+  const quizzes = quizzesOf(course.id, allQuizzes).filter((quiz) => quiz.status === "published");
   const sections = [...new Map(entries.flatMap((entry) => (entry.section ? [[entry.section.id, entry.section]] : []))).values()];
 
   const rows: Row[] = entries
@@ -74,6 +86,7 @@ export function GradebookView() {
         entry.section?.name ?? "—",
         quizzes,
         (quiz) => bestAttempt(quiz.id, entry.progress.attempts)?.percent ?? null,
+        (quiz) => awaitingMarking(quiz.id, entry.progress.attempts),
       ),
     );
 
@@ -124,7 +137,7 @@ export function GradebookView() {
         // FR-1.8: an archived course keeps its grades, viewable and exportable.
         eyebrow={course.status === "archived" ? <Badge tone="warn">Archived term · read-only</Badge> : undefined}
         title="Gradebook"
-        description="Scores arrive here automatically when learners submit a quiz. No manual marking."
+        description="Quiz scores arrive here when learners hand in. Answers that need a teacher count once they are marked in the grading queue."
         actions={
           <>
             <label className="sr-only" htmlFor="gradebook-course">
@@ -267,7 +280,7 @@ export function GradebookView() {
                   <td className="px-3 py-2.5 whitespace-nowrap text-ink-2">{row.section}</td>
                   {row.scores.map((score, index) => (
                     <td key={quizzes[index].id} className="px-3 py-2.5 text-right tabular-nums">
-                      <ScoreCell score={score} passMark={quizzes[index].passMark} />
+                      <ScoreCell score={score} passMark={quizzes[index].passMark} awaiting={row.awaiting[index]} />
                     </td>
                   ))}
                   <td className="px-3 py-2.5 text-right font-semibold tabular-nums">
@@ -297,8 +310,10 @@ export function GradebookView() {
   );
 }
 
-function ScoreCell({ score, passMark }: { score: number | null; passMark: number }) {
-  if (score === null) return <span className="font-normal text-ink-3">Missing</span>;
+function ScoreCell({ score, passMark, awaiting = false }: { score: number | null; passMark: number; awaiting?: boolean }) {
+  if (score === null) {
+    return <span className={awaiting ? "font-normal text-warn" : "font-normal text-ink-3"}>{awaiting ? "To mark" : "Missing"}</span>;
+  }
   if (score < passMark) {
     return (
       <span className="text-bad">

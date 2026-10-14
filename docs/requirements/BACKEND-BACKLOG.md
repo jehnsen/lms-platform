@@ -2,7 +2,7 @@
 
 Everything that must be real on a server before go-live. This phase of the project is frontend-first: each item below has a typed interface and a mock in the browser, and this file records what has to replace the mock.
 
-**Last updated:** 2026-10-14, after Phase 3a. Items are added as each phase introduces a new mock.
+**Last updated:** 2026-10-14, after Phase 3b. Items are added as each phase introduces a new mock.
 
 ## How the frontend is prepared for it
 
@@ -53,21 +53,24 @@ Replace each mock repository with database tables and API endpoints.
 | `api/materials.ts` | Content library items, captions, and the files behind them | `GET /materials`, `POST /materials` (upload), `PATCH /materials/:id`, `DELETE /materials/:id`, `GET /courses/:id/lessons/:lessonId/file` |
 | `api/assignments.ts` | Assignments with rubrics and attachments, submissions with files, inline comments, grades and their release, similarity reports | `GET` and `POST /assignments`, `GET`, `PUT` and `DELETE /assignments/:id`, `GET` and `POST /assignments/:id/submissions`, `PUT /submissions/:id/grade`, `POST` and `DELETE /submissions/:id/comments`, `POST /assignments/:id/release`, `POST /submissions/:id/similarity`, file downloads |
 | `api/settings.ts` | School settings: password policy, retention period, upload size limits, default late rule, submission size limit, who sees similarity reports | `GET /settings`, `PUT /settings` |
-| `api/progress.ts` | Completed lessons, quiz attempts, checkpoint answers | `GET /users/:id/progress`, `POST /lessons/:id/completion`, `POST /quizzes/:id/attempts`, `POST /checkpoints/:id/answers` |
+| `api/progress.ts` | Completed lessons, checkpoint answers, and reading a learner's attempts | `GET /users/:id/progress`, `POST /lessons/:id/completion`, `POST /checkpoints/:id/answers` |
+| `api/quizzes.ts` | Quizzes and questions, the question bank, attempts in progress, handed-in attempts, the grading queue | `GET` and `POST /quizzes`, `GET`, `PUT` and `DELETE /quizzes/:id`, `POST /quizzes/:id/attempts`, `PATCH /attempts/:id`, `POST /attempts/:id/submit`, `GET /grading-queue`, `PUT /attempts/:id/marks/:questionId`, `GET`, `POST` and `DELETE /question-bank` |
 | `api/grades.ts` | Class gradebook | `GET /courses/:id/gradebook`, `POST /courses/:id/gradebook/exports` |
 | `api/notifications.ts` | In-app notifications | `GET /notifications`, `POST /notifications/:id/read` |
 | `api/lesson-plans.ts` | Saved lesson plans | `GET/POST/DELETE /lesson-plans` |
 | `api/audit.ts` | Audit log reads | `GET /audit-events` |
 
-Still read directly from a static seed file, to be moved behind the service layer in the phase shown:
-
-- Quizzes and questions: `src/lib/data/quizzes.ts` (Phase 3b). Until then a copied course has no quizzes.
-
-Moved behind the service layer in Phase 2: the course catalogue with its units and lessons, and the content library. `src/lib/data/courses.ts` and `people.ts` are now only seeds.
+Nothing is read straight from a seed file any more. The course catalogue and the content library moved behind the service layer in Phase 2 and quizzes in Phase 3b; `src/lib/data/courses.ts`, `quizzes.ts` and `people.ts` are now only seeds. (The student dashboard still shows fixed sample numbers for study time and streak from `people.ts`.)
 
 **Content visibility (US-09).** `GET /courses` and `GET /courses/:id` must return only the lessons the caller may see: nothing scheduled for later and nothing restricted to another section. The rule is `courseForViewer()` in `src/lib/domain/content-visibility.ts`. Today the whole course is in the browser's storage and the filter runs there, so a student who inspects storage can read an unreleased lesson. The same applies to lesson files: `GET /courses/:id/lessons/:lessonId/file` must check that the caller may see that lesson.
 
-Quiz grading currently runs in the browser (`src/lib/grading.ts`), which means the answers are shipped to the client. The server must grade attempts and never send answer keys.
+**Quizzes (BR-11).** Everything the browser decides today must be decided by the server:
+
+- **The answer key.** A quiz reaches the browser whole, answers included, and is marked there by `src/lib/grading.ts`. The server must mark attempts and send a student only the questions, with the right-hand choices of matching questions already shuffled.
+- **The time limit.** `remainingMs()` in `src/lib/domain/quizzes.ts` is evaluated against the browser's clock. The server must stamp the start, refuse answers after the limit, and hand the attempt in itself when the limit is reached, whether or not the student's browser is open. Today `settleExpiredAttempts()` does that only when the student next opens the app.
+- **Autosave.** `saveDraftAnswers()` writes to local storage on every change. It becomes `PATCH /attempts/:id`, and the client needs to queue saves and show when one has failed.
+- **Attempt limits.** `startDecision()` counts attempts held in the browser.
+- **Manual marks.** `applyManualMark()` reworks the total in the browser; the server must do it and own the final score.
 
 Bulk import: the CSV file is parsed and validated in the browser (`previewUserImport`). The server must parse the uploaded file and run the rules in `src/lib/domain/user-import.ts` itself, inside one transaction, and enforce unique email and SIS ID with database constraints.
 

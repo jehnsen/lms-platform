@@ -25,7 +25,11 @@ const ROUTE_RULES: RouteRule[] = [
   // FR-2.1: the course builder. Creating and editing are for roles that hold those permissions.
   { prefix: "/courses/new", action: "create", resource: "course" },
   { prefix: "/courses", pattern: /^\/courses\/[^/]+\/edit$/, action: "update", resource: "course" },
-  { prefix: "/quizzes", action: "submit", resource: "quiz" },
+  // Students take quizzes; staff see them with their answers. Building and marking are for faculty.
+  { prefix: "/quizzes", action: "view", resource: "quiz" },
+  { prefix: "/quizzes/new", action: "create", resource: "quiz" },
+  { prefix: "/quizzes", pattern: /^\/quizzes\/[^/]+\/edit$/, action: "update", resource: "quiz" },
+  { prefix: "/grading", action: "update", resource: "gradebook" },
   // Assignments: everyone who has them may list and open them; setting and marking are for staff.
   { prefix: "/assignments", action: "view", resource: "assignment" },
   { prefix: "/assignments/new", action: "create", resource: "assignment" },

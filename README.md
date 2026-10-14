@@ -43,7 +43,9 @@ Each role sees only its own menu and pages. Opening a page the role may not see 
 | Courses and lessons | `/courses`, `/courses/[courseId]` | student, faculty, admin | `src/components/course-catalog.tsx`, `course-overview.tsx`, `curriculum.tsx`, `src/lib/api/courses.ts` |
 | Course builder: details, sections and schedule, units and lessons, release times, section limits, templates, copies | `/courses/new` (faculty), `/courses/[courseId]/edit` (faculty who teach it, admin) | faculty, admin | `src/components/course-new.tsx`, `course-builder.tsx`, `lesson-editor.tsx`, `sortable-list.tsx`, `src/lib/domain/course-rules.ts`, `course-copy.ts`, `content-visibility.ts` |
 | Lessons: video with in-video quizzes, reading, link, document, slides | `/courses/[courseId]/learn/[lessonId]` | student; faculty and admin preview | `src/components/lesson-player.tsx`, `lesson-workspace.tsx`, `src/lib/api/materials.ts`, `src/lib/domain/links.ts` |
-| Graded quizzes | `/quizzes`, `/quizzes/[quizId]` | student | `src/components/quiz-runner.tsx`, `src/lib/grading.ts` |
+| Quizzes: timed attempts with autosave and automatic hand-in, five question kinds, instant marking | `/quizzes`, `/quizzes/[quizId]` | student takes them; faculty and admin see questions and answers | `src/components/quiz-list.tsx`, `quiz-runner.tsx`, `quiz-questions.tsx`, `quiz-preview.tsx`, `src/lib/api/quizzes.ts`, `src/lib/grading.ts`, `src/lib/domain/quizzes.ts` |
+| Quiz builder and question bank | `/quizzes/new`, `/quizzes/[quizId]/edit` | faculty | `src/components/quiz-builder.tsx`, `question-editor.tsx`, `sortable-list.tsx` |
+| Grading queue for teacher-marked answers | `/grading` | faculty | `src/components/grading-queue.tsx`, `src/lib/api/quizzes.ts` |
 | Grades | `/grades` | student (own), parent (child) | `src/components/grades-view.tsx` |
 | Gradebook | `/gradebook` | faculty (own courses), admin (all, read-only) | `src/components/gradebook-view.tsx`, `src/lib/api/grades.ts` |
 | Content library: uploads within size limits, captions, preview | `/content` | faculty; admin read-only | `src/components/content-library.tsx`, `src/lib/api/materials.ts`, `src/lib/domain/uploads.ts` |
@@ -69,6 +71,10 @@ A new course has no students: they are placed in sections by the CSV import or t
 **Setting and marking an assignment.** Faculty press **New assignment** on `/assignments`: instructions, due date and time, points, attached files, the sections it is for, how students hand in (typed text, files or both), the late rule, whether handing in again is allowed, and an optional rubric. It can be saved as a draft; publishing checks everything, including that the rubric adds up to the assignment's points. Students hand in on the assignment's page and get a receipt with the date, time and a code. On the marking page (`/assignments/[assignmentId]/submissions/[studentId]`) the teacher comments on selected text or on a file, picks rubric levels (the total and any late deduction update as they go) and writes feedback. Students see none of that until the teacher presses **Release grades** on the assignment page.
 
 The seeded demo has an assignment with marked, unmarked and late work (as faculty, open "Reflection: where have you met machine learning?") and one the student has still to do.
+
+**Building and marking a quiz.** Faculty press **New quiz** on `/quizzes`: settings (due date, pass mark, share of the course grade, an optional time limit and attempt limit, the unit it follows) and questions of five kinds: multiple choice, multiple answers, true or false, matching and short answer. Questions can be saved to, and copied from, the question bank shared by all faculty. Multiple choice, true or false and matching are marked automatically; a short answer is marked by keyword or by a teacher, as the question says. Teacher-marked answers arrive on `/grading`; saving a mark there updates the student's score, and the attempt counts once nothing is left to mark.
+
+In the seeded demo, "Unit 2 quiz: Training models" has a 10-minute limit, a matching question and a teacher-marked question, and two answers are already waiting in Dr. Okafor's grading queue.
 
 **Archiving a term.** On `/admin/terms`, archiving a term makes every course in it read-only for all roles: no quiz attempts, no progress, no edits. Grades stay viewable and gradebooks can still be exported. A term can be reopened.
 
@@ -103,7 +109,7 @@ src/proxy.ts       Redirects before a page is served (signed out, or wrong role)
 - **All data** — users, terms, sections, enrollments, courses, course templates, library items, assignments, submissions, school settings, learner progress, lesson plans, notifications and the audit log are kept in `localStorage` by the repositories in `src/lib/api/_stores.ts`, under versioned keys such as `lms:progress:v1`. The admin home page has **Reset demo data**; the student grades page has **Reset demo progress**.
 - **The audit log** — written by the browser, editable by the user, capped at 500 events.
 - **Notifications** — in-app only. Nothing is emailed or pushed.
-- **Quiz content** — a static file, `src/lib/data/quizzes.ts`. Quizzes cannot be edited and are not copied with a course until Phase 3b. Courses start from the seed in `src/lib/data/courses.ts` and are then edited in the browser.
+- **Quizzes** — a quiz reaches the browser with its answer key and is marked there. The time limit runs on the browser's clock; answers are saved to local storage as they are given; and an attempt whose time runs out while the app is closed is handed in the next time the student opens the quizzes page or the quiz. Courses and quizzes start from the seeds in `src/lib/data/` and are then edited in the browser.
 - **Who sees which lesson** — release times and section limits are applied in the browser by `courseForViewer()`. The whole course is in the browser's storage, so this hides lessons from the screen, not from someone who inspects storage.
 - **Study time and streak on the student dashboard** — fixed sample numbers in `src/lib/data/people.ts`.
 - **AI tutor and lesson planner** — template-based, in `src/lib/mock-ai/`. No model is called.
@@ -124,7 +130,8 @@ The service layer is the seam: replace the body of each module in `src/lib/api/`
 | `api/materials.ts` | Content library list, upload, captions, delete, and the file a lesson shows. |
 | `api/assignments.ts` | Assignments, submissions (the server stamps the time and applies the late rule), marking, inline comments, grade release (the server withholds unreleased marks), similarity checks, file downloads. |
 | `api/settings.ts` | School settings. |
-| `api/progress.ts` | Lesson completion, quiz attempts, checkpoint answers. |
+| `api/progress.ts` | Lesson completion, checkpoint answers, and a learner's record. |
+| `api/quizzes.ts` | Quizzes (without answer keys for students), the question bank, starting an attempt, autosave, handing in (the server marks and enforces the time limit), the grading queue and manual marks. |
 | `api/grades.ts` | Class gradebook and export logging. |
 | `api/notifications.ts` | Notification list and read state. |
 | `api/lesson-plans.ts` | Saved lesson plans. |

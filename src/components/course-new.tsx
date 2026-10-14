@@ -14,6 +14,7 @@ import {
   useTerms,
   type CourseSource,
 } from "@/lib/api/courses";
+import { useQuizzes } from "@/lib/api/quizzes";
 import { useActor } from "@/lib/api/session";
 import { countCourseDates, daysBetween, shiftDate } from "@/lib/domain/course-copy";
 import { courseLessons } from "@/lib/domain/course-outline";
@@ -42,6 +43,7 @@ export function CourseNew() {
   const terms = useTerms();
   const courses = useCourses();
   const templates = useTemplates();
+  const quizzes = useQuizzes();
   const openTerms = terms.filter((term) => term.status !== "archived");
 
   const [startFrom, setStartFrom] = useState<StartFrom>("blank");
@@ -67,7 +69,9 @@ export function CourseNew() {
   const suggestedShift = sourceStart && term ? daysBetween(sourceStart, term.startsOn) : 0;
   const shiftText = typedShift ?? String(suggestedShift);
   const shiftDays = Number(shiftText);
-  const dateCount = source ? countCourseDates(source) : 0;
+  // The quizzes that will be copied with it: the template's own, or the course's.
+  const sourceQuizzes = !source ? [] : startFrom === "template" ? (template?.quizzes ?? []) : quizzes.filter((quiz) => quiz.courseId === source.id);
+  const dateCount = source ? countCourseDates(source, sourceQuizzes) : 0;
 
   const submit = async () => {
     const found: string[] = [];
@@ -215,10 +219,10 @@ export function CourseNew() {
 
             {source ? (
               <p className="mt-3 text-sm text-ink-2">
-                Copies {source.modules.length} {source.modules.length === 1 ? "unit" : "units"} and{" "}
-                {courseLessons(source).length} {courseLessons(source).length === 1 ? "lesson" : "lessons"}, with the
-                sections and their schedules. Students, progress and grades are not copied. Unit quizzes are not
-                copied yet.
+                Copies {source.modules.length} {source.modules.length === 1 ? "unit" : "units"},{" "}
+                {courseLessons(source).length} {courseLessons(source).length === 1 ? "lesson" : "lessons"} and{" "}
+                {sourceQuizzes.length} {sourceQuizzes.length === 1 ? "quiz" : "quizzes"}, with the sections and their
+                schedules. Students, progress, quiz attempts and grades are not copied.
               </p>
             ) : null}
           </fieldset>
@@ -281,7 +285,7 @@ export function CourseNew() {
               <>
                 <p className="mt-1 text-sm text-ink-2">
                   The course you are copying has {dateCount} {dateCount === 1 ? "date" : "dates"}: its first and last
-                  day and each lesson&apos;s release time. They all move by the same number of days.
+                  day, each lesson&apos;s release time and each quiz&apos;s due date. They all move by the same number of days.
                 </p>
                 <div className="mt-3 flex flex-wrap items-end gap-3">
                   <div>

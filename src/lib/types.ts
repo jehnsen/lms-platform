@@ -262,17 +262,36 @@ export interface BooleanQuestion extends QuestionBase {
 
 export interface ShortAnswerQuestion extends QuestionBase {
   kind: "short";
-  /** Any one of these phrases in the response earns full marks. */
+  /**
+   * US-12: how the answer is marked. `auto` gives full marks when the response
+   * contains one of the `accept` phrases; `manual` sends it to the grading
+   * queue for a teacher. Absent means `auto`, as in the original prototype.
+   */
+  marking?: "auto" | "manual";
+  /** Auto marking: any one of these phrases in the response earns full marks. */
   accept: string[];
   sample: string;
+}
+
+/** FR-3.5: match each item on the left with one on the right. Auto-marked, with part marks. */
+export interface MatchingQuestion extends QuestionBase {
+  kind: "matching";
+  pairs: Array<{ left: string; right: string }>;
+  /** Extra choices on the right that match nothing. */
+  distractors?: string[];
 }
 
 export type Question =
   | SingleChoiceQuestion
   | MultiChoiceQuestion
   | BooleanQuestion
-  | ShortAnswerQuestion;
+  | ShortAnswerQuestion
+  | MatchingQuestion;
 
+/**
+ * A response to one question. For matching it is one entry per left item: the
+ * index of the chosen right-hand choice (pairs first, then distractors), or -1.
+ */
 export type Answer = number | number[] | boolean | string;
 export type AnswerSheet = Record<string, Answer | undefined>;
 
@@ -281,6 +300,7 @@ export interface Quiz {
   courseId: string;
   title: string;
   description: string;
+  /** Roughly how long it takes; shown when there is no time limit. */
   minutes: number;
   /** Percent needed to pass. */
   passMark: number;
@@ -288,6 +308,20 @@ export interface Quiz {
   weight: number;
   due: string;
   questions: Question[];
+  /** FR-3.7: minutes allowed per attempt. Absent means untimed. */
+  timeLimitMinutes?: number;
+  /** Attempts allowed per student. Absent means unlimited. */
+  maxAttempts?: number;
+  /** Students see and take only published quizzes. */
+  status: "draft" | "published";
+}
+
+/** A mark given by a teacher to one answer (US-12). */
+export interface ManualMark {
+  points: number;
+  feedback?: string;
+  markedById: string;
+  markedAt: string;
 }
 
 export interface QuizAttempt {
@@ -297,6 +331,34 @@ export interface QuizAttempt {
   possible: number;
   percent: number;
   submittedAt: string;
+  /** What the student answered. Kept for manual marking and review; older attempts have none. */
+  answers?: AnswerSheet;
+  /** Marks given by hand, by question id. */
+  manual?: Record<string, ManualMark>;
+  /** `awaiting-marking` until every manually marked answer has a mark; then the score is final and counts. */
+  status?: "graded" | "awaiting-marking";
+  startedAt?: string;
+  /** FR-3.7: handed in by the system because the time limit was reached. */
+  autoSubmitted?: boolean;
+}
+
+/** FR-3.7: an attempt in progress. Answers are saved here as they are given. */
+export interface QuizDraft {
+  quizId: string;
+  userId: string;
+  startedAt: string;
+  answers: AnswerSheet;
+  savedAt: string;
+}
+
+/** FR-3.5: a reusable question in the shared question bank. */
+export interface BankQuestion {
+  id: string;
+  /** The course it was written for, used to filter the bank. */
+  courseId: string;
+  addedById: string;
+  addedAt: string;
+  question: Question;
 }
 
 /** Everything one learner has done. Stored per user by the progress service. */
@@ -511,4 +573,6 @@ export interface CourseTemplate {
   course: Course;
   /** Section names and schedules, keyed by the ids the lessons' `sectionIds` refer to. */
   sections: Array<Pick<Section, "id" | "name" | "meetings">>;
+  /** The course's quizzes, copied with it (US-08). Templates saved before quizzes could be copied have none. */
+  quizzes?: Quiz[];
 }

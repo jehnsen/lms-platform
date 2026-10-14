@@ -10,13 +10,14 @@
 import { useMemo } from "react";
 import { seedProgress } from "@/lib/data/directory";
 import { can } from "@/lib/domain/permissions";
-import type { Course, LearnerProgress, QuizAttempt, User } from "@/lib/types";
+import type { Course, LearnerProgress, Quiz, User } from "@/lib/types";
 import { useNow } from "@/lib/use-now";
 import { useRepository } from "./_repository";
 import {
   coursesRepo,
   enrollmentsRepo,
   progressRepo,
+  quizzesRepo,
   sectionsRepo,
   termsRepo,
   usersRepo,
@@ -46,6 +47,8 @@ export interface ViewedLearner {
   progress: LearnerProgress;
   /** The courses this learner is enrolled in, with only the lessons released to them (US-09). */
   courses: Course[];
+  /** The published quizzes of those courses. */
+  quizzes: Quiz[];
   /** True when looking at someone else's record (a parent viewing a child). */
   readOnly: boolean;
   /** Linked children to choose between, for parents with more than one. */
@@ -67,19 +70,26 @@ export function useViewedLearner(): ViewedLearner | null | undefined {
   const enrollments = useRepository(enrollmentsRepo);
   const catalogue = useRepository(coursesRepo);
   const terms = useRepository(termsRepo);
+  const allQuizzes = useRepository(quizzesRepo);
   const now = useNow();
 
   return useMemo(() => {
     if (actor === undefined) return undefined;
     if (!actor) return null;
 
-    const describe = (learner: User, readOnly: boolean): ViewedLearner => ({
-      learner,
-      progress: all[learner.id] ?? EMPTY_PROGRESS,
-      courses: coursesForLearner(learner, catalogue, sections, enrollments, terms, now),
-      readOnly,
-      children,
-    });
+    const describe = (learner: User, readOnly: boolean): ViewedLearner => {
+      const courses = coursesForLearner(learner, catalogue, sections, enrollments, terms, now);
+      return {
+        learner,
+        progress: all[learner.id] ?? EMPTY_PROGRESS,
+        courses,
+        quizzes: allQuizzes.filter(
+          (quiz) => quiz.status === "published" && courses.some((course) => course.id === quiz.courseId),
+        ),
+        readOnly,
+        children,
+      };
+    };
 
     const self = users.find((user) => user.id === actor.id);
     if (self && can(actor, "view", { type: "grades", ownerId: actor.id })) return describe(self, false);
@@ -87,7 +97,7 @@ export function useViewedLearner(): ViewedLearner | null | undefined {
     const child = children.find((candidate) => candidate.id === selection[actor.id]) ?? children[0];
     if (child && can(actor, "view", { type: "grades", ownerId: child.id })) return describe(child, true);
     return null;
-  }, [actor, users, all, selection, children, sections, enrollments, catalogue, terms, now]);
+  }, [actor, users, all, selection, children, sections, enrollments, catalogue, terms, allQuizzes, now]);
 }
 
 /** Parent only: switch which linked child is shown. */
@@ -125,11 +135,6 @@ export async function setLessonComplete(courseId: string, lessonId: string, comp
         : progress.completedLessons.filter((id) => id !== lessonId),
     };
   });
-}
-
-export async function recordAttempt(attempt: QuizAttempt, courseId: string): Promise<void> {
-  authorize("submit", { type: "quiz", courseId });
-  updateMine(courseId, (progress) => ({ ...progress, attempts: [...progress.attempts, attempt] }));
 }
 
 /** Only the first answer to a checkpoint counts towards participation. */

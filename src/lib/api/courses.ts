@@ -25,6 +25,7 @@ import {
   coursesRepo,
   enrollmentsRepo,
   materialsRepo,
+  quizzesRepo,
   sectionsRepo,
   templatesRepo,
   termsRepo,
@@ -359,6 +360,7 @@ export async function createCourse(input: NewCourseInput): Promise<string> {
         rating: 0,
         modules: [],
       },
+      quizzes: [],
       sections: [
         {
           id: makeId("section"),
@@ -383,7 +385,11 @@ export async function createCourse(input: NewCourseInput): Promise<string> {
     const source = coursesRepo.get().find((candidate) => candidate.id === courseId);
     if (!source) throw new CourseError(["The course to copy no longer exists."]);
     draft = copyCourse(
-      { course: source, sections: sectionsRepo.get().filter((section) => section.courseId === courseId) },
+      {
+        course: source,
+        sections: sectionsRepo.get().filter((section) => section.courseId === courseId),
+        quizzes: quizzesRepo.get(),
+      },
       target,
       makeId,
     );
@@ -394,6 +400,7 @@ export async function createCourse(input: NewCourseInput): Promise<string> {
 
   coursesRepo.update((courses) => [...courses, draft.course]);
   sectionsRepo.update((sections) => [...sections, ...draft.sections]);
+  if (draft.quizzes.length > 0) quizzesRepo.update((quizzes) => [...quizzes, ...draft.quizzes]);
   recordAudit({
     action: "course.create",
     resource: `course:${draft.course.id}`,
@@ -468,6 +475,7 @@ export async function saveCourseAsTemplate(courseId: string, name: string): Prom
       .get()
       .filter((section) => section.courseId === courseId)
       .map((section) => ({ id: section.id, name: section.name, meetings: section.meetings })),
+    quizzes: quizzesRepo.get().filter((quiz) => quiz.courseId === courseId),
   };
   templatesRepo.update((templates) => [...templates, template]);
   recordAudit({ action: "template.create", resource: `template:${template.id}`, outcome: "allowed", detail: template.name });

@@ -3,7 +3,11 @@
  * term, sections, enrollments, each learner's starting progress, and a few
  * notifications. The service layer loads these into its mock repositories.
  */
+import { buildAttempt } from "@/lib/domain/quizzes";
+import { quizPoints } from "@/lib/grading";
 import type {
+  AnswerSheet,
+  BankQuestion,
   Enrollment,
   LearnerProgress,
   Notification,
@@ -13,7 +17,7 @@ import type {
   User,
 } from "@/lib/types";
 import { courses } from "./courses";
-import { quizPoints, quizzes } from "./quizzes";
+import { quizzes } from "./quizzes";
 
 function emailFor(name: string) {
   const plain = name
@@ -160,7 +164,69 @@ function classmateProgress(studentIndex: number, userId: string): LearnerProgres
       submittedAt: new Date(Date.parse(quiz.due) - (2 + (studentIndex % 5)) * DAY_MS).toISOString(),
     });
   }
-  return { completedLessons: [], attempts, checkpoints: {} };
+  return { completedLessons: [], attempts: withHandMarkedQuiz(studentIndex, userId, attempts), checkpoints: {} };
+}
+
+/**
+ * US-12: three classmates have taken the timed quiz, which has an answer a
+ * teacher marks. Two are waiting in the grading queue; one is already marked.
+ */
+const HAND_MARKED_QUIZ_ID = "ml-quiz-2";
+
+const HAND_MARKED_ANSWERS: Record<number, { answers: AnswerSheet; marked?: number }> = {
+  2: {
+    answers: {
+      q1: 1,
+      q2: 1,
+      q3: [0, 1, 3],
+      q4: false,
+      q5: "generalization",
+      q6: [0, 1, 2, 3],
+      q7: "Because the model has already seen the training data, its score there is too kind. The validation set is new to it, so the score is honest and we can see if it is overfitting.",
+    },
+  },
+  4: {
+    answers: {
+      q1: 1,
+      q2: 0,
+      q3: [0, 3],
+      q4: false,
+      q5: "generalisation",
+      q6: [0, 1, 3, 2],
+      q7: "So we can test it.",
+    },
+  },
+  6: {
+    answers: {
+      q1: 1,
+      q2: 1,
+      q3: [0, 1],
+      q4: true,
+      q5: "accuracy",
+      q6: [0, 1, 2, 3],
+      q7: "The validation data is not used for training. If the error is low on training data but high on validation data the model is overfitting.",
+    },
+    marked: 3,
+  },
+};
+
+function withHandMarkedQuiz(studentIndex: number, userId: string, attempts: LearnerProgress["attempts"]) {
+  const seed = HAND_MARKED_ANSWERS[studentIndex];
+  const quiz = quizzes.find((candidate) => candidate.id === HAND_MARKED_QUIZ_ID);
+  if (!seed || !quiz) return attempts;
+  const attempt = buildAttempt(
+    quiz,
+    seed.answers,
+    {
+      id: `seed-${userId}-${quiz.id}`,
+      startedAt: `2026-10-13T10:0${studentIndex}:00.000Z`,
+      submittedAt: `2026-10-13T10:1${studentIndex}:00.000Z`,
+    },
+    seed.marked === undefined
+      ? {}
+      : { q7: { points: seed.marked, feedback: "Clear and correct.", markedById: "u-faculty-okafor", markedAt: "2026-10-13T15:00:00.000Z" } },
+  );
+  return [...attempts.filter((candidate) => candidate.quizId !== quiz.id), attempt];
 }
 
 const demoStudentProgress: LearnerProgress = {
@@ -260,3 +326,17 @@ export const seedNotifications: Notification[] = [
     mandatory: true,
   },
 ];
+
+/** FR-3.5: the shared question bank starts with every seeded quiz question, filed under its course. */
+export const seedQuestionBank: BankQuestion[] = quizzes.flatMap((quiz) =>
+  quiz.questions.map((question) => {
+    const id = `bank-${quiz.id}-${question.id}`;
+    return {
+      id,
+      courseId: quiz.courseId,
+      addedById: TEACHING.find((entry) => entry.courseId === quiz.courseId)?.facultyId ?? DEMO_USER_IDS.faculty,
+      addedAt: "2026-09-01T08:00:00.000Z",
+      question: { ...question, id },
+    };
+  }),
+);

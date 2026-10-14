@@ -18,6 +18,7 @@ export type ResourceType =
   | "course-template"
   | "progress"
   | "quiz"
+  | "question-bank"
   | "assignment"
   | "submission"
   | "similarity-report"
@@ -83,7 +84,10 @@ export const PERMISSIONS: Record<Role, Grants> = {
     // FR-2.5: templates are shared; only their author (or an admin) removes one.
     "course-template": { view: "any", create: "any", delete: "own" },
     progress: { view: "course" },
-    quiz: { view: "course" },
+    // US-12: faculty build quizzes for the courses they teach. Marking by hand is "update" on the gradebook.
+    quiz: { view: "course", create: "course", update: "course", delete: "course" },
+    // FR-3.5: the question bank is shared; a teacher removes only what they added.
+    "question-bank": { view: "any", create: "any", delete: "own" },
     // US-10, US-15: faculty set and mark assignments in the courses they teach.
     assignment: { view: "course", create: "course", update: "course", delete: "course" },
     submission: { view: "course", update: "course" },
@@ -100,6 +104,7 @@ export const PERMISSIONS: Record<Role, Grants> = {
     "course-template": { view: "any", delete: "any" },
     progress: { view: "any" },
     quiz: { view: "any" },
+    "question-bank": { view: "any", delete: "any" },
     // Admins oversee assignments and marked work but do not mark it.
     assignment: { view: "any" },
     submission: { view: "any" },

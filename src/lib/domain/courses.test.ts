@@ -12,7 +12,7 @@ import { courseLessons, locateLesson, moveItem, sectionCode } from "@/lib/domain
 import { courseProblems, type CourseRulesContext } from "@/lib/domain/course-rules";
 import { embedUrlFor, isWebUrl } from "@/lib/domain/links";
 import { DEFAULT_UPLOAD_LIMITS_MB, checkUpload, materialKindOf } from "@/lib/domain/uploads";
-import type { Course, Lesson, Term } from "@/lib/types";
+import type { Course, Lesson, Quiz, Term } from "@/lib/types";
 
 function lesson(id: string, extra: Partial<Lesson> = {}): Lesson {
   return { id, title: `Lesson ${id}`, type: "reading", minutes: 5, summary: "", keyPoints: [], thumbnail: "/t.jpg", ...extra };
@@ -183,6 +183,33 @@ describe("US-08: copy a course or start from a template", () => {
       undefined,
       "2027-02-18T08:00:00.000Z",
     ]);
+  });
+
+  it("copies the course's quizzes with new ids, keeps them on their units and moves their due dates", () => {
+    const quiz: Quiz = {
+      id: "quiz-1",
+      courseId: "math",
+      title: "Unit 1 quiz",
+      description: "",
+      minutes: 10,
+      passMark: 70,
+      weight: 40,
+      due: "2026-10-20",
+      status: "published",
+      questions: [{ id: "q1", kind: "boolean", prompt: "True?", points: 1, explanation: "", answer: true }],
+    };
+    const other: Quiz = { ...quiz, id: "quiz-9", courseId: "art" };
+    const withQuizzes = copyCourse({ course, sections, quizzes: [quiz, other] }, target, makeId);
+    expect(withQuizzes.quizzes).toHaveLength(1);
+    const [copied] = withQuizzes.quizzes;
+    expect(copied).toMatchObject({ courseId: withQuizzes.course.id, title: "Unit 1 quiz", due: "2027-03-09" });
+    expect(copied.id).not.toBe("quiz-1");
+    expect(copied.questions[0].id).not.toBe("q1");
+    expect(withQuizzes.course.modules.map((unit) => unit.quizId)).toEqual([copied.id, undefined]);
+    expect(countCourseDates(course, [quiz, other])).toBe(5);
+    // Without quizzes to copy, a unit does not point at a quiz that is not there.
+    expect(copy.course.modules.map((unit) => unit.quizId)).toEqual([undefined, undefined]);
+    expect(copy.quizzes).toEqual([]);
   });
 
   it("leaves the original untouched", () => {

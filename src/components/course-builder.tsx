@@ -704,7 +704,7 @@ function TemplateDialog({ courseId, courseTitle, onClose }: { courseId: string; 
   };
 
   return (
-    <Dialog title="Save as template" description="The units, lessons, sections and schedule are copied. No students, progress or grades." onClose={onClose}>
+    <Dialog title="Save as template" description="The units, lessons, quizzes, sections and schedule are copied. No students, progress, attempts or grades." onClose={onClose}>
       {done ? (
         <div className="flex flex-col gap-4">
           <p role="status" className="text-sm text-ink-2">

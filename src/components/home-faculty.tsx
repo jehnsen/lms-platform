@@ -6,9 +6,9 @@ import { CourseCover } from "@/components/course-art";
 import { ButtonLink, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
 import { useCourses } from "@/lib/api/courses";
 import { useGradebook } from "@/lib/api/grades";
+import { useQuizzes } from "@/lib/api/quizzes";
 import { useActor } from "@/lib/api/session";
-import { quizzesForCourse } from "@/lib/data/quizzes";
-import { bestAttempt, courseGrade } from "@/lib/progress";
+import { bestAttempt, courseGrade, quizzesOf } from "@/lib/progress";
 import type { Course } from "@/lib/types";
 import { firstNameOf } from "@/lib/utils";
 
@@ -90,10 +90,11 @@ export function FacultyHome() {
 
 function TeachingCourseCard({ course }: { course: Course }) {
   const entries = useGradebook(course.id) ?? [];
-  const quizzes = quizzesForCourse(course.id);
+  // Published quizzes only: a draft is not something students could have taken.
+  const quizzes = quizzesOf(course.id, useQuizzes()).filter((quiz) => quiz.status === "published");
 
   const grades = entries
-    .map((entry) => courseGrade(course, entry.progress))
+    .map((entry) => courseGrade(course, entry.progress, quizzes))
     .filter((grade): grade is number => grade !== null);
   const average = grades.length
     ? Math.round(grades.reduce((sum, grade) => sum + grade, 0) / grades.length)

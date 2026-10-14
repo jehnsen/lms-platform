@@ -3,7 +3,6 @@
 import { Card, ButtonLink, Meter, PageContainer, PageHeader, SectionTitle } from "@/components/ui";
 import { selectViewedChild, useViewedLearner } from "@/lib/api/progress";
 import { useActor } from "@/lib/api/session";
-import { getQuiz } from "@/lib/data/quizzes";
 import { letterGrade } from "@/lib/grading";
 import { courseGrade, courseProgress, overallGrade } from "@/lib/progress";
 import { firstNameOf, formatDate } from "@/lib/utils";
@@ -28,9 +27,9 @@ export function ParentHome() {
     );
   }
 
-  const { learner, progress, courses, children } = viewed;
+  const { learner, progress, courses, quizzes, children } = viewed;
   const childName = firstNameOf(learner.name);
-  const overall = overallGrade(progress, courses);
+  const overall = overallGrade(progress, courses, quizzes);
   const recent = [...progress.attempts]
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
     .slice(0, 4);
@@ -72,7 +71,7 @@ export function ParentHome() {
           <Card>
             <ul>
               {courses.map((course) => {
-                const grade = courseGrade(course, progress);
+                const grade = courseGrade(course, progress, quizzes);
                 const lessons = courseProgress(course, progress);
                 return (
                   <li key={course.id} className="border-t border-line p-4 first:border-t-0">
@@ -130,7 +129,7 @@ export function ParentHome() {
                     >
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium">
-                          {getQuiz(attempt.quizId)?.title ?? "Quiz"}
+                          {quizzes.find((quiz) => quiz.id === attempt.quizId)?.title ?? "Quiz"}
                         </span>
                         <span className="block text-xs text-ink-3">{formatDate(attempt.submittedAt)}</span>
                       </span>

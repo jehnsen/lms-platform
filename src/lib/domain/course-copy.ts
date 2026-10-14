@@ -7,7 +7,8 @@
  * by those ids, so nothing recorded against the original can attach to the copy.
  */
 import { sectionCode } from "@/lib/domain/course-outline";
-import type { Course, Section } from "@/lib/types";
+import { copyQuiz } from "@/lib/domain/quizzes";
+import type { Course, Quiz, Section } from "@/lib/types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -26,10 +27,11 @@ export function daysBetween(from: string, to: string) {
   return Math.round((Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) / DAY_MS);
 }
 
-/** How many dates a bulk shift would move: the course's own two and every lesson release. */
-export function countCourseDates(course: Course) {
+/** How many dates a bulk shift would move: the course's own two, every lesson release and every quiz due date. */
+export function countCourseDates(course: Course, quizzes: Quiz[] = []) {
   const lessonDates = course.modules.flatMap((module) => module.lessons).filter((lesson) => lesson.releaseAt).length;
-  return (course.startsOn ? 1 : 0) + (course.endsOn ? 1 : 0) + lessonDates;
+  const quizDates = quizzes.filter((quiz) => quiz.courseId === course.id).length;
+  return (course.startsOn ? 1 : 0) + (course.endsOn ? 1 : 0) + lessonDates + quizDates;
 }
 
 /** Every date in the course moved by the same number of days. */
@@ -63,6 +65,7 @@ export interface CopyTarget {
 export interface CourseCopy {
   course: Course;
   sections: Section[];
+  quizzes: Quiz[];
 }
 
 /**
@@ -71,7 +74,7 @@ export interface CourseCopy {
  * section follow it to the new one.
  */
 export function copyCourse(
-  source: { course: Course; sections: SectionOutline[] },
+  source: { course: Course; sections: SectionOutline[]; quizzes?: Quiz[] },
   target: CopyTarget,
   makeId: (prefix: string) => string,
 ): CourseCopy {
@@ -87,6 +90,12 @@ export function copyCourse(
   }));
   const newSectionId = new Map(source.sections.map((section, index) => [section.id, sections[index].id]));
 
+  // Quizzes come too, with new ids and their due dates moved with every other date.
+  const quizzes = (source.quizzes ?? [])
+    .filter((quiz) => quiz.courseId === source.course.id)
+    .map((quiz) => ({ from: quiz.id, copy: copyQuiz(quiz, courseId, shiftDate(quiz.due.slice(0, 10), target.shiftDays), makeId) }));
+  const newQuizId = new Map(quizzes.map(({ from, copy }) => [from, copy.id]));
+
   const shifted = shiftCourseDates(source.course, target.shiftDays);
   const course: Course = {
     ...shifted,
@@ -101,7 +110,7 @@ export function copyCourse(
     modules: shifted.modules.map((module) => ({
       id: makeId("unit"),
       title: module.title,
-      // Quizzes are not copied yet: they still live outside the service layer (Phase 3b).
+      quizId: module.quizId === undefined ? undefined : newQuizId.get(module.quizId),
       lessons: module.lessons.map((lesson) => ({
         ...lesson,
         id: makeId("lesson"),
@@ -112,5 +121,5 @@ export function copyCourse(
       })),
     })),
   };
-  return { course, sections };
+  return { course, sections, quizzes: quizzes.map(({ copy }) => copy) };
 }
