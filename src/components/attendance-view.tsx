@@ -2,7 +2,17 @@
 
 import { useState } from "react";
 import { CheckCheck, LoaderCircle, Lock, TriangleAlert } from "lucide-react";
-import { Badge, Button, Card, Meter, PageContainer, PageHeader, PageSkeleton, fieldClass } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  Meter,
+  PageContainer,
+  PageHeader,
+  PageSkeleton,
+  ScrollRegion,
+  fieldClass,
+} from "@/components/ui";
 import {
   AttendanceError,
   saveAttendance,
@@ -382,7 +392,7 @@ function SummaryCard({ book }: { book: SectionAttendance }) {
         </p>
       </div>
       {book.summaries.length === 0 ? null : (
-        <div className="overflow-x-auto">
+        <ScrollRegion label="Attendance so far">
           <table className="w-full min-w-[30rem] text-sm">
             <thead>
               <tr className="text-left text-xs text-ink-3">
@@ -416,7 +426,7 @@ function SummaryCard({ book }: { book: SectionAttendance }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       )}
     </Card>
   );

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Download, LoaderCircle, Send } from "lucide-react";
 import { Dialog } from "@/components/dialog";
-import { Badge, Button } from "@/components/ui";
+import { Badge, Button, ScrollRegion } from "@/components/ui";
 import { exportGradesToSis, useSisExportPlan, type SisExportResult } from "@/lib/api/reports";
 import { SIS_GRADE_COLUMNS, sisFailureRows, sisGradeRows } from "@/lib/domain/sis-export";
 import { downloadCsv } from "@/lib/download";
@@ -80,7 +80,7 @@ export function SisExportDialog({
               <p className="mt-0.5 text-sm text-ink-2">
                 Put these right, then export again. The records that are ready are not held up by them.
               </p>
-              <div className="mt-2 max-h-72 overflow-auto rounded-lg border border-line">
+              <ScrollRegion label="Failed records" className="mt-2 max-h-72 overflow-auto rounded-lg border border-line">
                 <table className="w-full min-w-[34rem] text-sm">
                   <thead>
                     <tr className="text-left text-xs text-ink-3">
@@ -102,7 +102,7 @@ export function SisExportDialog({
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </ScrollRegion>
             </section>
           ) : (
             <p className="text-sm text-ink-2">Every record is complete.</p>

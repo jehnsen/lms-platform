@@ -62,6 +62,25 @@ export const fieldBaseClass =
   "rounded-lg border border-line-strong bg-surface text-sm placeholder:text-ink-3 aria-invalid:border-bad disabled:opacity-50";
 export const fieldClass = `${fieldBaseClass} h-10 px-3`;
 
+/**
+ * A box that scrolls sideways when its content is wider than the screen, such
+ * as a wide table on a phone (NFR-6). It can be focused, so someone using a
+ * keyboard can scroll it with the arrow keys (WCAG 2.1.1), and it is a named
+ * region, so a screen reader says what it holds. It is positioned, so text
+ * that is visually hidden inside it stays inside it instead of widening the page.
+ */
+export function ScrollRegion({ label, className, ...props }: ComponentProps<"div"> & { label: string }) {
+  return (
+    <div
+      role="region"
+      aria-label={label}
+      tabIndex={0}
+      className={cn("relative overflow-x-auto focus-visible:outline-offset-[-2px]", className)}
+      {...props}
+    />
+  );
+}
+
 export function Card({ className, ...props }: ComponentProps<"div">) {
   return <div className={cn("rounded-xl border border-line bg-surface shadow-xs", className)} {...props} />;
 }

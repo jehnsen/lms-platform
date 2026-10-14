@@ -178,31 +178,33 @@ function Thread({ conversation, myId, onBack }: { conversation: ConversationRow;
         </div>
       </div>
 
-      {/* A log: new messages are announced as they arrive. */}
-      <ol role="log" aria-label={`Messages with ${conversation.other?.name ?? "this person"}`} className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto px-4 py-4">
-        {messages.map((message) => {
-          const mine = message.fromId === myId;
-          return (
-            <li key={message.id} className={cn("flex max-w-[85%] flex-col", mine ? "items-end self-end" : "items-start self-start")}>
-              <p
-                className={cn(
-                  "rounded-2xl px-3 py-2 text-sm break-words whitespace-pre-wrap",
-                  mine ? "bg-primary text-on-primary" : "bg-surface-2 text-ink",
-                )}
-              >
-                <span className="sr-only">{mine ? "You: " : `${conversation.other?.name ?? "They"}: `}</span>
-                {message.body}
-              </p>
-              <span className="mt-0.5 text-xs text-ink-3">
-                {formatDateTime(message.sentAt)}
-                {message.broadcastSectionId ? " · sent to the whole section" : ""}
-                {mine && message.readAt ? " · read" : ""}
-              </span>
-            </li>
-          );
-        })}
+      {/* A log: new messages are announced as they arrive. The list inside keeps its own meaning. */}
+      <div role="log" aria-label={`Messages with ${conversation.other?.name ?? "this person"}`} className="max-h-[28rem] overflow-y-auto px-4 py-4">
+        <ol className="flex flex-col gap-2">
+          {messages.map((message) => {
+            const mine = message.fromId === myId;
+            return (
+              <li key={message.id} className={cn("flex max-w-[85%] flex-col", mine ? "items-end self-end" : "items-start self-start")}>
+                <p
+                  className={cn(
+                    "rounded-2xl px-3 py-2 text-sm break-words whitespace-pre-wrap",
+                    mine ? "bg-primary text-on-primary" : "bg-surface-2 text-ink",
+                  )}
+                >
+                  <span className="sr-only">{mine ? "You: " : `${conversation.other?.name ?? "They"}: `}</span>
+                  {message.body}
+                </p>
+                <span className="mt-0.5 text-xs text-ink-3">
+                  {formatDateTime(message.sentAt)}
+                  {message.broadcastSectionId ? " · sent to the whole section" : ""}
+                  {mine && message.readAt ? " · read" : ""}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
         <div ref={end} />
-      </ol>
+      </div>
 
       {conversation.canSend ? (
         <form

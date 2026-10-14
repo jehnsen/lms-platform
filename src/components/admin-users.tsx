@@ -2,7 +2,16 @@
 
 import { useLayoutEffect, useState } from "react";
 import { Download, LoaderCircle, Pencil, RefreshCw, Search, Upload } from "lucide-react";
-import { Badge, Button, Card, PageContainer, PageHeader, fieldBaseClass, fieldClass } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  PageContainer,
+  PageHeader,
+  ScrollRegion,
+  fieldBaseClass,
+  fieldClass,
+} from "@/components/ui";
 import { STATUS_LABELS, UserEditDialog } from "@/components/user-edit-dialog";
 import { ImportReport, UserImportPanel, downloadImportReport } from "@/components/user-import";
 import { useActor } from "@/lib/api/session";
@@ -249,7 +258,7 @@ export function AdminUsers() {
             </div>
           ) : null}
 
-          <div className="relative overflow-x-auto">
+          <ScrollRegion label="Users">
             <table className="w-full min-w-[52rem] text-sm">
               <caption className="sr-only">User accounts</caption>
               <thead>
@@ -317,7 +326,7 @@ export function AdminUsers() {
                 ) : null}
               </tbody>
             </table>
-          </div>
+          </ScrollRegion>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-2.5 text-xs text-ink-3">
             <span>
               {visible.length} of {users.length} {users.length === 1 ? "account" : "accounts"}

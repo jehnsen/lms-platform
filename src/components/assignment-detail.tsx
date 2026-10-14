@@ -15,6 +15,7 @@ import {
   Card,
   PageContainer,
   PageSkeleton,
+  ScrollRegion,
   SectionTitle,
   StatTile,
   buttonClass,
@@ -475,7 +476,7 @@ function StaffSection({ assignment, canEdit }: { assignment: Assignment; canEdit
       </div>
 
       <Card className="overflow-hidden">
-        <div className="relative overflow-x-auto">
+        <ScrollRegion label="Students and their hand-ins">
           <table className="w-full min-w-[44rem] text-sm">
             <caption className="sr-only">Students this assignment is set for, with their submissions</caption>
             <thead>
@@ -543,7 +544,7 @@ function StaffSection({ assignment, canEdit }: { assignment: Assignment; canEdit
               ) : null}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       </Card>
     </section>
   );

@@ -116,7 +116,6 @@ export function ScoreTrendChart({ points, passMark }: { points: TrendPoint[]; pa
                 aria-label={`${point.title}, ${point.dateLabel}: ${point.percent}%`}
                 onFocus={() => setHover(index)}
                 onBlur={() => setHover(null)}
-                className="outline-none"
               />
               {index % labelEvery === 0 || index === last ? (
                 <text
@@ -196,7 +195,7 @@ export function ColumnChart({
           <div
             key={column.label}
             tabIndex={0}
-            className="group relative flex h-full flex-1 flex-col items-center justify-end outline-none"
+            className="group relative flex h-full flex-1 flex-col items-center justify-end rounded-sm"
           >
             {showValues ? (
               <span className="mb-1 text-xs font-medium tabular-nums">{column.value}</span>

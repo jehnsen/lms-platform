@@ -1,9 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useLayoutEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Pencil, Plus } from "lucide-react";
-import { CalendarEventDialog } from "@/components/calendar-event-dialog";
 import { Badge, Button, Card, PageContainer, PageHeader, PageSkeleton, fieldClass } from "@/components/ui";
 import { useCalendar } from "@/lib/api/calendar";
 import { selectViewedChild } from "@/lib/api/progress";
@@ -22,6 +22,9 @@ import {
 } from "@/lib/domain/schedule";
 import { useNow } from "@/lib/use-now";
 import { cn, firstNameOf } from "@/lib/utils";
+
+// NFR-2: the event form loads only when it is opened.
+const CalendarEventDialog = dynamic(() => import("@/components/calendar-event-dialog").then((module) => module.CalendarEventDialog));
 
 const UTC = { timeZone: "UTC" } as const;
 const WEEKDAY_LONG = new Intl.DateTimeFormat("en-US", { weekday: "long", ...UTC });

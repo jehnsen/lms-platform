@@ -3,7 +3,17 @@
 import { useState } from "react";
 import { ChevronRight, FileSpreadsheet, FileText, LoaderCircle, TriangleAlert } from "lucide-react";
 import { ColumnChart, type Column } from "@/components/charts";
-import { Badge, Button, Card, PageContainer, PageHeader, PageSkeleton, StatTile, fieldClass } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  PageContainer,
+  PageHeader,
+  PageSkeleton,
+  ScrollRegion,
+  StatTile,
+  fieldClass,
+} from "@/components/ui";
 import {
   exportMeta,
   exportReport,
@@ -218,7 +228,7 @@ function SchoolDashboard({
             <h2 className="font-semibold">Courses</h2>
             <p className="text-sm text-ink-3">Open a course to see its classes and students.</p>
           </div>
-          <div className="overflow-x-auto">
+          <ScrollRegion label="Courses">
             <table className="w-full min-w-[40rem] text-sm">
               <thead>
                 <tr className="text-left text-xs text-ink-3">
@@ -266,7 +276,7 @@ function SchoolDashboard({
                 ) : null}
               </tbody>
             </table>
-          </div>
+          </ScrollRegion>
         </Card>
 
         <Card className="p-5">
@@ -287,7 +297,7 @@ function SchoolDashboard({
         {view.atRisk.length === 0 ? (
           <p className="border-t border-line px-5 py-4 text-sm text-ink-2">Nobody matches the at-risk rules.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <ScrollRegion label="Students at risk">
             <table className="w-full min-w-[36rem] text-sm">
               <thead>
                 <tr className="text-left text-xs text-ink-3">
@@ -311,7 +321,7 @@ function SchoolDashboard({
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollRegion>
         )}
       </Card>
 
@@ -449,7 +459,7 @@ function ClassDashboard({
             Students <span className="font-normal text-ink-3">· {rows.length} shown</span>
           </h2>
         </div>
-        <div className="overflow-x-auto">
+        <ScrollRegion label="Students">
           <table className="w-full min-w-[52rem] text-sm">
             <thead>
               <tr className="text-left text-xs text-ink-3">
@@ -491,7 +501,7 @@ function ClassDashboard({
               ) : null}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       </Card>
 
       <p className="mt-4 text-xs text-ink-3">

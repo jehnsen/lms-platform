@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
-import { Badge, Button, Card, PageContainer, PageHeader, PageSkeleton } from "@/components/ui";
+import { Badge, Button, Card, PageContainer, PageHeader, PageSkeleton, ScrollRegion } from "@/components/ui";
 import { exportMeta } from "@/lib/api/analytics";
 import {
   logReportExport,
@@ -190,7 +190,7 @@ function ReportCard({ report }: { report: ProgressReport }) {
       {courses.length === 0 ? (
         <p className="px-5 py-4 text-sm text-ink-2">No courses in this term.</p>
       ) : (
-        <div className="overflow-x-auto">
+        <ScrollRegion label="Courses in this report">
           <table className="w-full min-w-[48rem] text-sm">
             <thead>
               <tr className="text-left text-xs text-ink-3">
@@ -245,7 +245,7 @@ function ReportCard({ report }: { report: ProgressReport }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       )}
 
       <div className="flex flex-col gap-1 border-t border-line px-5 py-3 text-xs text-ink-3">

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Download, FileDown, LoaderCircle, Upload } from "lucide-react";
-import { Badge, Button, Card, buttonClass } from "@/components/ui";
+import { Badge, Button, Card, ScrollRegion, buttonClass } from "@/components/ui";
 import { commitUserImport, previewUserImport, userImportTemplate } from "@/lib/api/users";
 import { countImport, importReport, type ImportPlan } from "@/lib/domain/user-import";
 import { downloadCsv } from "@/lib/download";
@@ -60,7 +60,7 @@ export function ImportReport({
       ) : null}
 
       {skipped.length > 0 ? (
-        <div className="relative overflow-x-auto rounded-lg border border-line">
+        <ScrollRegion label="Rows that need attention" className="rounded-lg border border-line">
           <table className="w-full min-w-[36rem] text-sm">
             <caption className="sr-only">
               {saved ? "Rows that did not create an account" : "Rows that will not create an account"}
@@ -97,7 +97,7 @@ export function ImportReport({
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       ) : null}
     </div>
   );

@@ -296,7 +296,7 @@ export function ContentLibrary() {
                 addFiles(Array.from(event.dataTransfer.files));
               }}
               className={cn(
-                "relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors focus-within:border-primary",
+                "relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors focus-within:border-primary focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary",
                 dragging ? "border-primary bg-primary-soft" : "border-line-strong hover:border-primary",
               )}
             >

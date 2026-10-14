@@ -1,12 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useLayoutEffect, useState } from "react";
 import { Archive, ArchiveRestore, LoaderCircle, Send } from "lucide-react";
-import { SisExportDialog } from "@/components/sis-export-dialog";
 import { Badge, Button, Card, PageContainer, PageHeader } from "@/components/ui";
 import { archiveTerm, reopenTerm, useTermSummaries, type TermSummary } from "@/lib/api/courses";
 import type { Term } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
+
+// NFR-2: the export dialog loads only when it is opened.
+const SisExportDialog = dynamic(() => import("@/components/sis-export-dialog").then((module) => module.SisExportDialog));
 
 const STATUS_BADGES: Record<Term["status"], { label: string; tone: "good" | "neutral" | "primary" }> = {
   active: { label: "Active", tone: "good" },

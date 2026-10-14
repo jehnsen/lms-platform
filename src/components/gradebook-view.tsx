@@ -1,12 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useLayoutEffect, useState } from "react";
 import { ArrowDownUp, Download, Search, Send, Settings2, TriangleAlert } from "lucide-react";
 import { ColumnChart, type Column } from "@/components/charts";
-import { GradebookSetupDialog } from "@/components/gradebook-setup-dialog";
-import { SisExportDialog } from "@/components/sis-export-dialog";
-import { Badge, Button, Card, PageContainer, PageHeader, StatTile } from "@/components/ui";
+import { Badge, Button, Card, PageContainer, PageHeader, ScrollRegion, StatTile } from "@/components/ui";
 import { useClassView } from "@/lib/api/analytics";
 import { releaseGrades } from "@/lib/api/assignments";
 import { useCourses } from "@/lib/api/courses";
@@ -34,6 +33,10 @@ const BANDS: Array<{ label: string; min: number; max: number }> = [
 ];
 
 const PASS_MARK = 70;
+
+// NFR-2: the dialogs load only when they are opened, not with the gradebook.
+const GradebookSetupDialog = dynamic(() => import("@/components/gradebook-setup-dialog").then((module) => module.GradebookSetupDialog));
+const SisExportDialog = dynamic(() => import("@/components/sis-export-dialog").then((module) => module.SisExportDialog));
 
 /** Short column names: Q1, Q2 for quizzes and A1, A2 for assignments, in due order. */
 function itemCodes(items: GradeItem[]): Record<string, string> {
@@ -249,7 +252,7 @@ export function GradebookView() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search learners"
-              className="h-9 w-56 max-w-full rounded-lg border border-line-strong bg-surface pr-3 pl-9 text-sm outline-none placeholder:text-ink-3 focus:border-primary"
+              className="h-9 w-56 max-w-full rounded-lg border border-line-strong bg-surface pr-3 pl-9 text-sm placeholder:text-ink-3 focus:border-primary"
             />
           </div>
           <Button variant="ghost" size="sm" onClick={() => setSort(sort === "name" ? "overall" : "name")}>
@@ -258,7 +261,7 @@ export function GradebookView() {
           </Button>
         </div>
 
-        <div className="relative overflow-x-auto">
+        <ScrollRegion label="Gradebook">
           <table className="w-full min-w-[40rem] text-sm">
             <thead>
               <tr className="text-left text-xs text-ink-3">
@@ -292,7 +295,7 @@ export function GradebookView() {
               ) : null}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
         <p className="border-t border-line px-4 py-2.5 text-xs text-ink-3">
           <span className="text-bad">▾</span> a quiz score below its pass mark, or a total below {PASS_MARK}%.{" "}
           <span className="text-warn">*</span> a mark the student cannot see yet.{" "}
@@ -510,7 +513,7 @@ function ItemsCard({ book, codes }: { book: Gradebook; codes: Record<string, str
       {book.summaries.length === 0 ? (
         <p className="p-5 text-sm text-ink-2">No quizzes or assignments are published in this course yet.</p>
       ) : (
-        <div className="mt-2 overflow-x-auto">
+        <ScrollRegion label="Grade items" className="mt-2">
           <table className="w-full min-w-[36rem] text-sm">
             <thead>
               <tr className="text-left text-xs text-ink-3">
@@ -571,7 +574,7 @@ function ItemsCard({ book, codes }: { book: Gradebook; codes: Record<string, str
               })}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       )}
     </Card>
   );

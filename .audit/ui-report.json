@@ -1,0 +1,2552 @@
+[
+  {
+    "label": "student 360 light /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 284,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 263,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 263,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 221,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 252,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 216,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 240,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 205,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 204,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 220,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /grades",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 248,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /tutor",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 194,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /messages [/Dr\\. Amara Okafor/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 light /quizzes/ml-quiz-1 [/^(Start|Retake) quiz/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 240,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 284,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 263,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 263,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 221,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 252,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 216,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 240,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 205,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 204,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 220,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /grades",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 248,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /tutor",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 194,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /messages [/Dr\\. Amara Okafor/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "student 360 dark /quizzes/ml-quiz-1 [/^(Start|Retake) quiz/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 240,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 397,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 317,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 362,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 344,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 305,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 335,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 300,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 330,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 330,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 302,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /grades",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 349,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /tutor",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /messages [/Dr\\. Amara Okafor/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 light /quizzes/ml-quiz-1 [/^(Start|Retake) quiz/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 330,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 397,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 317,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 362,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 344,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 305,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 335,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 300,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 330,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 330,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 302,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /grades",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 349,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /tutor",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /messages [/Dr\\. Amara Okafor/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 287,
+    "longTasks": []
+  },
+  {
+    "label": "student 1280 dark /quizzes/ml-quiz-1 [/^(Start|Retake) quiz/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 330,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 339,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 244,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /courses/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 214,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 313,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /courses/ml-foundations/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 266,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 263,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 239,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /assignments/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 221,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 269,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /assignments/asg-ml-reflection/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 239,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /assignments/asg-ml-reflection/submissions/u-student-01",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 233,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 252,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /quizzes/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 232,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 283,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /quizzes/ml-quiz-2/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 245,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /grading",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 203,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 205,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 204,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 228,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /gradebook",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 230,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /analytics",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /content",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 208,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /lesson-planner",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 195,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /gradebook [Set up grading]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 265,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /announcements [New announcement]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 204,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /messages [New message]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /calendar [Month]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /calendar [Add event]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 239,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /courses/ml-foundations [Schedule live class]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 313,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 light /forums [New thread]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 339,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 244,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /courses/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 214,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 313,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /courses/ml-foundations/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 266,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 263,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 239,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /assignments/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 221,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 269,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /assignments/asg-ml-reflection/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 239,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /assignments/asg-ml-reflection/submissions/u-student-01",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 233,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 252,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /quizzes/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 232,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 283,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /quizzes/ml-quiz-2/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 245,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /grading",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 203,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 205,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 204,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 228,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /gradebook",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 230,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /analytics",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /content",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 208,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /lesson-planner",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 195,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /gradebook [Set up grading]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 265,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /announcements [New announcement]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 204,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /messages [New message]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /calendar [Month]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /calendar [Add event]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 239,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /courses/ml-foundations [Schedule live class]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 313,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 360 dark /forums [New thread]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 411,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 370,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /courses/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 340,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 418,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /courses/ml-foundations/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 392,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 402,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 368,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /assignments/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 349,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 411,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /assignments/asg-ml-reflection/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 368,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /assignments/asg-ml-reflection/submissions/u-student-01",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 362,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 374,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /quizzes/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 361,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 405,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /quizzes/ml-quiz-2/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 374,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /grading",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 362,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 334,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /gradebook",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 363,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /analytics",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /content",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /lesson-planner",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /gradebook [Set up grading]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 366,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /announcements [New announcement]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /messages [New message]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /calendar [Month]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 362,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /calendar [Add event]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 364,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /courses/ml-foundations [Schedule live class]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 418,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 light /forums [New thread]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 411,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 370,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /courses/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 340,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 418,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /courses/ml-foundations/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 392,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 402,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 368,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /assignments/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 349,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 411,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /assignments/asg-ml-reflection/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 368,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /assignments/asg-ml-reflection/submissions/u-student-01",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 362,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 374,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /quizzes/new",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 361,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 405,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /quizzes/ml-quiz-2/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 374,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /grading",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 362,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 334,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /gradebook",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 363,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /analytics",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /content",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /lesson-planner",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /gradebook [Set up grading]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 366,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /announcements [New announcement]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /messages [New message]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /calendar [Month]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 362,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /calendar [Add event]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 364,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /courses/ml-foundations [Schedule live class]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 418,
+    "longTasks": []
+  },
+  {
+    "label": "faculty 1280 dark /forums [New thread]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 332,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 238,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 313,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /courses/ml-foundations/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 266,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 263,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 221,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 252,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /assignments/asg-ml-reflection/submissions/u-student-01",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 233,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 216,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 247,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 205,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 204,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 189,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /gradebook",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 230,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /analytics",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /content",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 208,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /admin/users",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 208,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /admin/terms",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 195,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /admin/settings",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 207,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /admin/audit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 194,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /gradebook [Export to SIS]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 235,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /admin/users [Import CSV]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 208,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 light /analytics [/^Open Machine Learning/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 238,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 313,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /courses/ml-foundations/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 266,
+    "longTasks": [
+      53
+    ]
+  },
+  {
+    "label": "admin 360 dark /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 263,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 221,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 252,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /assignments/asg-ml-reflection/submissions/u-student-01",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 233,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 216,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 247,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 236,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 205,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 204,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 193,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 189,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /gradebook",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 230,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /analytics",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /content",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 208,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /admin/users",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 208,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /admin/terms",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 195,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /admin/settings",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 207,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /admin/audit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 194,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /gradebook [Export to SIS]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 235,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /admin/users [Import CSV]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 208,
+    "longTasks": []
+  },
+  {
+    "label": "admin 360 dark /analytics [/^Open Machine Learning/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 346,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 360,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 416,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /courses/ml-foundations/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 389,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 400,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 348,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 390,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /assignments/asg-ml-reflection/submissions/u-student-01",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 360,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 343,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 373,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 373,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 331,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /gradebook",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 361,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /analytics",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /content",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /admin/users",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /admin/terms",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 337,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /admin/settings",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 341,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /admin/audit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 336,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /gradebook [Export to SIS]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 366,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /admin/users [Import CSV]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 light /analytics [/^Open Machine Learning/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 346,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /courses",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 360,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /courses/ml-foundations",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 416,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /courses/ml-foundations/edit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 389,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /courses/ml-foundations/learn/ml-learning-from-data",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 400,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /assignments",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 348,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /assignments/asg-ml-reflection",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 390,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /assignments/asg-ml-reflection/submissions/u-student-01",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 360,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /quizzes",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 343,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /quizzes/ml-quiz-2",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 373,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 373,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /forums",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /forums/thread-ml-validation",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 331,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /gradebook",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 361,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /analytics",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /content",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /admin/users",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /admin/terms",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 337,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /admin/settings",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 341,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /admin/audit",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 336,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /gradebook [Export to SIS]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 366,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /admin/users [Import CSV]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "admin 1280 dark /analytics [/^Open Machine Learning/]",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 329,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 light /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 214,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 light /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 206,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 light /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 205,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 light /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 204,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 light /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 light /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 207,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 light /grades",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 217,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 light /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 dark /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 214,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 dark /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 206,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 dark /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 205,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 dark /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 204,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 dark /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 192,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 dark /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 207,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 dark /grades",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 217,
+    "longTasks": []
+  },
+  {
+    "label": "parent 360 dark /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 209,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 light /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 259,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 light /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 light /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 light /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 light /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 light /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 252,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 light /grades",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 light /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 dark /",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 259,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 dark /calendar",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 dark /attendance",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 dark /announcements",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 dark /messages",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 dark /notifications",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 252,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 dark /grades",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  },
+  {
+    "label": "parent 1280 dark /reports",
+    "violations": [],
+    "overflow": null,
+    "scriptKb": 249,
+    "longTasks": []
+  }
+]

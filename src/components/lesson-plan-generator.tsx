@@ -39,7 +39,7 @@ const DEFAULT_INPUT: LessonPlanInput = {
 };
 
 const FIELD_CLASS =
-  "h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-sm outline-none placeholder:text-ink-3 focus:border-primary";
+  "h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-sm placeholder:text-ink-3 focus:border-primary";
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));

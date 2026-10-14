@@ -3,7 +3,16 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Lock } from "lucide-react";
-import { Badge, Button, Card, PageContainer, PageHeader, PageSkeleton, fieldClass } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  PageContainer,
+  PageHeader,
+  PageSkeleton,
+  ScrollRegion,
+  fieldClass,
+} from "@/components/ui";
 import {
   NotificationError,
   markAllNotificationsRead,
@@ -156,7 +165,7 @@ function Preferences() {
           and those cannot be switched off.
         </p>
       </div>
-      <div className="overflow-x-auto">
+      <ScrollRegion label="How you are notified">
         <table className="w-full min-w-[30rem] text-sm">
           <thead>
             <tr className="text-left text-xs text-ink-3">
@@ -199,7 +208,7 @@ function Preferences() {
             ))}
           </tbody>
         </table>
-      </div>
+      </ScrollRegion>
       {/* Always rendered, so each change and each refusal is announced (NFR-5). */}
       <p role="status" className="px-5 pt-2 text-sm text-ink-2">
         {note}

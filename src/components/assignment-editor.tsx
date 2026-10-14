@@ -421,7 +421,7 @@ function EditorForm({
                   className="mt-2"
                   onClick={() => set({ points: draft.rubric!.criteria.reduce((sum, criterion) => sum + (criterion.points || 0), 0) })}
                 >
-                  Set the assignment&apos;s points to the rubric total
+                  Set points to the rubric total
                 </Button>
               ) : null}
             </fieldset>

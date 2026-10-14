@@ -19,7 +19,19 @@ npm run dev      # http://localhost:3000
 npm run build    # production build
 npm run lint
 npm test         # unit tests for the rules in src/lib/domain
+npm run audit:ui # accessibility, 360 px layout and speed check (see below)
 ```
+
+### Checking accessibility, layout and speed
+
+`npm run audit:ui` (`scripts/audit-ui.mjs`) opens every page in Chrome as each of the four demo roles, at 360 px and at 1280 px wide, in the light and the dark theme, and also opens a dozen dialogs and states by clicking. For each it reports WCAG 2.1 A and AA violations found by axe-core (NFR-5), whether the page scrolls sideways (NFR-6), and the JavaScript loaded and any main-thread task of 50 ms or more while the page loads (NFR-2). It writes `.audit/ui-report.json` and fails when there is a violation or sideways scrolling. Run it against a production build:
+
+```bash
+npm run build && npm run start   # one terminal
+npm run audit:ui                 # another; BASE_URL=http://localhost:3000 by default
+```
+
+It uses the Chrome installed on the machine (set `CHROME` to the path of another Chrome or Edge), and `ONLY=student,parent` audits some roles. Automated checks find only part of what WCAG asks: a pass with a screen reader and the keyboard is still needed before go-live.
 
 ## Roles and demo accounts
 
@@ -215,7 +227,7 @@ The full list of server-side work is in `docs/requirements/BACKEND-BACKLOG.md`.
 - **Changing the signed-in user reloads the page.** Use `reloadTo()` in `src/lib/navigation.ts` for sign-in, sign-out and role switches, so nothing cached for the previous user survives. Use `<Link>` and `useRouter()` everywhere else.
 - **Do not delete `.next/dev` while `npm run dev` is running.** The dev server will return errors until it is restarted.
 - **Storage versions.** When the shape of a stored value changes, bump the version passed to `createRepository`; the old key is ignored and the store restarts from its seed.
-- **Dependencies added for the requirements work.** `papaparse` (Phase 1) parses the CSV import; it is loaded with `import()` only when an admin picks a file. `@dnd-kit/core`, `@dnd-kit/sortable` and `@dnd-kit/utilities` (Phase 2) give the course builder drag-and-drop that also works from the keyboard; use `SortableList` in `src/components/sortable-list.tsx` for any other reorderable list. `jspdf`, `jspdf-autotable` and `exceljs` (Phase 7) make the PDF and Excel exports in `src/lib/export-files.ts`; they are loaded with `import()` only when someone exports. `exceljs` brings `uuid` 8, which `npm audit` reports as moderate (GHSA-w5hq-g745-h8pq); the advisory concerns `v3`, `v5` and `v6` called with a buffer, and `exceljs` only calls `v4()` without one. `vitest` (Phase 0) runs the unit tests.
+- **Dependencies added for the requirements work.** `papaparse` (Phase 1) parses the CSV import; it is loaded with `import()` only when an admin picks a file. `@dnd-kit/core`, `@dnd-kit/sortable` and `@dnd-kit/utilities` (Phase 2) give the course builder drag-and-drop that also works from the keyboard; use `SortableList` in `src/components/sortable-list.tsx` for any other reorderable list. `jspdf`, `jspdf-autotable` and `exceljs` (Phase 7) make the PDF and Excel exports in `src/lib/export-files.ts`; they are loaded with `import()` only when someone exports. `exceljs` brings `uuid` 8, which `npm audit` reports as moderate (GHSA-w5hq-g745-h8pq); the advisory concerns `v3`, `v5` and `v6` called with a buffer, and `exceljs` only calls `v4()` without one. `vitest` (Phase 0) runs the unit tests. `playwright-core` and `@axe-core/playwright` (dev only) drive Chrome for `npm run audit:ui`; no browser is downloaded.
 - **Dialogs and form fields.** Use `Dialog` in `src/components/dialog.tsx` (the native `<dialog>` element: focus trap, Escape, inert page) and `fieldClass` in `src/components/ui.tsx` for inputs and selects.
 - **Theme and type.** Light and dark follow the system setting. Colours are tokens in `src/app/globals.css`; a unit test checks that every text and surface pair used reaches WCAG AA contrast in both themes. The typeface is Inter, set in `src/app/layout.tsx`.
 - Course and lesson photos in `public/thumbnails/` and `public/images/` are from [Unsplash](https://unsplash.com/license).

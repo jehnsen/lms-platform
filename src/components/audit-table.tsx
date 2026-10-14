@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui";
+import { Badge, ScrollRegion } from "@/components/ui";
 import { ROLE_LABELS } from "@/lib/domain/permissions";
 import type { AuditEvent, User } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
@@ -16,7 +16,7 @@ export function AuditTable({
   const nameOf = (userId: string | null) => users.find((user) => user.id === userId)?.name ?? "Not signed in";
 
   return (
-    <div className="relative overflow-x-auto">
+    <ScrollRegion label="Audit log">
       <table className="w-full min-w-[44rem] text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
@@ -49,6 +49,6 @@ export function AuditTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }

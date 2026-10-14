@@ -11,6 +11,7 @@ import {
   PageContainer,
   PageHeader,
   PageSkeleton,
+  ScrollRegion,
 } from "@/components/ui";
 import { useViewedGrades, type LearnerCourseGrade } from "@/lib/api/grades";
 import { resetMyProgress, selectViewedChild } from "@/lib/api/progress";
@@ -199,7 +200,7 @@ function CourseGrades({ entry, state, readOnly }: { entry: LearnerCourseGrade; s
       {scores.length === 0 ? (
         <p className="px-5 py-4 text-sm text-ink-2">Nothing to grade in this course yet.</p>
       ) : (
-        <div className="relative overflow-x-auto">
+        <ScrollRegion label={`Grades in ${course.title}`}>
           <table className="w-full min-w-[44rem] text-sm">
             <thead>
               <tr className="text-left text-xs text-ink-3">
@@ -273,7 +274,7 @@ function CourseGrades({ entry, state, readOnly }: { entry: LearnerCourseGrade; s
               })}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       )}
       <p className="border-t border-line px-5 py-2.5 text-xs text-ink-3">
         The running total counts released grades only.{" "}

@@ -547,8 +547,11 @@ function GradeCard({ assignment, attempt, canEdit }: { assignment: Assignment; a
           ) : null}
           <div className="flex justify-between gap-3 font-semibold">
             <dt>Mark that counts</dt>
-            <dd role="status">
-              {final === null ? "—" : final} / {assignment.points}
+            <dd>
+              {/* The live region is inside the term's value, so the list keeps its structure (NFR-5). */}
+              <span role="status">
+                {final === null ? "—" : final} / {assignment.points}
+              </span>
             </dd>
           </div>
         </dl>

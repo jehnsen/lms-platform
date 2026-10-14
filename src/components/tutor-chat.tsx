@@ -165,7 +165,7 @@ export function TutorChat({
             event.preventDefault();
             send(input);
           }}
-          className="flex items-end gap-2 rounded-xl border border-line-strong bg-surface p-1.5 focus-within:border-primary"
+          className="flex items-end gap-2 rounded-xl border border-line-strong bg-surface p-1.5 focus-within:border-primary focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary"
         >
           <label htmlFor="tutor-input" className="sr-only">
             Ask the AI tutor

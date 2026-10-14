@@ -1,0 +1,331 @@
+ok   faculty 360 light /
+ok   faculty 360 light /courses
+ok   faculty 360 light /courses/new
+ok   faculty 360 light /courses/ml-foundations
+ok   faculty 360 light /courses/ml-foundations/edit
+ok   faculty 360 light /courses/ml-foundations/learn/ml-learning-from-data
+ok   faculty 360 light /assignments
+ok   faculty 360 light /assignments/new
+ok   faculty 360 light /assignments/asg-ml-reflection
+FAIL faculty 360 light /assignments/asg-ml-reflection/edit — scrolls sideways (365px)
+FAIL faculty 360 light /assignments/asg-ml-reflection/submissions/u-student-01 — 1 axe
+ok   faculty 360 light /quizzes
+ok   faculty 360 light /quizzes/new
+ok   faculty 360 light /quizzes/ml-quiz-2
+ok   faculty 360 light /quizzes/ml-quiz-2/edit
+ok   faculty 360 light /grading
+ok   faculty 360 light /calendar
+FAIL faculty 360 light /attendance — 1 axe
+ok   faculty 360 light /announcements
+ok   faculty 360 light /messages
+ok   faculty 360 light /forums
+ok   faculty 360 light /forums/thread-ml-validation
+ok   faculty 360 light /notifications
+FAIL faculty 360 light /reports — 1 axe
+FAIL faculty 360 light /gradebook — 1 axe, scrolls sideways (506px)
+FAIL faculty 360 light /analytics — 1 axe
+ok   faculty 360 light /content
+ok   faculty 360 light /lesson-planner
+FAIL faculty 360 light /gradebook [Set up grading] — scrolls sideways (506px)
+ok   faculty 360 light /announcements [New announcement]
+ok   faculty 360 light /messages [New message]
+ok   faculty 360 light /calendar [Month]
+ok   faculty 360 light /calendar [Add event]
+ok   faculty 360 light /courses/ml-foundations [Schedule live class]
+ok   faculty 360 light /forums [New thread]
+ok   faculty 360 dark /
+ok   faculty 360 dark /courses
+ok   faculty 360 dark /courses/new
+ok   faculty 360 dark /courses/ml-foundations
+ok   faculty 360 dark /courses/ml-foundations/edit
+ok   faculty 360 dark /courses/ml-foundations/learn/ml-learning-from-data
+ok   faculty 360 dark /assignments
+ok   faculty 360 dark /assignments/new
+ok   faculty 360 dark /assignments/asg-ml-reflection
+FAIL faculty 360 dark /assignments/asg-ml-reflection/edit — scrolls sideways (365px)
+FAIL faculty 360 dark /assignments/asg-ml-reflection/submissions/u-student-01 — 1 axe
+ok   faculty 360 dark /quizzes
+ok   faculty 360 dark /quizzes/new
+ok   faculty 360 dark /quizzes/ml-quiz-2
+ok   faculty 360 dark /quizzes/ml-quiz-2/edit
+ok   faculty 360 dark /grading
+ok   faculty 360 dark /calendar
+FAIL faculty 360 dark /attendance — 1 axe
+ok   faculty 360 dark /announcements
+ok   faculty 360 dark /messages
+ok   faculty 360 dark /forums
+ok   faculty 360 dark /forums/thread-ml-validation
+ok   faculty 360 dark /notifications
+FAIL faculty 360 dark /reports — 1 axe
+FAIL faculty 360 dark /gradebook — 1 axe, scrolls sideways (506px)
+FAIL faculty 360 dark /analytics — 1 axe
+ok   faculty 360 dark /content
+ok   faculty 360 dark /lesson-planner
+FAIL faculty 360 dark /gradebook [Set up grading] — scrolls sideways (506px)
+ok   faculty 360 dark /announcements [New announcement]
+ok   faculty 360 dark /messages [New message]
+ok   faculty 360 dark /calendar [Month]
+ok   faculty 360 dark /calendar [Add event]
+ok   faculty 360 dark /courses/ml-foundations [Schedule live class]
+ok   faculty 360 dark /forums [New thread]
+ok   faculty 1280 light /
+ok   faculty 1280 light /courses
+ok   faculty 1280 light /courses/new
+ok   faculty 1280 light /courses/ml-foundations
+ok   faculty 1280 light /courses/ml-foundations/edit
+ok   faculty 1280 light /courses/ml-foundations/learn/ml-learning-from-data
+ok   faculty 1280 light /assignments
+ok   faculty 1280 light /assignments/new
+ok   faculty 1280 light /assignments/asg-ml-reflection
+ok   faculty 1280 light /assignments/asg-ml-reflection/edit
+FAIL faculty 1280 light /assignments/asg-ml-reflection/submissions/u-student-01 — 1 axe
+ok   faculty 1280 light /quizzes
+ok   faculty 1280 light /quizzes/new
+ok   faculty 1280 light /quizzes/ml-quiz-2
+ok   faculty 1280 light /quizzes/ml-quiz-2/edit
+ok   faculty 1280 light /grading
+ok   faculty 1280 light /calendar
+ok   faculty 1280 light /attendance
+ok   faculty 1280 light /announcements
+ok   faculty 1280 light /messages
+ok   faculty 1280 light /forums
+ok   faculty 1280 light /forums/thread-ml-validation
+ok   faculty 1280 light /notifications
+ok   faculty 1280 light /reports
+ok   faculty 1280 light /gradebook
+ok   faculty 1280 light /analytics
+ok   faculty 1280 light /content
+ok   faculty 1280 light /lesson-planner
+ok   faculty 1280 light /gradebook [Set up grading]
+ok   faculty 1280 light /announcements [New announcement]
+ok   faculty 1280 light /messages [New message]
+ok   faculty 1280 light /calendar [Month]
+ok   faculty 1280 light /calendar [Add event]
+ok   faculty 1280 light /courses/ml-foundations [Schedule live class]
+ok   faculty 1280 light /forums [New thread]
+ok   faculty 1280 dark /
+ok   faculty 1280 dark /courses
+ok   faculty 1280 dark /courses/new
+ok   faculty 1280 dark /courses/ml-foundations
+ok   faculty 1280 dark /courses/ml-foundations/edit
+ok   faculty 1280 dark /courses/ml-foundations/learn/ml-learning-from-data
+ok   faculty 1280 dark /assignments
+ok   faculty 1280 dark /assignments/new
+ok   faculty 1280 dark /assignments/asg-ml-reflection
+ok   faculty 1280 dark /assignments/asg-ml-reflection/edit
+FAIL faculty 1280 dark /assignments/asg-ml-reflection/submissions/u-student-01 — 1 axe
+ok   faculty 1280 dark /quizzes
+ok   faculty 1280 dark /quizzes/new
+ok   faculty 1280 dark /quizzes/ml-quiz-2
+ok   faculty 1280 dark /quizzes/ml-quiz-2/edit
+ok   faculty 1280 dark /grading
+ok   faculty 1280 dark /calendar
+ok   faculty 1280 dark /attendance
+ok   faculty 1280 dark /announcements
+ok   faculty 1280 dark /messages
+ok   faculty 1280 dark /forums
+ok   faculty 1280 dark /forums/thread-ml-validation
+ok   faculty 1280 dark /notifications
+ok   faculty 1280 dark /reports
+ok   faculty 1280 dark /gradebook
+ok   faculty 1280 dark /analytics
+ok   faculty 1280 dark /content
+ok   faculty 1280 dark /lesson-planner
+ok   faculty 1280 dark /gradebook [Set up grading]
+ok   faculty 1280 dark /announcements [New announcement]
+ok   faculty 1280 dark /messages [New message]
+ok   faculty 1280 dark /calendar [Month]
+ok   faculty 1280 dark /calendar [Add event]
+ok   faculty 1280 dark /courses/ml-foundations [Schedule live class]
+ok   faculty 1280 dark /forums [New thread]
+ok   admin 360 light /
+ok   admin 360 light /courses
+ok   admin 360 light /courses/ml-foundations
+ok   admin 360 light /courses/ml-foundations/edit
+ok   admin 360 light /courses/ml-foundations/learn/ml-learning-from-data
+ok   admin 360 light /assignments
+ok   admin 360 light /assignments/asg-ml-reflection
+FAIL admin 360 light /assignments/asg-ml-reflection/submissions/u-student-01 — 1 axe
+ok   admin 360 light /quizzes
+ok   admin 360 light /quizzes/ml-quiz-2
+ok   admin 360 light /calendar
+FAIL admin 360 light /attendance — 1 axe
+ok   admin 360 light /announcements
+ok   admin 360 light /messages
+ok   admin 360 light /forums
+ok   admin 360 light /forums/thread-ml-validation
+ok   admin 360 light /notifications
+FAIL admin 360 light /reports — 1 axe
+FAIL admin 360 light /gradebook — 1 axe
+FAIL admin 360 light /analytics — 1 axe, scrolls sideways (595px)
+ok   admin 360 light /content
+ok   admin 360 light /admin/users
+ok   admin 360 light /admin/terms
+ok   admin 360 light /admin/settings
+FAIL admin 360 light /admin/audit — 1 axe
+FAIL admin 360 light /gradebook [Export to SIS] — 1 axe
+ok   admin 360 light /admin/users [Import CSV]
+FAIL admin 360 light /analytics [/^Open Machine Learning/] — 1 axe
+ok   admin 360 dark /
+ok   admin 360 dark /courses
+ok   admin 360 dark /courses/ml-foundations
+ok   admin 360 dark /courses/ml-foundations/edit
+ok   admin 360 dark /courses/ml-foundations/learn/ml-learning-from-data
+ok   admin 360 dark /assignments
+ok   admin 360 dark /assignments/asg-ml-reflection
+FAIL admin 360 dark /assignments/asg-ml-reflection/submissions/u-student-01 — 1 axe
+ok   admin 360 dark /quizzes
+ok   admin 360 dark /quizzes/ml-quiz-2
+ok   admin 360 dark /calendar
+FAIL admin 360 dark /attendance — 1 axe
+ok   admin 360 dark /announcements
+ok   admin 360 dark /messages
+ok   admin 360 dark /forums
+ok   admin 360 dark /forums/thread-ml-validation
+ok   admin 360 dark /notifications
+FAIL admin 360 dark /reports — 1 axe
+FAIL admin 360 dark /gradebook — 1 axe
+FAIL admin 360 dark /analytics — 1 axe, scrolls sideways (595px)
+ok   admin 360 dark /content
+ok   admin 360 dark /admin/users
+ok   admin 360 dark /admin/terms
+ok   admin 360 dark /admin/settings
+FAIL admin 360 dark /admin/audit — 1 axe
+FAIL admin 360 dark /gradebook [Export to SIS] — 1 axe
+ok   admin 360 dark /admin/users [Import CSV]
+FAIL admin 360 dark /analytics [/^Open Machine Learning/] — 1 axe
+ok   admin 1280 light /
+ok   admin 1280 light /courses
+ok   admin 1280 light /courses/ml-foundations
+ok   admin 1280 light /courses/ml-foundations/edit
+ok   admin 1280 light /courses/ml-foundations/learn/ml-learning-from-data
+ok   admin 1280 light /assignments
+ok   admin 1280 light /assignments/asg-ml-reflection
+FAIL admin 1280 light /assignments/asg-ml-reflection/submissions/u-student-01 — 1 axe
+ok   admin 1280 light /quizzes
+ok   admin 1280 light /quizzes/ml-quiz-2
+ok   admin 1280 light /calendar
+ok   admin 1280 light /attendance
+ok   admin 1280 light /announcements
+ok   admin 1280 light /messages
+ok   admin 1280 light /forums
+ok   admin 1280 light /forums/thread-ml-validation
+ok   admin 1280 light /notifications
+ok   admin 1280 light /reports
+ok   admin 1280 light /gradebook
+ok   admin 1280 light /analytics
+ok   admin 1280 light /content
+ok   admin 1280 light /admin/users
+ok   admin 1280 light /admin/terms
+ok   admin 1280 light /admin/settings
+ok   admin 1280 light /admin/audit
+FAIL admin 1280 light /gradebook [Export to SIS] — 1 axe
+ok   admin 1280 light /admin/users [Import CSV]
+ok   admin 1280 light /analytics [/^Open Machine Learning/]
+ok   admin 1280 dark /
+ok   admin 1280 dark /courses
+ok   admin 1280 dark /courses/ml-foundations
+ok   admin 1280 dark /courses/ml-foundations/edit
+ok   admin 1280 dark /courses/ml-foundations/learn/ml-learning-from-data
+ok   admin 1280 dark /assignments
+ok   admin 1280 dark /assignments/asg-ml-reflection
+FAIL admin 1280 dark /assignments/asg-ml-reflection/submissions/u-student-01 — 1 axe
+ok   admin 1280 dark /quizzes
+ok   admin 1280 dark /quizzes/ml-quiz-2
+ok   admin 1280 dark /calendar
+ok   admin 1280 dark /attendance
+ok   admin 1280 dark /announcements
+ok   admin 1280 dark /messages
+ok   admin 1280 dark /forums
+ok   admin 1280 dark /forums/thread-ml-validation
+ok   admin 1280 dark /notifications
+ok   admin 1280 dark /reports
+ok   admin 1280 dark /gradebook
+ok   admin 1280 dark /analytics
+ok   admin 1280 dark /content
+ok   admin 1280 dark /admin/users
+ok   admin 1280 dark /admin/terms
+ok   admin 1280 dark /admin/settings
+ok   admin 1280 dark /admin/audit
+FAIL admin 1280 dark /gradebook [Export to SIS] — 1 axe
+ok   admin 1280 dark /admin/users [Import CSV]
+ok   admin 1280 dark /analytics [/^Open Machine Learning/]
+ok   parent 360 light /
+ok   parent 360 light /calendar
+ok   parent 360 light /attendance
+ok   parent 360 light /announcements
+ok   parent 360 light /messages
+ok   parent 360 light /notifications
+FAIL parent 360 light /grades — 1 axe
+FAIL parent 360 light /reports — 1 axe
+ok   parent 360 dark /
+ok   parent 360 dark /calendar
+ok   parent 360 dark /attendance
+ok   parent 360 dark /announcements
+ok   parent 360 dark /messages
+ok   parent 360 dark /notifications
+FAIL parent 360 dark /grades — 1 axe
+FAIL parent 360 dark /reports — 1 axe
+ok   parent 1280 light /
+ok   parent 1280 light /calendar
+ok   parent 1280 light /attendance
+ok   parent 1280 light /announcements
+ok   parent 1280 light /messages
+ok   parent 1280 light /notifications
+ok   parent 1280 light /grades
+ok   parent 1280 light /reports
+ok   parent 1280 dark /
+ok   parent 1280 dark /calendar
+ok   parent 1280 dark /attendance
+ok   parent 1280 dark /announcements
+ok   parent 1280 dark /messages
+ok   parent 1280 dark /notifications
+ok   parent 1280 dark /grades
+ok   parent 1280 dark /reports
+
+284 page states audited; 40 with problems.
+
+[serious] definition-list: <dl> elements must only directly contain properly-ordered <dt> and <dd> groups, <script>, <template> or <div> elements
+  pages: /assignments/asg-ml-reflection/submissions/u-student-01
+  e.g. dl ::   dl element has direct children that are not allowed: div > [role=status]
+
+[serious] scrollable-region-focusable: Scrollable region must have keyboard access
+  pages: /attendance, /reports, /gradebook, /analytics, /admin/audit, /gradebook [Export to SIS], /analytics [/^Open Machine Learning/], /grades
+  e.g. .overflow-x-auto ::   Element should have focusable content
+
+Sideways scroll: faculty 360 light /assignments/asg-ml-reflection/edit
+  button.inline-flex.shrink-0.items-center.justify-center (365px): Set the assignment's points to the rubric total
+
+Sideways scroll: faculty 360 light /gradebook
+  
+
+Sideways scroll: faculty 360 light /gradebook [Set up grading]
+  
+
+Sideways scroll: faculty 360 dark /assignments/asg-ml-reflection/edit
+  button.inline-flex.shrink-0.items-center.justify-center (365px): Set the assignment's points to the rubric total
+
+Sideways scroll: faculty 360 dark /gradebook
+  
+
+Sideways scroll: faculty 360 dark /gradebook [Set up grading]
+  
+
+Sideways scroll: admin 360 light /analytics
+  
+
+Sideways scroll: admin 360 dark /analytics
+  
+
+Largest JavaScript per page (KB): faculty 1280 light /courses/ml-foundations 420; faculty 1280 light /courses/ml-foundations [Schedule live class] 420; faculty 1280 dark /courses/ml-foundations 420; faculty 1280 dark /courses/ml-foundations [Schedule live class] 420; admin 1280 light /courses/ml-foundations 418
+Page loads with a main-thread task of 200 ms or more: 20
+  faculty 360 light /courses/ml-foundations/edit: 53, 260 ms
+  faculty 360 light /quizzes/ml-quiz-2/edit: 319 ms
+  faculty 360 dark /courses/ml-foundations/edit: 51, 278 ms
+  faculty 360 dark /quizzes/ml-quiz-2/edit: 380 ms
+  faculty 1280 light /courses/ml-foundations/edit: 58, 277 ms
+  faculty 1280 light /quizzes/ml-quiz-2/edit: 370 ms
+  faculty 1280 dark /courses/ml-foundations/edit: 51, 290 ms
+  faculty 1280 dark /quizzes/ml-quiz-2/edit: 362 ms
+  faculty 1280 dark /calendar [Month]: 233 ms
+  admin 360 light /courses/ml-foundations/edit: 54, 268 ms
