@@ -81,7 +81,7 @@ export function LoginForm() {
   };
 
   const emailProblem = () =>
-    EMAIL_PATTERN.test(email.trim()) ? undefined : "Enter a valid email address, like name@school.edu.";
+    EMAIL_PATTERN.test(email.trim()) ? undefined : "Enter a valid email address, like name@dbcc.edu.ph.";
 
   const submit = () => {
     const nextErrors: typeof errors = { email: emailProblem() };
@@ -213,7 +213,7 @@ export function LoginForm() {
               onChange={(event) => setEmail(event.target.value)}
               aria-invalid={errors.email ? true : undefined}
               aria-describedby={errors.email ? "login-email-error" : undefined}
-              placeholder="name@school.edu"
+              placeholder="name@dbcc.edu.ph"
               className={INPUT_CLASS}
             />
           </div>

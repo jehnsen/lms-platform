@@ -43,24 +43,25 @@ export const mockSis: SisAdapter = {
   async fetchRoster() {
     await new Promise<void>((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
     return [
-      { sisId: "S-1000", name: "Mike Manabat", email: "mike.manabat@example.com", role: "student", sectionCodes: ["CS-110-A"] },
-      { sisId: "S-1001", name: "Aiko Tanaka", email: "aiko.tanaka@example.com", role: "student", sectionCodes: ["CS-110-A"] },
-      { sisId: "S-1013", name: "Mateo Alvarez", email: "mateo.alvarez@example.com", role: "student", sectionCodes: ["CS-110-B", "IT-101-A"] },
-      { sisId: "S-1014", name: "Nia Williams", email: "nia.williams@example.com", role: "student", sectionCodes: ["BIO-201-A", "LS-105-B"] },
-      { sisId: "F-2005", name: "Dr. Hugo Lindqvist", email: "hugo.lindqvist@example.com", role: "faculty", sectionCodes: ["LS-105-B"] },
-      { sisId: "S-1015", name: "Omar Farouk", email: "", role: "student", sectionCodes: ["IT-101-B"] },
-      { sisId: "S-1016", name: "Priscilla Nwosu", email: "priscilla.nwosu@example.com", role: "student", sectionCodes: ["ART-900-A"] },
+      { sisId: "2023-00412", name: "Miguel Angelo Manalo", email: "miguel.manalo@dbcc.edu.ph", role: "student", sectionCodes: ["IT-321-A"] },
+      { sisId: "2023-00418", name: "Angelica Mae Dimaano", email: "angelica.dimaano@dbcc.edu.ph", role: "student", sectionCodes: ["IT-321-A"] },
+      { sisId: "2023-00689", name: "Carlo Emmanuel Aquino", email: "carlo.aquino@dbcc.edu.ph", role: "student", sectionCodes: ["IT-321-B", "IT-211-A", "ETH-101-A"] },
+      { sisId: "2023-00694", name: "Princess Anne Villareal", email: "princess.villareal@dbcc.edu.ph", role: "student", sectionCodes: ["NATSCI-102-A", "BA-105-B"] },
+      { sisId: "F-2005", name: "Mr. Arnold Dizon", email: "arnold.dizon@dbcc.edu.ph", role: "faculty", sectionCodes: ["BA-105-B"] },
+      { sisId: "2023-00702", name: "Noel Vincent Magsino", email: "", role: "student", sectionCodes: ["IT-211-B"] },
+      { sisId: "2023-00715", name: "Shaira Mae Bautista", email: "shaira.bautista@dbcc.edu.ph", role: "student", sectionCodes: ["BSIT-900-A"] },
     ];
   },
   /**
    * MOCK: nothing is sent anywhere. It takes every record whose student ID
-   * looks like one of its own ("S-" and digits) and turns the rest down, so an
+   * looks like one of its own (the admission year, a hyphen and five digits, as
+   * in "2023-00412") and turns the rest down, so an
    * export can show a rejection.
    */
   async exportGrades(records) {
     await new Promise<void>((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
     const rejected = records
-      .filter((record) => !/^S-\d+$/.test(record.studentSisId))
+      .filter((record) => !/^\d{4}-\d{5}$/.test(record.studentSisId))
       .map((record) => ({ key: record.key, reason: "The SIS has no student with this ID." }));
     return { accepted: records.length - rejected.length, rejected };
   },

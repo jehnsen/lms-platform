@@ -5,8 +5,11 @@ import {
   ArrowRight,
   BookCheck,
   CircleCheckBig,
+  ClipboardCheck,
   ClipboardList,
+  Clock,
   Flame,
+  ListChecks,
   Play,
   Sparkles,
   Target,
@@ -14,6 +17,7 @@ import {
 import { ColumnChart } from "@/components/charts";
 import { CourseCover, Thumbnail } from "@/components/course-art";
 import {
+  Avatar,
   Badge,
   ButtonLink,
   Card,
@@ -38,9 +42,18 @@ import {
   nextLesson,
   pendingQuizzes,
 } from "@/lib/progress";
-import { dateParts, firstNameOf, formatMinutes } from "@/lib/utils";
+import { useNow } from "@/lib/use-now";
+import { cn, dateParts, firstNameOf, formatMinutes, initialsOf } from "@/lib/utils";
 
 const TUTOR_PROMPTS = ["Explain it more simply", "Give me an example", "Quiz me"];
+
+/** Work due within this many days is flagged as due soon. */
+const DUE_SOON_DAYS = 3;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function todayLabel(now: number) {
+  return new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(now);
+}
 
 /** The student home page: where they left off, what is due, and how they are doing. */
 export function DashboardView() {
@@ -50,6 +63,7 @@ export function DashboardView() {
   const assignments = useAssignments();
   const quizzes = useQuizzes();
   const grades = useViewedGrades();
+  const now = useNow();
   // Archived courses are read-only (FR-1.8), so there is nothing in them to resume or to do.
   const open = courses.filter((course) => course.status !== "archived");
   const active = activeCourses(state, open);
@@ -82,6 +96,7 @@ export function DashboardView() {
   const upNext = [
     ...pending.map((quiz) => ({
       id: quiz.id,
+      kind: "quiz" as const,
       href: `/quizzes/${quiz.id}`,
       title: quiz.title,
       due: quiz.due,
@@ -91,6 +106,7 @@ export function DashboardView() {
       .filter((row) => !row.mine && open.some((course) => course.id === row.assignment.courseId))
       .map((row) => ({
         id: row.assignment.id,
+        kind: "assignment" as const,
         href: `/assignments/${row.assignment.id}`,
         title: row.assignment.title,
         due: row.assignment.dueAt,
@@ -105,7 +121,9 @@ export function DashboardView() {
     <PageContainer>
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
+          {/* The date depends on the viewer's clock, so it only appears once the page is in the browser. */}
+          <p className="mb-2 h-5 text-sm font-medium text-ink-3">{now > 0 ? todayLabel(now) : null}</p>
+          <h1 className="text-3xl leading-tight font-semibold tracking-[-0.025em] text-balance sm:text-4xl">
             Welcome back, {actor ? firstNameOf(actor.name) : ""}
           </h1>
           <p className="mt-2 max-w-2xl text-ink-2 text-pretty">
@@ -114,10 +132,12 @@ export function DashboardView() {
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Badge tone="warn" className="h-10 gap-1.5 px-3 text-sm">
-            <Flame aria-hidden className="size-4" />
+          <span className="inline-flex h-10 items-center gap-2 rounded-full border border-spark-solid/30 bg-spark-soft py-1 pr-4 pl-1 text-sm font-medium text-spark">
+            <span className="grid size-8 place-items-center rounded-full bg-surface shadow-card">
+              <Flame aria-hidden className="size-4" />
+            </span>
             {studyStreakDays}-day streak
-          </Badge>
+          </span>
           <ButtonLink href="/courses" variant="secondary">
             Browse courses
           </ButtonLink>
@@ -141,34 +161,35 @@ export function DashboardView() {
               className="aspect-video h-full w-full md:aspect-auto md:min-h-64"
               imageClassName="transition-transform duration-300 group-hover:scale-105"
             >
-              <span className="absolute inset-0 grid place-items-center bg-black/25 transition-colors group-hover:bg-black/40">
-                <span className="grid size-16 place-items-center rounded-full bg-white/95 text-neutral-950 shadow-lg transition-transform group-hover:scale-105">
+              <span className="absolute inset-0 grid place-items-center bg-linear-to-t from-black/50 via-black/15 to-black/10 transition-colors group-hover:bg-black/20">
+                <span className="grid size-16 place-items-center rounded-full bg-white/95 text-neutral-950 shadow-lg ring-8 ring-white/20 transition-transform group-hover:scale-105">
                   <Play aria-hidden className="size-7 translate-x-0.5 fill-current" />
                 </span>
               </span>
-              <span className="absolute right-3 bottom-3 rounded bg-black/75 px-1.5 py-0.5 text-xs font-medium text-white tabular-nums">
+              <span className="absolute right-3 bottom-3 inline-flex items-center gap-1 rounded-md bg-black/75 px-2 py-1 text-xs font-medium text-white tabular-nums">
+                <Clock aria-hidden className="size-3" />
                 {resumeLesson.minutes} min
               </span>
             </Thumbnail>
           </Link>
 
-          <div className="flex flex-col justify-between gap-5 p-5 sm:p-6">
+          <div className="flex flex-col justify-between gap-6 p-5 sm:p-7">
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="primary">{started ? "Continue learning" : "Start learning"}</Badge>
                 <span className="text-sm text-ink-3">{resume.title}</span>
               </div>
-              <h2 className="mt-3 text-2xl leading-tight font-semibold tracking-tight text-balance">
+              <h2 className="mt-4 text-2xl leading-tight font-semibold tracking-tight text-balance">
                 {resumeLesson.title}
               </h2>
-              <p className="mt-2 line-clamp-3 text-sm text-ink-2 text-pretty">{resumeLesson.summary}</p>
+              <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-ink-2 text-pretty">{resumeLesson.summary}</p>
             </div>
             <div>
               <div className="mb-2 flex items-center justify-between text-sm">
                 <span className="text-ink-2">
                   {resumeProgress.done} of {resumeProgress.total} lessons
                 </span>
-                <span className="font-medium tabular-nums">{resumeProgress.percent}%</span>
+                <span className="font-semibold text-primary-ink tabular-nums">{resumeProgress.percent}%</span>
               </div>
               <Meter value={resumeProgress.percent} label={`${resume.title} progress`} className="h-2" />
               <div className="mt-5 flex flex-wrap gap-2">
@@ -185,16 +206,22 @@ export function DashboardView() {
         </Card>
 
         <Card className="flex flex-col p-5 sm:p-6">
-          <div className="text-sm text-ink-2">Study time this week</div>
-          <div className="mt-1 text-4xl font-semibold tracking-tight">{formatMinutes(weekMinutes)}</div>
+          <div className="flex items-start justify-between gap-3">
+            <div className="text-sm font-medium text-ink-2">Study time this week</div>
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary-ink">
+              <Clock aria-hidden className="size-4" />
+            </span>
+          </div>
+          <div className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">{formatMinutes(weekMinutes)}</div>
           <p className="mt-1 text-xs text-ink-3">
             Most active on {busiest.day} · {busiest.minutes} min
           </p>
-          <div className="mt-5 flex-1">
+          <div className="mt-6 flex-1">
             <ColumnChart
               ariaLabel="Minutes studied each day this week"
               showValues={false}
-              className="h-28"
+              labelIndex={weeklyActivity.indexOf(busiest)}
+              className="h-32"
               columns={weeklyActivity.map((entry) => ({
                 label: entry.day,
                 value: entry.minutes,
@@ -250,7 +277,7 @@ export function DashboardView() {
                 <li key={course.id}>
                   <Link
                     href={`/courses/${course.id}`}
-                    className="group flex h-full flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-xs transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-md"
+                    className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition-[border-color,box-shadow,translate] hover:-translate-y-0.5 hover:border-line-strong hover:shadow-raised"
                   >
                     <CourseCover
                       course={course}
@@ -258,18 +285,25 @@ export function DashboardView() {
                       className="aspect-2/1"
                       imageClassName="transition-transform duration-300 group-hover:scale-105"
                     >
-                      <span className="absolute top-2 left-2 rounded-full bg-black/70 px-2 py-0.5 text-xs font-medium text-white">
+                      <span className="absolute top-3 left-3 rounded-full bg-black/70 px-2.5 py-0.5 text-xs font-medium text-white">
                         {course.subject}
                       </span>
                     </CourseCover>
-                    <div className="flex flex-1 flex-col p-4">
-                      <div className="font-medium text-balance group-hover:underline">{course.title}</div>
-                      <div className="mt-0.5 text-xs text-ink-3">{course.instructor}</div>
-                      <div className="mt-auto flex items-center gap-3 pt-4">
-                        <Meter value={progress.percent} label={`${course.title} progress`} className="flex-1" />
-                        <span className="shrink-0 text-xs text-ink-2 tabular-nums">
-                          {progress.done > 0 ? `${progress.done}/${progress.total} lessons` : "Not started"}
-                        </span>
+                    <div className="flex flex-1 flex-col p-4 sm:p-5">
+                      <div className="text-xs font-medium tracking-wide text-ink-3">{course.code}</div>
+                      <div className="mt-0.5 font-semibold text-balance group-hover:text-primary-ink">{course.title}</div>
+                      <div className="mt-2 flex items-center gap-2 text-xs text-ink-2">
+                        <Avatar initials={initialsOf(course.instructor)} size="sm" />
+                        <span className="truncate">{course.instructor}</span>
+                      </div>
+                      <div className="mt-auto pt-5">
+                        <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+                          <span className="text-ink-2 tabular-nums">
+                            {progress.done > 0 ? `${progress.done} of ${progress.total} lessons` : "Not started"}
+                          </span>
+                          <span className="font-medium tabular-nums">{progress.percent}%</span>
+                        </div>
+                        <Meter value={progress.percent} label={`${course.title} progress`} />
                       </div>
                     </div>
                   </Link>
@@ -290,35 +324,54 @@ export function DashboardView() {
             >
               Up next
             </SectionTitle>
-            <Card>
+            <Card className="overflow-hidden">
               {upNext.length === 0 ? (
                 <p className="p-4 text-sm text-ink-2">Nothing to hand in and every quiz taken. Nice work.</p>
               ) : (
                 <ul>
                   {upNext.slice(0, 5).map((item) => {
                     const due = dateParts(item.due);
+                    const left = now > 0 ? Date.parse(item.due) - now : Infinity;
+                    const soon = left >= 0 && left <= DUE_SOON_DAYS * DAY_MS;
+                    const KindIcon = item.kind === "quiz" ? ListChecks : ClipboardCheck;
                     return (
                       <li key={item.id} className="border-t border-line first:border-t-0">
-                        <Link href={item.href} className="flex items-center gap-3 p-3.5 transition-colors hover:bg-surface-2">
+                        <Link href={item.href} className="group flex items-center gap-3 p-3.5 transition-colors hover:bg-surface-2">
                           <span
                             aria-hidden
-                            className="grid size-11 shrink-0 place-items-center rounded-lg bg-surface-2 text-center leading-none"
+                            className={cn(
+                              "grid size-11 shrink-0 place-items-center rounded-xl text-center leading-none",
+                              soon ? "bg-warn-soft text-warn" : "bg-surface-2",
+                            )}
                           >
                             <span>
-                              <span className="block text-[10px] font-medium text-ink-3 uppercase">{due.month}</span>
+                              <span className={cn("block text-[10px] font-semibold uppercase", soon ? "text-warn" : "text-ink-3")}>
+                                {due.month}
+                              </span>
                               <span className="mt-0.5 block text-base font-semibold tabular-nums">{due.day}</span>
                             </span>
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-medium">{item.title}</span>
-                            <span className="block truncate text-xs text-ink-3">
+                            <span className="flex items-center gap-2">
+                              <span className="truncate text-sm font-medium">{item.title}</span>
+                              {soon ? (
+                                <Badge tone="warn" className="shrink-0">
+                                  Due soon
+                                </Badge>
+                              ) : null}
+                            </span>
+                            <span className="mt-0.5 flex items-center gap-1 text-xs text-ink-3">
+                              <KindIcon aria-hidden className="size-3 shrink-0" />
                               <span className="sr-only">
                                 Due {due.month} {due.day} ·{" "}
                               </span>
-                              {item.detail}
+                              <span className="truncate">{item.detail}</span>
                             </span>
                           </span>
-                          <ArrowRight aria-hidden className="size-4 shrink-0 text-ink-3" />
+                          <ArrowRight
+                            aria-hidden
+                            className="size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5"
+                          />
                         </Link>
                       </li>
                     );
@@ -328,11 +381,14 @@ export function DashboardView() {
             </Card>
           </section>
 
-          <Card className="border-spark-solid/40 bg-spark-soft p-5">
+          <Card className="border-spark-solid/40 bg-linear-to-br from-spark-soft to-surface p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-spark">
-              <Sparkles aria-hidden className="size-4" />
+              <span className="grid size-7 place-items-center rounded-lg bg-surface shadow-card">
+                <Sparkles aria-hidden className="size-4" />
+              </span>
               AI tutor
             </div>
+
             <p className="mt-2 text-sm text-ink">
               Stuck on <span className="font-medium">{resumeLesson.title}</span>? Ask for help any time.
             </p>

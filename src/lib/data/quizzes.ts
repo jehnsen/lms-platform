@@ -1,11 +1,13 @@
 import type { Quiz } from "@/lib/types";
+import { programQuizzes } from "./quizzes-programs";
 
 /**
  * Seed data: the quizzes the demo starts with. The app reads quizzes through
  * `src/lib/api/quizzes.ts`, which loads these into its mock repository; only
  * seeds and build-time `generateStaticParams` import this file directly.
+ * The program courses' quizzes are in `quizzes-programs.ts`.
  */
-export const quizzes: Quiz[] = [
+const generalQuizzes: Quiz[] = [
   {
     id: "ml-quiz-1",
     courseId: "ml-foundations",
@@ -378,7 +380,7 @@ export const quizzes: Quiz[] = [
         kind: "single",
         points: 2,
         prompt: "Which of these is a need rather than a want?",
-        options: ["A streaming subscription", "Concert tickets", "Rent", "New headphones"],
+        options: ["A streaming subscription", "Concert tickets", "Boarding house rent", "New headphones"],
         answer: 2,
         explanation: "Housing is essential; the others are discretionary.",
       },
@@ -386,10 +388,10 @@ export const quizzes: Quiz[] = [
         id: "q2",
         kind: "single",
         points: 2,
-        prompt: "With a monthly income of 2,000, how much does 50/30/20 suggest saving?",
-        options: ["200", "400", "600", "1,000"],
+        prompt: "With a monthly income of ₱20,000, how much does 50/30/20 suggest saving?",
+        options: ["₱2,000", "₱4,000", "₱6,000", "₱10,000"],
         answer: 1,
-        explanation: "20% of 2,000 is 400.",
+        explanation: "20% of ₱20,000 is ₱4,000.",
       },
       {
         id: "q3",
@@ -425,3 +427,5 @@ export const quizzes: Quiz[] = [
     ],
   },
 ];
+
+export const quizzes: Quiz[] = [...generalQuizzes, ...programQuizzes];

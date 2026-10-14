@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Paperclip } from "lucide-react";
-import { Badge } from "@/components/ui";
+import { Award, CalendarClock, Download, FileUp, Info, Paperclip, Users } from "lucide-react";
+import { Badge, FactTile } from "@/components/ui";
 import { describeLatePolicy, type SubmissionState } from "@/lib/domain/assignments";
 import type { Assignment, AttachedFile, Section, Submission } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
@@ -27,28 +27,25 @@ export function LateBadge({ late }: { late: Submission["late"] }) {
 /** The facts every reader of an assignment needs: when it is due, what it is worth, who it is for, and the late rule. */
 export function AssignmentFacts({ assignment, sections }: { assignment: Assignment; sections: Section[] }) {
   return (
-    <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-      <div>
-        <dt className="text-xs text-ink-3">Due</dt>
-        <dd className="font-medium">{formatDateTime(assignment.dueAt)}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-ink-3">Worth</dt>
-        <dd className="font-medium tabular-nums">{assignment.points} points</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-ink-3">Set for</dt>
-        <dd className="font-medium">{sections.map((section) => section.name).join(", ") || "No section"}</dd>
-      </div>
-      <div>
-        <dt className="text-xs text-ink-3">Hand in</dt>
-        <dd className="font-medium">
-          {assignment.accepts.length === 2 ? "Typed text or files" : assignment.accepts[0] === "file" ? "Files" : "Typed text"}
-        </dd>
-      </div>
-      <div className="sm:col-span-2 lg:col-span-4">
-        <dt className="text-xs text-ink-3">Late work and resubmission</dt>
-        <dd>
+    <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <FactTile icon={CalendarClock} label="Due" value={formatDateTime(assignment.dueAt)} />
+      <FactTile icon={Award} label="Worth" value={<span className="tabular-nums">{assignment.points} points</span>} />
+      <FactTile
+        icon={Users}
+        label="Set for"
+        value={sections.map((section) => section.name).join(", ") || "No section"}
+      />
+      <FactTile
+        icon={FileUp}
+        label="Hand in"
+        value={assignment.accepts.length === 2 ? "Typed text or files" : assignment.accepts[0] === "file" ? "Files" : "Typed text"}
+      />
+      <div className="relative rounded-xl border border-line py-2.5 pr-3 pl-10 text-sm sm:col-span-2 lg:col-span-4">
+        <dt className="text-xs text-ink-3">
+          <Info aria-hidden className="absolute top-3 left-3 size-4 text-ink-3" />
+          Late work and resubmission
+        </dt>
+        <dd className="mt-0.5">
           {describeLatePolicy(assignment.late)}{" "}
           {assignment.allowResubmission
             ? "Handing in again is allowed; the latest version is the one marked."
@@ -56,6 +53,7 @@ export function AssignmentFacts({ assignment, sections }: { assignment: Assignme
         </dd>
       </div>
     </dl>
+
   );
 }
 

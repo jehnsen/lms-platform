@@ -37,6 +37,11 @@
   --chart: #2a78d6;
   --chart-grid: #e1e0d9;
   --chart-axis: #c3c2b7;
+
+  /* Elevation: a hairline plus a soft drop, so cards lift off the page without heavy borders. */
+  --elevation-card: 0 1px 2px rgb(21 20 15 / 0.04), 0 1px 3px rgb(21 20 15 / 0.05);
+  --elevation-raised: 0 2px 4px rgb(21 20 15 / 0.04), 0 8px 24px -6px rgb(21 20 15 / 0.1);
+  --elevation-button: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(21 20 15 / 0.16);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -72,6 +77,10 @@
     --chart: #3987e5;
     --chart-grid: #2c2c2a;
     --chart-axis: #383835;
+
+    --elevation-card: 0 1px 2px rgb(0 0 0 / 0.3);
+    --elevation-raised: 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 24px -6px rgb(0 0 0 / 0.5);
+    --elevation-button: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 1px 2px rgb(0 0 0 / 0.4);
   }
 }
 
@@ -108,11 +117,23 @@
 
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
+
+  --shadow-card: var(--elevation-card);
+  --shadow-raised: var(--elevation-raised);
+  --shadow-button: var(--elevation-button);
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
+  /* Inter's single-storey "a" and open digits read a little calmer at UI sizes. */
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* A quiet scrollbar for panes that scroll inside the page, such as the sidebar. */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
 }
 
 :focus-visible {

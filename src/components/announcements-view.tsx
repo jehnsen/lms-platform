@@ -4,7 +4,18 @@ import Link from "next/link";
 import { useLayoutEffect, useState } from "react";
 import { LoaderCircle, Megaphone, Plus, Trash2 } from "lucide-react";
 import { Dialog } from "@/components/dialog";
-import { Badge, Button, Card, Meter, PageContainer, PageHeader, PageSkeleton, fieldBaseClass, fieldClass } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Meter,
+  PageContainer,
+  PageHeader,
+  PageSkeleton,
+  fieldBaseClass,
+  fieldClass,
+} from "@/components/ui";
 import {
   AnnouncementError,
   deleteAnnouncement,
@@ -139,8 +150,11 @@ export function CourseAnnouncements({ courseId }: { courseId: string }) {
         ) : null}
       </div>
       {shown.length === 0 ? (
-        <p className="text-sm text-ink-2">None yet.</p>
+        <EmptyState icon={Megaphone} title="No announcements yet" className="py-6">
+          News from your teacher about this course will show up here.
+        </EmptyState>
       ) : (
+
         <ul className="flex flex-col gap-3">
           {shown.map((row) => (
             <li key={row.announcement.id}>

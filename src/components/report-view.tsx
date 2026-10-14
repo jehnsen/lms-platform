@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
-import { Badge, Button, Card, PageContainer, PageHeader, PageSkeleton, ScrollRegion } from "@/components/ui";
+import { Avatar, Badge, Card, PageContainer, PageHeader, PageSkeleton, ScrollRegion } from "@/components/ui";
 import { exportMeta } from "@/lib/api/analytics";
 import {
   logReportExport,
@@ -15,9 +15,13 @@ import {
 import { useActor } from "@/lib/api/session";
 import { formatRate } from "@/lib/domain/attendance";
 import { downloadCsv } from "@/lib/download";
-import { formatDate } from "@/lib/utils";
+import { formatDate, initialsOf } from "@/lib/utils";
 
-const selectClass = "h-10 max-w-full rounded-lg border border-line-strong bg-surface px-3 text-sm";
+const selectClass = "h-10 max-w-full rounded-lg border border-line-strong bg-surface px-3 text-sm shadow-card";
+
+/** One segment of the joined export buttons. */
+const exportButtonClass =
+  "inline-flex h-10 items-center gap-2 px-3 text-sm sm:px-3.5 font-medium text-ink transition-colors hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-50 focus-visible:relative focus-visible:z-10";
 
 /**
  * FR-4.4 (US-18): the progress report for one student in one term. A student
@@ -128,22 +132,28 @@ export function ReportView() {
                   </select>
                 </>
               ) : null}
-              <Button variant="secondary" disabled={!report} onClick={() => void print()}>
-                <Printer aria-hidden className="size-4" />
-                Print
-              </Button>
-              <Button variant="secondary" disabled={!report} onClick={() => void exportFile("PDF")}>
-                <FileText aria-hidden className="size-4" />
-                PDF
-              </Button>
-              <Button variant="secondary" disabled={!report} onClick={() => void exportFile("Excel")}>
-                <FileSpreadsheet aria-hidden className="size-4" />
-                Excel
-              </Button>
-              <Button variant="secondary" disabled={!report} onClick={() => void download()}>
-                <Download aria-hidden className="size-4" />
-                CSV
-              </Button>
+              <div
+                role="group"
+                aria-label="Print or export"
+                className="flex flex-wrap divide-x divide-line overflow-hidden rounded-lg border border-line-strong bg-surface shadow-card"
+              >
+                <button type="button" className={exportButtonClass} disabled={!report} onClick={() => void print()}>
+                  <Printer aria-hidden className="size-4 text-ink-3" />
+                  Print
+                </button>
+                <button type="button" className={exportButtonClass} disabled={!report} onClick={() => void exportFile("PDF")}>
+                  <FileText aria-hidden className="size-4 text-ink-3" />
+                  PDF
+                </button>
+                <button type="button" className={exportButtonClass} disabled={!report} onClick={() => void exportFile("Excel")}>
+                  <FileSpreadsheet aria-hidden className="size-4 text-ink-3" />
+                  Excel
+                </button>
+                <button type="button" className={exportButtonClass} disabled={!report} onClick={() => void download()}>
+                  <Download aria-hidden className="size-4 text-ink-3" />
+                  CSV
+                </button>
+              </div>
             </>
           }
         />
@@ -165,13 +175,16 @@ function ReportCard({ report }: { report: ProgressReport }) {
 
   return (
     <Card className="overflow-hidden print:border-0 print:shadow-none">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
-        <div className="min-w-0">
-          <h2 className="text-xl font-semibold tracking-tight">{student.name}</h2>
-          <p className="text-sm text-ink-2">
-            {student.sisId ? `Student ID ${student.sisId} · ` : ""}
-            {term.name} · {formatDate(term.startsOn, true)} to {formatDate(term.endsOn, true)}
-          </p>
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-5 sm:px-6">
+        <div className="flex min-w-0 items-center gap-4">
+          <Avatar initials={initialsOf(student.name)} size="lg" className="print:hidden" />
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold tracking-tight">{student.name}</h2>
+            <p className="text-sm text-ink-2">
+              {student.sisId ? `Student ID ${student.sisId} · ` : ""}
+              {term.name} · {formatDate(term.startsOn, true)} to {formatDate(term.endsOn, true)}
+            </p>
+          </div>
         </div>
         {term.status === "archived" ? <Badge>Archived term</Badge> : null}
       </div>
@@ -192,7 +205,7 @@ function ReportCard({ report }: { report: ProgressReport }) {
       ) : (
         <ScrollRegion label="Courses in this report">
           <table className="w-full min-w-[48rem] text-sm">
-            <thead>
+            <thead className="bg-surface-2/60">
               <tr className="text-left text-xs text-ink-3">
                 <th scope="col" className="px-5 py-2.5 font-medium">Course</th>
                 <th scope="col" className="px-3 py-2.5 font-medium">Made up of</th>
@@ -205,7 +218,7 @@ function ReportCard({ report }: { report: ProgressReport }) {
             </thead>
             <tbody>
               {courses.map((entry) => (
-                <tr key={entry.course.id} className="border-t border-line align-top">
+                <tr key={entry.course.id} className="border-t border-line align-top transition-colors hover:bg-surface-2/40">
                   <th scope="row" className="px-5 py-3 text-left font-medium">
                     <span className="text-ink-3">{entry.course.code}</span> {entry.course.title}
                     <span className="block text-xs font-normal text-ink-3">
@@ -238,8 +251,14 @@ function ReportCard({ report }: { report: ProgressReport }) {
                     {entry.total.percent === null ? <span className="font-normal text-ink-3">—</span> : `${entry.total.percent}%`}
                   </td>
                   <td className="px-5 py-3 text-right tabular-nums">
-                    {entry.grade ?? <span className="text-ink-3">Not graded yet</span>}
-                    <span className="block text-xs text-ink-3">{entry.scale.name}</span>
+                    {entry.grade ? (
+                      <span className="inline-grid min-w-9 place-items-center rounded-lg bg-primary-soft px-2 py-0.5 font-semibold text-primary-ink">
+                        {entry.grade}
+                      </span>
+                    ) : (
+                      <span className="text-ink-3">Not graded yet</span>
+                    )}
+                    <span className="mt-0.5 block text-xs text-ink-3">{entry.scale.name}</span>
                   </td>
                 </tr>
               ))}
@@ -271,9 +290,10 @@ function ReportCard({ report }: { report: ProgressReport }) {
 
 function Figure({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="bg-surface px-5 py-3">
-      <dt className="text-xs text-ink-3">{label}</dt>
-      <dd className="mt-0.5 text-2xl font-semibold tracking-tight tabular-nums">{value}</dd>
+    <div className="bg-surface px-5 py-4 sm:px-6">
+      <dt className="text-xs font-medium text-ink-3">{label}</dt>
+      <dd className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">{value}</dd>
+
       {hint ? <dd className="text-xs text-ink-3">{hint}</dd> : null}
     </div>
   );

@@ -33,7 +33,7 @@ import {
 import { Brand } from "@/components/brand";
 import { NotificationBell } from "@/components/notification-bell";
 import { RouteGuard } from "@/components/route-guard";
-import { PageSkeleton } from "@/components/ui";
+import { Avatar, PageSkeleton } from "@/components/ui";
 import { signInAsDemo, signOut, useActor } from "@/lib/api/session";
 import { ROLES, ROLE_LABELS } from "@/lib/domain/permissions";
 import { SIGN_IN_PATH, canAccessRoute } from "@/lib/domain/routes";
@@ -134,11 +134,11 @@ function NavLinks({
   })).filter((group) => group.items.length > 0);
 
   return (
-    <nav aria-label="Main" className="flex flex-col gap-6">
+    <nav aria-label="Main" className="flex flex-col gap-5">
       {groups.map((group) => (
         <div key={group.items[0].href}>
           {group.heading ? (
-            <div className="mb-1 px-3 text-xs font-medium tracking-wide text-ink-3 uppercase">
+            <div className="mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-ink-3 uppercase">
               {group.heading}
             </div>
           ) : null}
@@ -152,13 +152,19 @@ function NavLinks({
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      "group relative flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                       active
                         ? "bg-primary-soft text-primary-ink"
                         : "text-ink-2 hover:bg-surface-2 hover:text-ink",
                     )}
                   >
-                    <item.icon aria-hidden className="size-4 shrink-0" />
+                    {active ? (
+                      <span aria-hidden className="absolute inset-y-1.5 -left-4 w-1 rounded-r-full bg-primary" />
+                    ) : null}
+                    <item.icon
+                      aria-hidden
+                      className={cn("size-4 shrink-0", active ? "text-primary-ink" : "text-ink-3 group-hover:text-ink-2")}
+                    />
                     {textFor(item.label, role)}
                   </Link>
                 </li>
@@ -194,14 +200,14 @@ function Sidebar({ onNavigate, inDrawer }: { onNavigate?: () => void; inDrawer?:
   const leave = () => reloadTo(SIGN_IN_PATH, signOut);
 
   return (
-    <div className="flex h-full flex-col gap-6 p-4">
+    <div className="flex h-full flex-col gap-5 p-4">
       <div className="flex items-center justify-between gap-2 pt-1 pl-1">
         <Brand />
         {/* On small screens the bell lives in the top bar instead. */}
         {inDrawer ? null : <NotificationBell panelClassName="absolute top-full left-0 mt-2 w-80" />}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="scrollbar-thin -mx-4 flex-1 overflow-y-auto px-4">
         {actor ? (
           // usePathname can suspend on routes with unknown params; fall back to an unhighlighted nav.
           <Suspense fallback={<NavLinks role={actor.role} pathname={null} onNavigate={onNavigate} />}>
@@ -213,16 +219,16 @@ function Sidebar({ onNavigate, inDrawer }: { onNavigate?: () => void; inDrawer?:
       </div>
 
       {actor ? (
-        <div className="flex flex-col gap-3">
-          <div>
-            <label htmlFor={viewAsId} className="mb-1 block px-1 text-xs text-ink-3">
+        <div className="rounded-xl border border-line bg-surface-2/60 p-2">
+          <div className="flex items-center gap-2 px-1 pb-2">
+            <label htmlFor={viewAsId} className="shrink-0 text-xs text-ink-3">
               Demo: view as
             </label>
             <select
               id={viewAsId}
               value={actor.role}
               onChange={(event) => viewAs(event.target.value as Role)}
-              className="h-9 w-full rounded-lg border border-line-strong bg-surface px-2 text-sm"
+              className="h-8 min-w-0 flex-1 rounded-md border border-line-strong bg-surface px-1.5 text-xs font-medium"
             >
               {ROLES.map((role) => (
                 <option key={role} value={role}>
@@ -232,13 +238,8 @@ function Sidebar({ onNavigate, inDrawer }: { onNavigate?: () => void; inDrawer?:
             </select>
           </div>
 
-          <div className="flex items-center gap-3 rounded-lg border border-line p-3">
-            <span
-              aria-hidden
-              className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2 text-sm font-semibold"
-            >
-              {initialsOf(actor.name)}
-            </span>
+          <div className="flex items-center gap-2.5 rounded-lg bg-surface p-2 shadow-card">
+            <Avatar initials={initialsOf(actor.name)} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium">{actor.name}</div>
               <div className="truncate text-xs text-ink-3">{ROLE_LABELS[actor.role]}</div>
@@ -248,7 +249,7 @@ function Sidebar({ onNavigate, inDrawer }: { onNavigate?: () => void; inDrawer?:
               onClick={leave}
               aria-label="Sign out"
               title="Sign out"
-              className="grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-surface-2 hover:text-ink"
+              className="grid size-8 shrink-0 place-items-center rounded-lg text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
             >
               <LogOut aria-hidden className="size-4" />
             </button>
@@ -265,12 +266,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-1">
-      <aside className="sticky top-0 z-30 hidden h-dvh w-60 shrink-0 border-r border-line bg-surface lg:block print:hidden!">
+      <aside className="sticky top-0 z-30 hidden h-dvh w-64 shrink-0 border-r border-line bg-surface lg:block print:hidden!">
         <Sidebar />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line bg-surface px-4 lg:hidden print:hidden!">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line bg-surface/90 px-4 backdrop-blur-md lg:hidden print:hidden!">
           <Brand />
           <div className="flex items-center">
             <NotificationBell panelClassName="fixed inset-x-3 top-16" />

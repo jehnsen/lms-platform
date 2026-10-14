@@ -1,27 +1,30 @@
 import type { Course } from "@/lib/types";
+import { programCourses } from "./courses-programs";
 
 /**
  * Seed data: the courses the demo starts with. The app reads courses through
  * `src/lib/api/courses.ts`, which loads these into its mock repository; only
  * seeds and build-time `generateStaticParams` import this file directly.
+ * The general courses are here and the program courses are in
+ * `courses-programs.ts`.
  */
-export const courses: Course[] = [
+const generalCourses: Course[] = [
   {
     id: "ml-foundations",
-    code: "CS-110",
+    code: "IT-321",
     termId: "term-2026-1",
     status: "active",
     thumbnail: "/thumbnails/course-ml-foundations.jpg",
-    title: "Machine Learning Foundations",
-    tagline: "Understand how machines learn from data — no PhD required.",
+    title: "Introduction to Machine Learning",
+    tagline: "How machines learn from data, from first principles to your first model.",
     description:
-      "A first course in machine learning for curious beginners. You will build intuition for how models learn from examples, why they sometimes fail, and how to tell a good model from a lucky one.",
-    subject: "Computer Science",
-    level: "Beginner",
-    instructor: "Dr. Amara Okafor",
+      "A professional elective for IT students. You will build intuition for how models learn from examples, why they sometimes fail, and how to tell a good model from a lucky one. Class meets in the computer laboratory; bring a laptop for the hands-on sessions.",
+    subject: "Information Technology",
+    level: "Intermediate",
+    instructor: "Dr. Maria Cristina Alcantara",
     accent: "#17346b",
-    learners: 12840,
-    rating: 4.8,
+    learners: 13,
+    rating: 0,
     modules: [
       {
         id: "ml-m1",
@@ -307,20 +310,20 @@ export const courses: Course[] = [
   },
   {
     id: "web-dev",
-    code: "IT-101",
+    code: "IT-211",
     termId: "term-2026-1",
     status: "active",
     thumbnail: "/thumbnails/course-web-dev.jpg",
-    title: "Web Development Fundamentals",
+    title: "Web Systems and Technologies",
     tagline: "Build your first real web pages with HTML and CSS.",
     description:
-      "Start from a blank file and finish with a responsive page you can share. Short videos, frequent practice, and no prior coding experience needed.",
-    subject: "Technology",
+      "Start from a blank file and finish with a responsive page you can share. Short videos, weekly laboratory exercises, and no prior web experience needed beyond Introduction to Programming.",
+    subject: "Information Technology",
     level: "Beginner",
-    instructor: "Marco Reyes",
+    instructor: "Mr. Jerome Villanueva",
     accent: "#7a2e12",
-    learners: 20415,
-    rating: 4.7,
+    learners: 13,
+    rating: 0,
     modules: [
       {
         id: "web-m1",
@@ -497,20 +500,20 @@ export const courses: Course[] = [
   },
   {
     id: "cell-biology",
-    code: "BIO-201",
+    code: "NATSCI-102",
     termId: "term-2026-1",
     status: "active",
     thumbnail: "/thumbnails/course-cell-biology.jpg",
-    title: "Biology: Cells and Genetics",
+    title: "General Biology: Cells and Genetics",
     tagline: "Explore the machinery of life, from membranes to DNA.",
     description:
-      "A visual tour of the cell and the code it carries. Each lesson pairs a short video with checkpoint questions so ideas stick before you move on.",
-    subject: "Science",
-    level: "Intermediate",
-    instructor: "Dr. Lena Park",
+      "A general education natural science course: a visual tour of the cell and the code it carries. Each lesson pairs a short video with checkpoint questions so ideas stick before the laboratory session.",
+    subject: "Natural Science",
+    level: "Beginner",
+    instructor: "Dr. Lourdes Macaraeg",
     accent: "#0f4d3a",
-    learners: 8630,
-    rating: 4.9,
+    learners: 13,
+    rating: 0,
     modules: [
       {
         id: "bio-m1",
@@ -683,20 +686,20 @@ export const courses: Course[] = [
   },
   {
     id: "money-skills",
-    code: "LS-105",
+    code: "BA-105",
     termId: "term-2026-1",
     status: "active",
     thumbnail: "/thumbnails/course-money-skills.jpg",
-    title: "Money Skills: Personal Finance",
+    title: "Personal Finance and Money Management",
     tagline: "Budget, save and understand interest before your first paycheck.",
     description:
-      "Practical money skills in short lessons: how to plan spending, why starting early matters, and how to avoid the most common traps.",
-    subject: "Life Skills",
+      "Practical money skills in short lessons: how to plan an allowance or a first salary, why starting early matters, and how to avoid the most common traps.",
+    subject: "Business",
     level: "Beginner",
-    instructor: "Sofia Mendes",
+    instructor: "Ms. Katrina Dimaculangan",
     accent: "#5a4300",
-    learners: 15270,
-    rating: 4.6,
+    learners: 13,
+    rating: 0,
     modules: [
       {
         id: "fin-m1",
@@ -713,15 +716,15 @@ export const courses: Course[] = [
             summary:
               "A simple starting split for your income: half for needs, about a third for wants, and a fifth for savings.",
             keyPoints: [
-              "Needs are essentials such as housing, food and transport.",
+              "Needs are essentials such as boarding house rent, food and fare to school.",
               "Wants make life enjoyable but could be reduced.",
               "50/30/20 is a guide, not a law — adjust it to your situation.",
             ],
             transcript: [
               "A budget is simply a plan for your money before you spend it.",
               "Start by sorting spending into needs and wants.",
-              "Needs are things you can't go without: rent, food, getting to school or work.",
-              "Wants are everything that makes life fun but isn't essential.",
+              "Needs are things you can't go without: rent, food, jeepney or bus fare to school or work.",
+              "Wants are everything that makes life fun but isn't essential, like milk tea, new gadgets or another online sale.",
               "A popular starting point is the fifty, thirty, twenty rule.",
               "Half for needs, thirty percent for wants, and twenty percent saved.",
             ],
@@ -749,7 +752,7 @@ export const courses: Course[] = [
               "Review monthly and adjust rather than abandoning the plan.",
             ],
             body: [
-              "Most first budgets fail for the same reason: they are built from guesses. Before you plan anything, spend one month simply writing down where your money goes. The result is usually a surprise.",
+              "Most first budgets fail for the same reason: they are built from guesses. Before you plan anything, spend one month simply writing down where your money goes, including the small GCash and Maya payments and the daily baon. The result is usually a surprise.",
               "Next, list your income and sort last month's spending into needs, wants and savings. Compare the split with 50/30/20. You are not aiming for a perfect match — you are looking for the one or two categories that are far from where you want them.",
               "Then give every unit of income a job for the coming month. Savings counts as a job, and it should be paid first, on the day money arrives, rather than from whatever is left at the end.",
               "Finally, check in once a month. A budget that is adjusted is working. A budget that is never looked at again is not.",
@@ -782,7 +785,7 @@ export const courses: Course[] = [
               "It works like a snowball rolling downhill, picking up more snow as it grows.",
               "In the early years the growth looks small. Later, it accelerates.",
               "That is why time is the most powerful ingredient in saving.",
-              "Someone who starts at eighteen can end up ahead of someone who saves more but starts at thirty.",
+              "Someone who starts at eighteen with ₱500 a month can end up ahead of someone who saves more but starts at thirty.",
             ],
             checkpoints: [
               {
@@ -817,8 +820,8 @@ export const courses: Course[] = [
             ],
             transcript: [
               "Saving and investing sound similar, but they do different jobs.",
-              "Savings are for money you may need soon. They are safe and easy to reach.",
-              "Investing is for goals years away. It can grow faster, but its value goes up and down.",
+              "Savings are for money you may need soon, kept in a bank account where deposits are insured by the PDIC. They are safe and easy to reach.",
+              "Investing is for goals years away, such as mutual funds, bonds or shares. It can grow faster, but its value goes up and down.",
               "That trade-off between risk and return never goes away.",
               "Spreading money across many investments, called diversifying, reduces the risk.",
               "A sensible order is: emergency savings first, then investing for the long term.",
@@ -845,3 +848,5 @@ export const courses: Course[] = [
     ],
   },
 ];
+
+export const courses: Course[] = [...generalCourses, ...programCourses];

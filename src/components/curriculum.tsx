@@ -70,12 +70,17 @@ export function Curriculum({
 
         return (
           <li key={module.id}>
-            <div className="mb-1.5 flex items-baseline justify-between gap-3 px-2">
+            <div className="mb-2 flex items-center justify-between gap-3 px-2">
               <h3 className="text-sm font-semibold">
-                <span className="text-ink-3">Unit {moduleIndex + 1} · </span>
+                <span className="mr-1.5 text-xs font-semibold tracking-wide text-ink-3 uppercase">Unit {moduleIndex + 1}</span>
                 {module.title}
               </h3>
-              <span className="shrink-0 text-xs text-ink-3 tabular-nums">
+              <span
+                className={cn(
+                  "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
+                  tracking && done === module.lessons.length && done > 0 ? "bg-good-soft text-good" : "bg-surface-2 text-ink-2",
+                )}
+              >
                 {tracking
                   ? `${done}/${module.lessons.length}`
                   : `${module.lessons.length} ${module.lessons.length === 1 ? "lesson" : "lessons"}`}
@@ -96,7 +101,7 @@ export function Curriculum({
                       href={`/courses/${course.id}/learn/${lesson.id}`}
                       aria-current={current ? "page" : undefined}
                       className={cn(
-                        "group flex items-center gap-3 rounded-lg p-2 text-sm transition-colors",
+                        "group flex items-center gap-3 rounded-xl p-2 text-sm transition-colors",
                         current ? "bg-primary-soft" : "hover:bg-surface-2",
                       )}
                     >
@@ -117,7 +122,7 @@ export function Curriculum({
                         </span>
                       </Thumbnail>
                       <span className="min-w-0 flex-1">
-                        <span className={cn("line-clamp-2", current && "font-medium")}>{lesson.title}</span>
+                        <span className={cn("line-clamp-2 font-medium", current && "text-primary-ink")}>{lesson.title}</span>
                         <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-3">
                           {LESSON_TYPE_LABELS[lesson.type]}
                           {scheduled ? (
@@ -147,11 +152,11 @@ export function Curriculum({
               {quiz ? (
                 <li>
                   <QuizRow href={`/quizzes/${quiz.id}`}>
-                    <span className={cn(TILE, "grid place-items-center bg-surface-2 text-ink-2")}>
+                    <span className={cn(TILE, "grid place-items-center bg-primary-soft text-primary-ink")}>
                       <ListChecks aria-hidden className="size-5" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block">Unit quiz</span>
+                      <span className="block font-medium">Unit quiz</span>
                       <span className="mt-0.5 block text-xs text-ink-3">
                         Graded · {quiz.questions.length} questions
                         {quiz.timeLimitMinutes ? ` · ${quiz.timeLimitMinutes} min limit` : null}
@@ -177,7 +182,8 @@ export function Curriculum({
 /** Learners take the quiz from here; staff open it to see its questions. */
 function QuizRow({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="flex items-center gap-3 rounded-lg p-2 text-sm transition-colors hover:bg-surface-2">
+    <Link href={href} className="flex items-center gap-3 rounded-xl p-2 text-sm transition-colors hover:bg-surface-2">
+
       {children}
     </Link>
   );

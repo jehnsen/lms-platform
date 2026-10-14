@@ -39,10 +39,23 @@ Sign in at `/login` by choosing a role; it fills in that role's demo account. Th
 
 | Role | Demo account | Home page shows |
 | --- | --- | --- |
-| Student | `mike.manabat@example.com` | Where they left off, what is due, their progress. |
-| Faculty | `amara.okafor@example.com` | The courses they teach, with class average and submissions. |
-| Admin | `priya.nair@example.com` | Account counts, recent audit events, and links to users and terms. |
-| Parent | `rosa.manabat@example.com` | Their linked child's grades and progress, read-only. Parents are not in the mock school directory, so SSO refuses them; use the password. |
+| Student | `miguel.manalo@dbcc.edu.ph` | Where they left off, what is due, their progress. |
+| Faculty | `maria.alcantara@dbcc.edu.ph` | The courses they teach, with class average and submissions. |
+| Admin | `rowena.panganiban@dbcc.edu.ph` | Account counts, recent audit events, and links to users and terms. |
+| Parent | `teresita.manalo@gmail.com` | Their linked child's grades and progress, read-only. Parents are not in the mock school directory, so SSO refuses them; use the password. |
+
+The seeded school is Don Bosco College – Canlubang, Calamba, Laguna. All people are invented. Its courses are:
+
+| Course | Code | Taught by | Who takes it |
+| --- | --- | --- | --- |
+| Introduction to Machine Learning, Web Systems and Technologies (IT electives) | IT-321, IT-211 | Dr. Alcantara, Mr. Villanueva | the whole seeded class |
+| General Biology: Cells and Genetics, Personal Finance and Money Management (general education) | NATSCI-102, BA-105 | Dr. Macaraeg, Ms. Dimaculangan | the whole seeded class |
+| Ethics (AB Philosophy and general education) | ETH-101 | Mr. Magtibay | the whole seeded class |
+| Don Bosco and the Preventive System (Salesian formation) | SAL-101 | Fr. Santiago, SDB | the whole seeded class |
+| Assessment in Learning 1 (BSEd) | ED-301 | Dr. Castillo | six students; not the demo student |
+| Engine Fundamentals and Servicing (BTVTEd, automotive) | AUTO-201 | Engr. Abad | six students; not the demo student |
+
+Sign in as the faculty member's account (first name, a dot and surname, at `dbcc.edu.ph`, for example `joselito.magtibay@dbcc.edu.ph`) to see a course's gradebook and marking, or use **Demo: view as**.
 
 Each role sees only its own menu and pages. Opening a page the role may not see shows a "no access" page and writes the attempt to the audit log.
 
@@ -95,17 +108,17 @@ The seeded demo has an assignment with marked, unmarked and late work (as facult
 
 **Building and marking a quiz.** Faculty press **New quiz** on `/quizzes`: settings (due date, pass mark, gradebook category, an optional time limit and attempt limit, the unit it follows) and questions of five kinds: multiple choice, multiple answers, true or false, matching and short answer. Questions can be saved to, and copied from, the question bank shared by all faculty. Multiple choice, true or false and matching are marked automatically; a short answer is marked by keyword or by a teacher, as the question says. Teacher-marked answers arrive on `/grading`; saving a mark there updates the student's score, and the attempt counts once nothing is left to mark.
 
-In the seeded demo, "Unit 2 quiz: Training models" has a 10-minute limit, a matching question and a teacher-marked question, and two answers are already waiting in Dr. Okafor's grading queue.
+In the seeded demo, "Unit 2 quiz: Training models" has a 10-minute limit, a matching question and a teacher-marked question, and two answers are already waiting in Dr. Alcantara's grading queue.
 
 **Grading a course.** On `/gradebook` a teacher presses **Set up grading** to name the course's categories and give each a weight (the save is refused until they total 100%), say which category each quiz and assignment counts in, choose the scale the grade is reported on (percentage, letter or GPA) and decide whether work not handed in by its due date counts as zero. Inside a category, work counts in proportion to its points. Totals are worked out from the stored scores every time they are shown, so they follow each new score and each change of weights. A course nobody has set up uses Assignments 50% and Quizzes 50% on the school's default scale. The grades of the letter and GPA scales are school policy: an admin changes them on `/admin/settings`.
 
 **Releasing grades.** The "Grade items and release" card on `/gradebook` lists every quiz and assignment. An assignment's marks stay hidden until the teacher presses **Release**. A quiz's scores are shown when the student hands in, unless the teacher presses **Hold**; they are then released for the whole class at once. Students are notified on release. On `/grades` a student (or a parent, for a linked child) sees only released grades and feedback, and a running total for each course that counts only those. In the teacher's gradebook an unreleased mark carries a `*` and does count.
 
-**Reports and the SIS export.** `/reports` shows one student's progress report for a term: the grade in each course with its category breakdown, missing work, lessons done, the term average and the GPA. It can be printed or downloaded as CSV. An admin exports final grades to the SIS with **Export to SIS** on `/gradebook` (one course) or **Export grades to SIS** on `/admin/terms` (every course of a term). The dialog shows what will go and lists every record that cannot, with the reason; both lists can be downloaded, and each export is written to the audit log. In the seeded demo, exporting Machine Learning Foundations fails the students whose work is not marked or not released yet.
+**Reports and the SIS export.** `/reports` shows one student's progress report for a term: the grade in each course with its category breakdown, missing work, lessons done, the term average and the GPA. It can be printed or downloaded as CSV. An admin exports final grades to the SIS with **Export to SIS** on `/gradebook` (one course) or **Export grades to SIS** on `/admin/terms` (every course of a term). The dialog shows what will go and lists every record that cannot, with the reason; both lists can be downloaded, and each export is written to the audit log. In the seeded demo, exporting Introduction to Machine Learning fails the students whose work is not marked or not released yet.
 
 **Taking attendance.** On `/attendance` a teacher chooses one of their sections; its class sessions are listed from the first class up to today, newest first, each marked "Not taken", "can be corrected" or "locked". Choosing one loads the roster with Present, Absent, Late and Excused for each student; **Mark the rest present** fills in whoever is left, and everyone must be marked before it is submitted. A submitted session can be corrected for a limited time (48 hours by default, an admin setting); each correction is listed under the roster with who made it and when, and is written to the audit log. Below the roster is each student's attendance in the course so far.
 
-**Low-attendance alerts.** On `/admin/settings` an admin sets the attendance threshold, how Late and Excused count, how many sessions must be recorded before the threshold is checked, the correction window, and which staff are academic coordinators. When a student's attendance in a course falls below the threshold, the student, their linked parents and the coordinators get one alert (with no coordinator named, the section's teachers get it). There is no second alert while attendance stays below; if it recovers and falls again, that is a new alert. To see it in the seeded demo, sign in as Dr. Okafor, take attendance for Machine Learning Foundations, Section A, and mark Mike Manabat absent: that takes him from 84.6% to 78.6%, and Mike, his parent Rosa and Dr. Okafor are each notified once.
+**Low-attendance alerts.** On `/admin/settings` an admin sets the attendance threshold, how Late and Excused count, how many sessions must be recorded before the threshold is checked, the correction window, and which staff are academic coordinators. When a student's attendance in a course falls below the threshold, the student, their linked parents and the coordinators get one alert (with no coordinator named, the section's teachers get it). There is no second alert while attendance stays below; if it recovers and falls again, that is a new alert. To see it in the seeded demo, sign in as Dr. Alcantara, take attendance for Introduction to Machine Learning, Section A, and mark Miguel Manalo absent: that takes him from 84.6% to 78.6%, and Miguel, his parent Teresita and Dr. Alcantara are each notified once.
 
 **The calendar.** `/calendar` shows a week (the timetable) or a month, with classes, quiz and assignment due dates, exams, holidays and school events, filtered by course and by kind. Classes come from each section's weekly schedule and the course's dates, and due dates from the quizzes and assignments themselves, so a change to any of them is on the calendar at once. An admin adds events for the whole school and faculty for the courses they teach with **Add event**; an event marked "no classes" removes those classes from the timetable and from the attendance list.
 
@@ -117,7 +130,7 @@ In the seeded demo, "Unit 2 quiz: Training models" has a 10-minute limit, a matc
 
 **Notification settings.** On `/notifications` each person switches email, push and in-app on or off for each kind of notification. The kinds the school requires (exams and timetable changes, attendance and account notices, by default; an admin setting) are locked on and go out on every channel whatever was chosen. Nothing is really emailed or pushed in the demo: a log at the bottom of the page shows what would have been sent.
 
-**Dashboards and at-risk students.** `/analytics` is the class dashboard for faculty: choose a course and a section to see the grade distribution, the work each student has missed, and every student's grade, attendance, lessons done, last sign-in and whether they are at risk. For an admin it opens on the school: sign-ins and activity over the last week, every course's figures, and everyone at risk; opening a course drills down to its class dashboard. An admin sets the at-risk rules on `/admin/settings`: each rule combines conditions (grade, attendance, missing work, days without signing in) that must all hold. In the seeded demo, Devon Clarke is at risk in three courses.
+**Dashboards and at-risk students.** `/analytics` is the class dashboard for faculty: choose a course and a section to see the grade distribution, the work each student has missed, and every student's grade, attendance, lessons done, last sign-in and whether they are at risk. For an admin it opens on the school: sign-ins and activity over the last week, every course's figures, and everyone at risk; opening a course drills down to its class dashboard. An admin sets the at-risk rules on `/admin/settings`: each rule combines conditions (grade, attendance, missing work, days without signing in) that must all hold. In the seeded demo, Jericho Ramos is at risk in three courses.
 
 **Exporting reports.** Each dashboard has **Export PDF** and **Export Excel**, and the progress report has PDF and Excel buttons. The file holds exactly the rows on screen with the filters applied, says which filters, when and by whom, and is written to the audit log.
 

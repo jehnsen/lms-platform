@@ -405,8 +405,8 @@ export function importTemplate(sectionCodes: string[]): string[][] {
   const [first = "SECTION-A", second] = sectionCodes;
   return [
     [...IMPORT_COLUMNS],
-    ["Jordan Rivera", "jordan.rivera@example.com", "student", second ? `${first};${second}` : first, "S-2001", ""],
-    ["Dr. Noor Haddad", "noor.haddad@example.com", "faculty", first, "F-3001", ""],
-    ["Alex Rivera", "alex.rivera@example.com", "parent", "", "", "jordan.rivera@example.com"],
+    ["Juan Carlo Dela Cruz", "juan.delacruz@dbcc.edu.ph", "student", second ? `${first};${second}` : first, "2026-00101", ""],
+    ["Mr. Ernesto Bautista", "ernesto.bautista@dbcc.edu.ph", "faculty", first, "F-3001", ""],
+    ["Elena Dela Cruz", "elena.delacruz@gmail.com", "parent", "", "", "juan.delacruz@dbcc.edu.ph"],
   ];
 }

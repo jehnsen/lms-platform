@@ -159,6 +159,70 @@ const GLOSSARY: GlossaryEntry[] = [
     example: "100 at 10% becomes 110, then 121, then 133.10 — each year's gain is larger than the last.",
   },
   {
+    name: "Human acts and conscience",
+    match: /human act|conscience|moral agent/i,
+    simple: "a human act is something you do knowingly and freely, and conscience is your reason judging whether it is good or bad.",
+    detail:
+      "Only acts done with knowledge and free will can be called good or bad. Ignorance, fear, habit or force can lessen how responsible you are.",
+    example: "Returning a lost wallet is a human act. Your heartbeat speeding up beforehand is not.",
+  },
+  {
+    name: "Utilitarianism and Kant",
+    match: /utilitarian|categorical imperative|\bkant\b|bentham/i,
+    simple: "utilitarianism judges an act by its results for everyone; Kant judges it by whether its rule could be a law for all.",
+    detail:
+      "A utilitarian asks which choice brings the greatest good to the greatest number. Kant asks whether you could will your rule universally, and never lets you treat a person only as a means.",
+    example: "Breaking a promise to help many people may look good to a utilitarian, but Kant asks what would happen to promising if everyone did it.",
+  },
+  {
+    name: "Virtue ethics",
+    match: /virtue|aristotle|eudaimonia|natural law/i,
+    simple: "it asks what kind of person you should become, not just what act to do.",
+    detail:
+      "Aristotle describes a virtue as a habit of choosing the mean between two extremes. Aquinas adds natural law: reason can discover the basic goods that acts should serve.",
+    example: "Courage sits between cowardice and recklessness: a student who speaks up politely about cheating is showing it.",
+  },
+  {
+    name: "The Preventive System",
+    match: /preventive|amorevolezza|loving-kindness|don bosco|salesian/i,
+    simple: "it is Don Bosco's way of educating through reason, religion and loving-kindness, with the educator present among the young.",
+    detail:
+      "Instead of waiting to punish wrongdoing, the educator prevents it by being present, explaining rules and making sure the young know they are loved.",
+    example: "A teacher who greets a struggling student at the door and agrees on a small plan is applying it.",
+  },
+  {
+    name: "Measurement, assessment and evaluation",
+    match: /measurement|formative|summative|learning target|bloom/i,
+    simple: "measurement is a score, assessment is evidence of learning, and evaluation is the judgement made from it.",
+    detail:
+      "Formative assessment helps learning while it is happening; summative assessment reports it. Learning targets should use observable verbs from Bloom's revised taxonomy.",
+    example: "34 out of 40 is a measurement. Deciding that the student has met the standard is evaluation.",
+  },
+  {
+    name: "Table of specification and item analysis",
+    match: /table of specification|\btos\b|item analysis|difficulty index|discrimination|validity|reliab/i,
+    simple: "a table of specification is the blueprint of a test, and item analysis checks how each item performed afterwards.",
+    detail:
+      "Items per topic are proportional to teaching hours. Difficulty index is the proportion who got an item right; discrimination index is upper-group minus lower-group proportion correct.",
+    example: "If 18 of 30 students answer an item correctly, its difficulty index is 0.60.",
+  },
+  {
+    name: "Shop safety and 5S",
+    match: /\bppe\b|jack stand|5s\b|seiri|shop safety|torque wrench/i,
+    simple: "it is working safely in the shop: the right protective equipment, a vehicle on stands, and an orderly bay.",
+    detail:
+      "Never work under a vehicle held only by a jack. 5S stands for sort, set in order, shine, standardize and sustain. A torque wrench is for tightening to a specification in N·m.",
+    example: "A tool board with a painted outline for each wrench is a 5S habit that also saves time.",
+  },
+  {
+    name: "The four-stroke cycle",
+    match: /four-stroke|intake|exhaust stroke|power stroke|compression stroke|crankshaft|camshaft|valve train|firing order|thermostat|viscosity/i,
+    simple: "an engine makes power in four strokes: intake, compression, power and exhaust.",
+    detail:
+      "The crankshaft turns twice for each cycle and the camshaft once. Oil lubricates and carries heat away, and the thermostat holds coolant back until the engine warms up.",
+    example: "Think of breathing in, squeezing, a push, and breathing out, repeated thousands of times a minute.",
+  },
+  {
     name: "Budgeting",
     match: /budget|50\/30\/20|needs and wants/i,
     simple: "it's deciding what your money will do before you spend it.",

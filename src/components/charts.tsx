@@ -176,34 +176,41 @@ export function ColumnChart({
   columns,
   ariaLabel,
   showValues = true,
+  labelIndex,
   className = "h-40",
 }: {
   columns: Column[];
   ariaLabel: string;
   /** Print each value on its column. Leave off when the tooltip is enough. */
   showValues?: boolean;
+  /** With `showValues` off, still print the value on this one column (e.g. the peak). */
+  labelIndex?: number;
   className?: string;
 }) {
   const max = Math.max(1, ...columns.map((column) => column.value));
+  // Leave headroom above the tallest column for a printed value.
+  const scale = showValues || labelIndex !== undefined ? 78 : 100;
   return (
     <div
       role="img"
       aria-label={`${ariaLabel}: ${columns.map((column) => `${column.label} ${column.valueLabel}`).join(", ")}`}
     >
       <div className={cn("flex items-end gap-2 border-b border-chart-axis", className)}>
-        {columns.map((column) => (
+        {columns.map((column, index) => (
           <div
             key={column.label}
             tabIndex={0}
             className="group relative flex h-full flex-1 flex-col items-center justify-end rounded-sm"
           >
-            {showValues ? (
-              <span className="mb-1 text-xs font-medium tabular-nums">{column.value}</span>
+            {showValues || index === labelIndex ? (
+              <span className="mb-1 text-xs font-medium whitespace-nowrap tabular-nums">
+                {showValues ? column.value : column.valueLabel}
+              </span>
             ) : null}
             <div
-              className="w-full max-w-6 rounded-t bg-chart transition-opacity group-hover:opacity-80 group-focus-visible:opacity-80"
+              className="w-full max-w-7 rounded-t bg-chart transition-opacity group-hover:opacity-80 group-focus-visible:opacity-80"
               style={{
-                height: `${(column.value / max) * (showValues ? 78 : 100)}%`,
+                height: `${(column.value / max) * scale}%`,
                 minHeight: column.value > 0 ? 2 : 0,
               }}
             />

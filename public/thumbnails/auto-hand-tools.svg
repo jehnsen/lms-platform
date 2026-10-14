@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" role="img" aria-label="Hand tools and measuring instruments">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f3b4c"/><stop offset="1" stop-color="#1c232e"/></linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#g)"/>
+  <circle cx="1120" cy="-40" r="320" fill="#fff" fill-opacity=".06"/>
+  <circle cx="1240" cy="700" r="260" fill="#fff" fill-opacity=".05"/>
+  <g fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="10"><circle cx="1000" cy="300" r="120"/><circle cx="1000" cy="300" r="40"/><path d="M1000 120v60M1000 420v60M820 300h60M1120 300h60M873 173l42 42M1085 385l42 42M873 427l42-42M1085 215l42-42"/></g>
+  <text x="72" y="104" fill="#fff" fill-opacity=".8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="30" font-weight="600" letter-spacing="3">AUTO-201</text>
+  <text fill="#fff" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="58" font-weight="700"><tspan x="72" y="460">Hand tools and</tspan><tspan x="72" y="530">measuring</tspan><tspan x="72" y="600">instruments</tspan></text>
+</svg>

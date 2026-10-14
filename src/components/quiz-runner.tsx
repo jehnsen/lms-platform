@@ -1,12 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, CircleCheck, CircleX, Clock, Hourglass, LoaderCircle, RotateCcw, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Award,
+  CalendarDays,
+  CircleCheck,
+  CircleX,
+  Clock,
+  EyeOff,
+  Hourglass,
+  ListChecks,
+  LoaderCircle,
+  RotateCcw,
+  Save,
+  Sparkles,
+  Target,
+  UserCheck,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { ForbiddenView } from "@/components/forbidden-view";
 import { NotFoundView } from "@/components/not-found-view";
 import { QuizPreview } from "@/components/quiz-preview";
 import { QuestionField, StatusIcon, describeAnswer, describeCorrect } from "@/components/quiz-questions";
-import { Badge, Button, ButtonLink, Card, Meter, PageContainer, PageSkeleton } from "@/components/ui";
+import { Badge, Breadcrumbs, Button, ButtonLink, Card, FactTile, Meter, PageContainer, PageSkeleton } from "@/components/ui";
 import { useCourseReadOnly } from "@/lib/api/courses";
 import { useCourseScale, useQuizGradesHeld } from "@/lib/api/grades";
 import { useMyProgress } from "@/lib/api/progress";
@@ -94,14 +113,32 @@ function StudentQuiz({ quiz, course }: { quiz: Quiz; course: Course | undefined 
 
   return (
     <PageContainer className="max-w-3xl">
+      <Breadcrumbs
+        items={[
+          { label: "Quizzes", href: "/quizzes" },
+          ...(course ? [{ label: course.title, href: `/courses/${course.id}` }] : []),
+          { label: quiz.title },
+        ]}
+      />
       <div className="mb-6">
-        {course ? (
-          <ButtonLink variant="ghost" size="sm" href={`/courses/${course.id}`} className="-ml-3">
-            <ArrowLeft aria-hidden className="size-4" />
-            {course.title}
-          </ButtonLink>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone="primary">
+            <ListChecks aria-hidden className="size-3" />
+            Graded quiz
+          </Badge>
+          {quiz.timeLimitMinutes ? (
+            <Badge>
+              <Clock aria-hidden className="size-3" />
+              Timed
+            </Badge>
+          ) : null}
+        </div>
+        <h1 className="mt-3 text-3xl leading-tight font-semibold tracking-[-0.025em] text-balance sm:text-4xl">
+          {quiz.title}
+        </h1>
+        {quiz.description && !draft && !review ? (
+          <p className="mt-2 max-w-2xl leading-relaxed text-ink-2 text-pretty">{quiz.description}</p>
         ) : null}
-        <h1 className="mt-2 text-3xl leading-tight font-semibold tracking-tight text-balance">{quiz.title}</h1>
       </div>
 
       {/* Always rendered, so the automatic submission is announced when it happens (NFR-5). */}
@@ -145,97 +182,126 @@ function StudentQuiz({ quiz, course }: { quiz: Quiz; course: Course | undefined 
           onBack={() => setReviewId(null)}
         />
       ) : (
-        <Card className="p-5 sm:p-6">
-          {quiz.description ? <p className="text-ink-2">{quiz.description}</p> : null}
-          <dl className="mt-5 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-            <Fact label="Questions" value={quiz.questions.length} />
-            <Fact label="Points" value={quizPoints(quiz)} />
-            <Fact
-              label={quiz.timeLimitMinutes ? "Time limit" : "Time"}
-              value={quiz.timeLimitMinutes ? `${quiz.timeLimitMinutes} min` : `About ${quiz.minutes} min`}
-            />
-            <Fact label="To pass" value={`${quiz.passMark}%`} />
-          </dl>
+        <Card className="overflow-hidden">
+          <div className="p-5 sm:p-7">
+            <dl className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:grid-cols-4">
+              <FactTile icon={ListChecks} label="Questions" value={quiz.questions.length} />
+              <FactTile icon={Award} label="Points" value={quizPoints(quiz)} />
+              <FactTile
+                icon={Clock}
+                label={quiz.timeLimitMinutes ? "Time limit" : "Time"}
+                value={quiz.timeLimitMinutes ? `${quiz.timeLimitMinutes} min` : `About ${quiz.minutes} min`}
+              />
+              <FactTile icon={Target} label="To pass" value={`${quiz.passMark}%`} />
+            </dl>
 
-          {archived ? (
-            <p className="mt-5 rounded-lg bg-surface-2 p-4 text-sm text-ink-2">
-              This course was archived at the end of term, so the quiz is closed. It is worth{" "}
-              {quizPoints(quiz)} points; your best score counts.
-            </p>
-          ) : (
-            <div className="mt-5 flex flex-col gap-2 text-sm text-ink-2">
-              <p>
-                Worth {quizPoints(quiz)} points · due {formatDate(quiz.due)}.{" "}
-                {quiz.maxAttempts
-                  ? `You have ${quiz.maxAttempts} ${quiz.maxAttempts === 1 ? "attempt" : "attempts"}; your best score counts.`
-                  : "You can retake it; your best score counts."}
+            {archived ? (
+              <p className="mt-6 rounded-xl bg-surface-2 p-4 text-sm text-ink-2">
+                This course was archived at the end of term, so the quiz is closed. It is worth{" "}
+                {quizPoints(quiz)} points; your best score counts.
               </p>
-              {quiz.timeLimitMinutes ? (
-                <p className="flex items-start gap-2 rounded-lg bg-surface-2 p-3 text-ink">
-                  <Clock aria-hidden className="mt-0.5 size-4 shrink-0" />
-                  <span>
-                    This quiz is timed. You have {quiz.timeLimitMinutes} minutes from the moment you start, and the
-                    clock keeps running if you leave the page. Your answers are saved as you go and handed in
-                    automatically when the time is up.
-                  </span>
-                </p>
-              ) : (
-                <p>Your answers are saved as you go, so you can leave and come back.</p>
-              )}
-              {scoresHeld ? (
-                <p>
-                  Your teacher releases the scores for this quiz, so you will not see yours straight away. You will
-                  be notified when they are released.
-                </p>
-              ) : quiz.questions.some(isManuallyMarked) ? (
-                <p>Some answers are marked by your teacher, so your final score arrives once they have marked them.</p>
-              ) : (
-                <p>Marked automatically as soon as you hand in.</p>
-              )}
-            </div>
-          )}
-
-          {attempts.length > 0 ? (
-            <div className="mt-5 rounded-lg bg-surface-2 p-4">
-              <h2 className="text-sm font-semibold">Your attempts</h2>
-              <ul className="mt-2 flex flex-col gap-1.5 text-sm">
-                {attempts.map((attempt, attemptIndex) => (
-                  <li key={attempt.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                    <span className="text-ink-2">
-                      Attempt {attemptIndex + 1} · {formatDate(attempt.submittedAt)}
-                      {attempt.autoSubmitted ? " · handed in at the time limit" : null}
-                    </span>
-                    <span className="flex items-center gap-2 tabular-nums">
-                      {attempt.id === best?.id ? <Badge tone="primary">Best</Badge> : null}
-                      {isFinal(attempt) ? (
-                        <span>
-                          {attempt.earned}/{attempt.possible} · {attempt.percent}%
-                        </span>
-                      ) : (
-                        <Badge tone="warn">{attempt.status === "held" ? "Grade not released yet" : "Awaiting marking"}</Badge>
-                      )}
-                      {attempt.answers ? (
-                        <Button variant="ghost" size="sm" onClick={() => setReviewId(attempt.id)}>
-                          Review<span className="sr-only"> attempt {attemptIndex + 1}</span>
-                        </Button>
-                      ) : null}
+            ) : (
+              <ul className="mt-6 flex flex-col gap-3 text-sm text-ink-2">
+                <Rule icon={CalendarDays}>
+                  Worth {quizPoints(quiz)} points · due <span className="font-medium text-ink">{formatDate(quiz.due)}</span>.
+                </Rule>
+                <Rule icon={RotateCcw}>
+                  {quiz.maxAttempts
+                    ? `You have ${quiz.maxAttempts} ${quiz.maxAttempts === 1 ? "attempt" : "attempts"}; your best score counts.`
+                    : "You can retake it; your best score counts."}
+                </Rule>
+                {quiz.timeLimitMinutes ? (
+                  <li className="flex items-start gap-3 rounded-xl border border-warn/25 bg-warn-soft p-3 text-ink">
+                    <Clock aria-hidden className="mt-0.5 size-4 shrink-0 text-warn" />
+                    <span>
+                      This quiz is timed. You have {quiz.timeLimitMinutes} minutes from the moment you start, and the
+                      clock keeps running if you leave the page. Your answers are saved as you go and handed in
+                      automatically when the time is up.
                     </span>
                   </li>
-                ))}
+                ) : (
+                  <Rule icon={Save}>Your answers are saved as you go, so you can leave and come back.</Rule>
+                )}
+                {scoresHeld ? (
+                  <Rule icon={EyeOff}>
+                    Your teacher releases the scores for this quiz, so you will not see yours straight away. You will
+                    be notified when they are released.
+                  </Rule>
+                ) : quiz.questions.some(isManuallyMarked) ? (
+                  <Rule icon={UserCheck}>
+                    Some answers are marked by your teacher, so your final score arrives once they have marked them.
+                  </Rule>
+                ) : (
+                  <Rule icon={Zap}>Marked automatically as soon as you hand in.</Rule>
+                )}
               </ul>
-            </div>
-          ) : archived ? (
-            <p className="mt-5 text-sm text-ink-2">You did not take this quiz.</p>
-          ) : null}
+            )}
 
-          {problems.length > 0 ? (
-            <p role="alert" className="mt-4 rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad">
-              {problems.join(" ")}
-            </p>
-          ) : null}
+            {attempts.length > 0 ? (
+              <div className="mt-6 overflow-hidden rounded-xl border border-line">
+                <h2 className="border-b border-line bg-surface-2/70 px-4 py-2.5 text-sm font-semibold">Your attempts</h2>
+                <ul className="divide-y divide-line text-sm">
+                  {attempts.map((attempt, attemptIndex) => (
+                    <li key={attempt.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3">
+                      <span className="min-w-0">
+                        <span className="block font-medium">Attempt {attemptIndex + 1}</span>
+                        <span className="block text-xs text-ink-3">
+                          {formatDate(attempt.submittedAt)}
+                          {attempt.autoSubmitted ? " · handed in at the time limit" : null}
+                        </span>
+                      </span>
+                      <span className="flex items-center gap-3 tabular-nums">
+                        {attempt.id === best?.id ? (
+                          <Badge tone="primary">
+                            <Award aria-hidden className="size-3" />
+                            Best
+                          </Badge>
+                        ) : null}
+                        {isFinal(attempt) ? (
+                          <span className="flex items-center gap-3">
+                            <Meter
+                              value={attempt.percent}
+                              label={`Attempt ${attemptIndex + 1} score`}
+                              className="hidden w-24 sm:block"
+                            />
+                            <span>
+                              <span className="text-ink-2">
+                                {attempt.earned}/{attempt.possible} ·{" "}
+                              </span>
+                              <span className="font-semibold">{attempt.percent}%</span>
+                            </span>
+                          </span>
+                        ) : (
+                          <Badge tone="warn">{attempt.status === "held" ? "Grade not released yet" : "Awaiting marking"}</Badge>
+                        )}
+                        {attempt.answers ? (
+                          <Button variant="ghost" size="sm" onClick={() => setReviewId(attempt.id)}>
+                            Review<span className="sr-only"> attempt {attemptIndex + 1}</span>
+                          </Button>
+                        ) : null}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : archived ? (
+              <p className="mt-6 text-sm text-ink-2">You did not take this quiz.</p>
+            ) : null}
+
+            {problems.length > 0 ? (
+              <p role="alert" className="mt-4 rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad">
+                {problems.join(" ")}
+              </p>
+            ) : null}
+          </div>
 
           {archived ? null : decision.allowed ? (
-            <div className="mt-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-surface-2/50 px-5 py-4 sm:px-7">
+              <p className="text-sm text-ink-2">
+                {attempts.length > 0 && best && isFinal(best)
+                  ? `Your best so far is ${best.percent}%. Try to beat it.`
+                  : `${quiz.questions.length} questions · ${quiz.timeLimitMinutes ? `${quiz.timeLimitMinutes} min limit` : `about ${quiz.minutes} min`}`}
+              </p>
               <Button size="lg" onClick={() => void start()} disabled={busy}>
                 {busy ? <LoaderCircle aria-hidden className="size-4 animate-spin" /> : null}
                 {attempts.length > 0 ? "Retake quiz" : "Start quiz"}
@@ -243,7 +309,7 @@ function StudentQuiz({ quiz, course }: { quiz: Quiz; course: Course | undefined 
               </Button>
             </div>
           ) : (
-            <p className="mt-5 text-sm text-ink-2">{decision.reason}</p>
+            <p className="border-t border-line px-5 py-4 text-sm text-ink-2 sm:px-7">{decision.reason}</p>
           )}
         </Card>
       )}
@@ -578,11 +644,13 @@ function ResultView({
   );
 }
 
-function Fact({ label, value }: { label: string; value: React.ReactNode }) {
+/** One rule of the quiz, with an icon, in the list on the quiz's start page. */
+function Rule({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
-    <div>
-      <dt className="text-ink-3">{label}</dt>
-      <dd className="mt-0.5 font-medium">{value}</dd>
-    </div>
+    <li className="flex items-start gap-3">
+      <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3" />
+      <span>{children}</span>
+    </li>
   );
 }
+

@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 export function Brand({ className }: { className?: string }) {
   return (
     <Link href="/" className={cn("flex items-center gap-2.5", className)}>
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-on-primary">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-linear-to-br from-primary to-primary-hover text-on-primary shadow-button">
         <GraduationCap aria-hidden className="size-4.5" />
       </span>
-      <span className="text-lg font-semibold tracking-tight">3rdLoopLearning</span>
+      <span className="text-[17px] font-semibold tracking-[-0.02em]">3rdLoopLearning</span>
     </Link>
   );
 }

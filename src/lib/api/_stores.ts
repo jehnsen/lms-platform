@@ -76,12 +76,12 @@ function readLegacyLearner(): (Partial<LearnerProgress> & { savedPlans?: LessonP
   }
 }
 
-export const usersRepo = createRepository<User[]>("users", 2, seedUsers);
-export const termsRepo = createRepository<Term[]>("terms", 2, seedTerms);
-export const sectionsRepo = createRepository<Section[]>("sections", 3, seedSections);
+export const usersRepo = createRepository<User[]>("users", 4, seedUsers);
+export const termsRepo = createRepository<Term[]>("terms", 3, seedTerms);
+export const sectionsRepo = createRepository<Section[]>("sections", 5, seedSections);
 
 /** The course catalogue: every course with its units and lessons. */
-export const coursesRepo = createRepository<Course[]>("courses", 1, seedCourses);
+export const coursesRepo = createRepository<Course[]>("courses", 3, seedCourses);
 
 const NO_TEMPLATES: CourseTemplate[] = [];
 
@@ -90,12 +90,12 @@ export const templatesRepo = createRepository<CourseTemplate[]>("course-template
 
 /** FR-2.6: the shared content library. The files themselves are in `_files.ts`. */
 export const materialsRepo = createRepository<Material[]>("materials", 1, seedMaterials);
-export const enrollmentsRepo = createRepository<Enrollment[]>("enrollments", 1, seedEnrollments);
+export const enrollmentsRepo = createRepository<Enrollment[]>("enrollments", 3, seedEnrollments);
 
 /** Learner progress keyed by user id. */
 export const progressRepo = createRepository<Record<string, LearnerProgress>>(
   "progress",
-  3,
+  5,
   seedProgress,
   () => {
     const legacy = readLegacyLearner();
@@ -117,7 +117,7 @@ const NO_PLANS: Record<string, LessonPlan[]> = {};
 /** Saved lesson plans keyed by the faculty member who owns them. */
 export const lessonPlansRepo = createRepository<Record<string, LessonPlan[]>>(
   "lesson-plans",
-  1,
+  2,
   NO_PLANS,
   () => {
     const plans = readLegacyLearner()?.savedPlans;
@@ -125,7 +125,7 @@ export const lessonPlansRepo = createRepository<Record<string, LessonPlan[]>>(
   },
 );
 
-export const notificationsRepo = createRepository<Notification[]>("notifications", 2, [
+export const notificationsRepo = createRepository<Notification[]>("notifications", 4, [
   ...seedNotifications,
   ...seedAttendanceNotifications,
 ]);
@@ -140,7 +140,7 @@ const NO_SELECTION: Record<string, string> = {};
 /** Which linked child a parent is currently looking at, keyed by parent id. */
 export const viewedChildRepo = createRepository<Record<string, string>>(
   "viewed-child",
-  1,
+  2,
   NO_SELECTION,
 );
 
@@ -161,20 +161,20 @@ const NO_DELIVERIES: DeliveryRecord[] = [];
 export const deliveriesRepo = createRepository<DeliveryRecord[]>("deliveries", 1, NO_DELIVERIES);
 
 /** FR-6.1: course announcements, with who has read each. */
-export const announcementsRepo = createRepository<Announcement[]>("announcements", 1, seedAnnouncements);
+export const announcementsRepo = createRepository<Announcement[]>("announcements", 3, seedAnnouncements);
 
 /** FR-6.2: every direct message. */
-export const messagesRepo = createRepository<Message[]>("messages", 1, seedMessages);
+export const messagesRepo = createRepository<Message[]>("messages", 2, seedMessages);
 
 /** FR-6.3: forum threads and their posts. */
-export const forumThreadsRepo = createRepository<ForumThread[]>("forum-threads", 1, seedForumThreads);
-export const forumPostsRepo = createRepository<ForumPost[]>("forum-posts", 1, seedForumPosts);
+export const forumThreadsRepo = createRepository<ForumThread[]>("forum-threads", 3, seedForumThreads);
+export const forumPostsRepo = createRepository<ForumPost[]>("forum-posts", 3, seedForumPosts);
 
 /** FR-6.4, FR-6.5: live classes, scheduled, running and ended, with their recordings. */
-export const liveSessionsRepo = createRepository<LiveSession[]>("live-sessions", 1, seedLiveSessions);
+export const liveSessionsRepo = createRepository<LiveSession[]>("live-sessions", 2, seedLiveSessions);
 
 /** FR-5.1: the attendance taken for each class session. One sheet per session, keyed by the session's id. */
-export const attendanceRepo = createRepository<AttendanceSheet[]>("attendance", 1, seedAttendanceSheets);
+export const attendanceRepo = createRepository<AttendanceSheet[]>("attendance", 3, seedAttendanceSheets);
 
 /**
  * FR-5.5: whether each student is below the attendance threshold in each
@@ -182,12 +182,12 @@ export const attendanceRepo = createRepository<AttendanceSheet[]>("attendance", 
  */
 export const attendanceAlertsRepo = createRepository<Record<string, AttendanceAlertState>>(
   "attendance-alerts",
-  1,
+  3,
   seedAttendanceAlerts,
 );
 
 /** FR-5.3: exams, holidays and other events on the academic calendar. Classes and due dates are not stored here. */
-export const calendarEventsRepo = createRepository<CalendarEvent[]>("calendar-events", 1, seedCalendarEvents);
+export const calendarEventsRepo = createRepository<CalendarEvent[]>("calendar-events", 3, seedCalendarEvents);
 
 const NO_SETUPS: Record<string, GradebookSetup> = {};
 
@@ -198,10 +198,10 @@ const NO_SETUPS: Record<string, GradebookSetup> = {};
 export const gradebookSetupsRepo = createRepository<Record<string, GradebookSetup>>("gradebook-setups", 1, NO_SETUPS);
 
 /** FR-3.1: assignments, drafts included. */
-export const assignmentsRepo = createRepository<Assignment[]>("assignments", 1, seedAssignments);
+export const assignmentsRepo = createRepository<Assignment[]>("assignments", 3, seedAssignments);
 
 /** FR-3.3: every hand-in, with its inline comments, grade and similarity report. Attached files are in `_files.ts`. */
-export const submissionsRepo = createRepository<Submission[]>("submissions", 1, seedSubmissions);
+export const submissionsRepo = createRepository<Submission[]>("submissions", 3, seedSubmissions);
 
 export interface MockCredential {
   digest: string;
@@ -231,7 +231,7 @@ export interface SisSyncState {
 }
 
 /** The outcome of the latest manual SIS sync (FR-1.6). */
-export const sisSyncRepo = createRepository<SisSyncState>("sis-sync", 2, {
+export const sisSyncRepo = createRepository<SisSyncState>("sis-sync", 3, {
   lastRunAt: null,
   created: 0,
   updated: 0,
@@ -240,7 +240,7 @@ export const sisSyncRepo = createRepository<SisSyncState>("sis-sync", 2, {
 });
 
 /** FR-3.5: quizzes with their questions and answer keys, drafts included. */
-export const quizzesRepo = createRepository<Quiz[]>("quizzes", 1, seedQuizzes);
+export const quizzesRepo = createRepository<Quiz[]>("quizzes", 3, seedQuizzes);
 
 const NO_DRAFTS: Record<string, QuizDraft> = {};
 
@@ -248,4 +248,4 @@ const NO_DRAFTS: Record<string, QuizDraft> = {};
 export const quizDraftsRepo = createRepository<Record<string, QuizDraft>>("quiz-drafts", 1, NO_DRAFTS);
 
 /** FR-3.5: the question bank shared by all faculty. */
-export const questionBankRepo = createRepository<BankQuestion[]>("question-bank", 1, seedQuestionBank);
+export const questionBankRepo = createRepository<BankQuestion[]>("question-bank", 3, seedQuestionBank);

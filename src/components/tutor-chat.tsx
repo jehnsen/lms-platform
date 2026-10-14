@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
-import { ArrowUp, Sparkles, Square } from "lucide-react";
+import { ArrowUp, ArrowUpRight, Sparkles, Square } from "lucide-react";
 import { RichText } from "@/components/rich-text";
 import { streamTutorReply, type TutorContext, type TutorTurn } from "@/lib/mock-ai/tutor";
 import { cn } from "@/lib/utils";
@@ -96,23 +96,40 @@ export function TutorChat({
   }, [messages]);
 
   return (
-    <div className={cn("flex min-h-0 flex-col", className)}>
-      <div ref={scroller} className="relative min-h-0 flex-1 overflow-y-auto px-4 py-4" aria-live="polite">
+    <div className={cn("@container flex min-h-0 flex-col", className)}>
+      <div ref={scroller} className="scrollbar-thin relative min-h-0 flex-1 overflow-y-auto px-4 py-4" aria-live="polite">
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 py-6 text-center">
-            <span className="grid size-10 place-items-center rounded-full bg-spark-soft text-spark">
-              <Sparkles aria-hidden className="size-5" />
+          <div className="flex min-h-full flex-col items-center justify-center gap-4 py-6 text-center">
+            <span className="grid size-12 place-items-center rounded-2xl border border-spark-solid/30 bg-linear-to-br from-spark-soft to-surface text-spark shadow-card">
+              <Sparkles aria-hidden className="size-6" />
             </span>
             <div>
-              <p className="font-medium">
+              <p className="text-lg font-semibold tracking-tight">
                 {context?.lessonTitle ? "Stuck on something?" : "What are you working on?"}
               </p>
-              <p className="mt-1 max-w-xs text-sm text-ink-2">
+              <p className="mt-1 max-w-sm text-sm text-ink-2">
                 {context?.lessonTitle
                   ? `Ask about “${context.lessonTitle}” and I'll explain, give examples, or quiz you.`
-                  : "Ask about any concept from your courses."}
+                  : "Ask about any concept from your courses, or start with one of these."}
               </p>
             </div>
+            <ul aria-label="Suggested questions" className="mt-2 grid w-full max-w-xl gap-2 @md:grid-cols-2">
+              {suggestions.map((suggestion) => (
+                <li key={suggestion}>
+                  <button
+                    type="button"
+                    onClick={() => send(suggestion)}
+                    className="group flex h-full w-full items-center justify-between gap-3 rounded-xl border border-line bg-surface px-3.5 py-3 text-left text-sm text-ink-2 shadow-card transition-colors hover:border-line-strong hover:bg-surface-2 hover:text-ink"
+                  >
+                    {suggestion}
+                    <ArrowUpRight
+                      aria-hidden
+                      className="size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : (
           <ol className="flex flex-col gap-4">
@@ -147,25 +164,28 @@ export function TutorChat({
         )}
       </div>
 
-      <div className="border-t border-line p-3">
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => send(suggestion)}
-              className="rounded-full border border-line px-2.5 py-1 text-xs text-ink-2 transition-colors hover:border-line-strong hover:text-ink"
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
+      <div className="border-t border-line bg-surface-2/40 p-3">
+        {/* Once the conversation starts, the suggestions move down here out of the way. */}
+        {messages.length > 0 ? (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {suggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => send(suggestion)}
+                className="rounded-full border border-line bg-surface px-2.5 py-1 text-xs text-ink-2 transition-colors hover:border-line-strong hover:text-ink"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <form
           onSubmit={(event) => {
             event.preventDefault();
             send(input);
           }}
-          className="flex items-end gap-2 rounded-xl border border-line-strong bg-surface p-1.5 focus-within:border-primary focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary"
+          className="flex items-end gap-2 rounded-xl border border-line-strong bg-surface p-1.5 shadow-card focus-within:border-primary focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary"
         >
           <label htmlFor="tutor-input" className="sr-only">
             Ask the AI tutor
@@ -198,7 +218,8 @@ export function TutorChat({
               type="submit"
               disabled={!input.trim()}
               aria-label="Send"
-              className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-on-primary transition-colors hover:bg-primary-hover disabled:opacity-40"
+              className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-on-primary shadow-button transition-colors hover:bg-primary-hover disabled:opacity-40 disabled:shadow-none"
+
             >
               <ArrowUp aria-hidden className="size-4" />
             </button>

@@ -1,15 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Captions, ChevronRight, ListChecks, Pencil, Play, Sparkles, Star, TimerReset } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import {
+  BookOpen,
+  CalendarClock,
+  CalendarDays,
+  Captions,
+  ClipboardCheck,
+  ListChecks,
+  MessagesSquare,
+  Pencil,
+  Play,
+  Sparkles,
+  Star,
+  TimerReset,
+  type LucideIcon,
+} from "lucide-react";
 import { CourseAnnouncements } from "@/components/announcements-view";
 import { CourseCover } from "@/components/course-art";
 import { ForbiddenView } from "@/components/forbidden-view";
 import { Curriculum } from "@/components/curriculum";
 import { LiveClasses } from "@/components/live-classes";
 import { NotFoundView } from "@/components/not-found-view";
-import { Badge, ButtonLink, Card, Meter, PageContainer, PageSkeleton, fieldClass } from "@/components/ui";
+import {
+  Avatar,
+  Badge,
+  Breadcrumbs,
+  ButtonLink,
+  Card,
+  FactTile,
+  Meter,
+  PageContainer,
+  PageSkeleton,
+  fieldClass,
+} from "@/components/ui";
 import { useAssignments, type AssignmentRow } from "@/lib/api/assignments";
 import { useCourse, useCourseRoster, useCourseSections, useMySections } from "@/lib/api/courses";
 import { useViewedGrades } from "@/lib/api/grades";
@@ -21,7 +46,7 @@ import { percentAndGrade } from "@/lib/grading";
 import { courseProgress, nextLesson } from "@/lib/progress";
 import type { Section } from "@/lib/types";
 import { useNow } from "@/lib/use-now";
-import { formatDate, formatDateTime, formatMinutes } from "@/lib/utils";
+import { cn, formatDate, formatDateTime, formatMinutes, initialsOf } from "@/lib/utils";
 
 const FEATURES = [
   { icon: Captions, title: "Captioned video", detail: "Every lesson has captions and a clickable transcript." },
@@ -68,8 +93,8 @@ export function CourseOverview({ courseId }: { courseId: string }) {
   const cover = (
     <CourseCover course={course} eager sizes="(min-width: 1024px) 22rem, 100vw" className="aspect-video">
       {upNext ? (
-        <span className="absolute inset-0 grid place-items-center bg-black/25 transition-colors group-hover:bg-black/40">
-          <span className="grid size-14 place-items-center rounded-full bg-white/95 text-neutral-950 shadow-lg transition-transform group-hover:scale-105">
+        <span className="absolute inset-0 grid place-items-center bg-linear-to-t from-black/45 via-black/10 to-black/10 transition-colors group-hover:bg-black/20">
+          <span className="grid size-14 place-items-center rounded-full bg-white/95 text-neutral-950 shadow-lg ring-8 ring-white/20 transition-transform group-hover:scale-105">
             <Play aria-hidden className="size-6 translate-x-0.5 fill-current" />
           </span>
         </span>
@@ -79,56 +104,52 @@ export function CourseOverview({ courseId }: { courseId: string }) {
 
   return (
     <PageContainer>
-      <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1 text-sm text-ink-3">
-        <Link href="/courses" className="hover:text-ink">
-          Courses
-        </Link>
-        <ChevronRight aria-hidden className="size-3.5" />
-        <span className="text-ink-2">{course.title}</span>
-      </nav>
+      <Breadcrumbs items={[{ label: "Courses", href: "/courses" }, { label: course.title }]} />
 
-      <Card className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div>
+      <Card className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-10">
+        <div className="flex flex-col">
           <div className="flex flex-wrap gap-1.5">
-            <Badge>{course.code}</Badge>
+            <Badge tone="primary">{course.code}</Badge>
             <Badge>{course.subject}</Badge>
             <Badge>{course.level}</Badge>
             {archived ? <Badge tone="warn">Archived · read-only</Badge> : null}
           </div>
-          <h1 className="mt-3 text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
+          <h1 className="mt-4 text-3xl leading-tight font-semibold tracking-[-0.025em] text-balance sm:text-4xl">
             {course.title}
           </h1>
           {course.description ? (
-            <p className="mt-3 max-w-[65ch] text-ink-2 text-pretty">{course.description}</p>
+            <p className="mt-3 max-w-[65ch] leading-relaxed text-ink-2 text-pretty">{course.description}</p>
           ) : null}
-          <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-2">
-            <div>
-              <dt className="sr-only">Instructor</dt>
-              <dd>{course.instructor}</dd>
+          <div className="mt-5 flex items-center gap-3">
+            <Avatar initials={initialsOf(course.instructor)} size="lg" />
+            <div className="min-w-0 text-sm">
+              <div className="text-xs text-ink-3">Taught by</div>
+              <div className="truncate font-semibold">{course.instructor}</div>
             </div>
-            <div>
-              <dt className="sr-only">Length</dt>
-              <dd>
-                {lessonCount} {lessonCount === 1 ? "lesson" : "lessons"}
-                {lessonCount > 0 ? ` · ${formatMinutes(courseMinutes(course))}` : null}
-              </dd>
-            </div>
+          </div>
+          <dl className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3 lg:mt-auto lg:pt-6">
+            <FactTile
+              icon={BookOpen}
+              label="Length"
+              value={`${lessonCount} ${lessonCount === 1 ? "lesson" : "lessons"}${lessonCount > 0 ? ` · ${formatMinutes(courseMinutes(course))}` : ""}`}
+            />
             {course.startsOn && course.endsOn ? (
-              <div>
-                <dt className="sr-only">Dates</dt>
-                <dd>
-                  {formatDate(course.startsOn)} to {formatDate(course.endsOn, true)}
-                </dd>
-              </div>
+              <FactTile
+                icon={CalendarDays}
+                label="Runs"
+                value={`${formatDate(course.startsOn)} to ${formatDate(course.endsOn, true)}`}
+              />
             ) : null}
             {course.rating > 0 ? (
-              <div>
-                <dt className="sr-only">Rating</dt>
-                <dd className="flex items-center gap-1 tabular-nums">
-                  <Star aria-hidden className="size-3.5 fill-current" />
-                  {course.rating} · {course.learners.toLocaleString("en-US")} learners
-                </dd>
-              </div>
+              <FactTile
+                icon={Star}
+                label="Rating"
+                value={
+                  <span className="tabular-nums">
+                    {course.rating} · {course.learners.toLocaleString("en-US")} learners
+                  </span>
+                }
+              />
             ) : null}
           </dl>
         </div>
@@ -138,35 +159,43 @@ export function CourseOverview({ courseId }: { courseId: string }) {
             <Link
               href={startHref}
               aria-label={`${!tracking ? "Preview" : finished ? "Review" : progress.done > 0 ? "Continue" : "Start"}: ${upNext.title}`}
-              className="group block overflow-hidden rounded-lg"
+              className="group block overflow-hidden rounded-xl"
             >
               {cover}
             </Link>
           ) : (
-            <div className="overflow-hidden rounded-lg">{cover}</div>
+            <div className="overflow-hidden rounded-xl">{cover}</div>
           )}
           {tracking ? (
             <>
-              <div className="flex items-baseline justify-between text-sm">
-                <span className="text-ink-2">Your progress</span>
-                <span className="font-medium tabular-nums">
-                  {progress.done}/{progress.total} lessons
-                </span>
-              </div>
-              <Meter value={progress.percent} label="Course progress" />
-              <div className="flex items-baseline justify-between text-sm">
-                <span className="text-ink-2">Course grade</span>
-                <span className="font-medium tabular-nums">
-                  {grade === null || !myGrade ? "Not graded yet" : percentAndGrade(grade, myGrade.scale)}
-                </span>
+              <div className="flex flex-col gap-3 rounded-xl bg-surface-2/70 p-4">
+                <div>
+                  <div className="mb-2 flex items-baseline justify-between text-sm">
+                    <span className="text-ink-2">Your progress</span>
+                    <span className="font-semibold tabular-nums">
+                      {progress.done}/{progress.total} lessons
+                    </span>
+                  </div>
+                  <Meter value={progress.percent} label="Course progress" className="h-2" />
+                </div>
+                <div className="flex items-baseline justify-between border-t border-line pt-3 text-sm">
+                  <span className="text-ink-2">Course grade</span>
+                  <span className="font-semibold tabular-nums">
+                    {grade === null || !myGrade ? "Not graded yet" : percentAndGrade(grade, myGrade.scale)}
+                  </span>
+                </div>
               </div>
               {startHref && upNext ? (
                 <>
-                  <ButtonLink href={startHref} className="mt-1">
+                  <ButtonLink href={startHref} size="lg" className="mt-1">
                     <Play aria-hidden className="size-4 fill-current" />
                     {finished ? "Review course" : progress.done > 0 ? "Continue" : "Start course"}
                   </ButtonLink>
-                  {!finished ? <p className="text-xs text-ink-3">Up next: {upNext.title}</p> : null}
+                  {!finished ? (
+                    <p className="text-center text-xs text-ink-3">
+                      Up next: <span className="font-medium text-ink-2">{upNext.title}</span>
+                    </p>
+                  ) : null}
                 </>
               ) : (
                 <p className="text-sm text-ink-2">No lessons have been released yet. Check back soon.</p>
@@ -208,10 +237,16 @@ export function CourseOverview({ courseId }: { courseId: string }) {
         <LiveClasses courseId={courseId} />
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold tracking-tight">Course content</h2>
+            <h2 className="text-lg font-semibold tracking-tight">
+              Course content
+              <span className="ml-2 text-sm font-normal text-ink-3">
+                {course.modules.length} {course.modules.length === 1 ? "unit" : "units"} · {lessonCount}{" "}
+                {lessonCount === 1 ? "lesson" : "lessons"}
+              </span>
+            </h2>
             {staff && allSections.length > 0 ? (
               <div className="flex items-center gap-2 text-sm">
                 <label htmlFor="course-preview-as" className="text-ink-2">
@@ -245,24 +280,24 @@ export function CourseOverview({ courseId }: { courseId: string }) {
           </Card>
         </section>
 
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4">
           <AssignmentsSection rows={assignments} staff={staff} canEdit={canEdit} />
           <ScheduleSection sections={staff ? allSections : mySections} />
 
-          <section>
-            <h2 className="mb-3 text-lg font-semibold tracking-tight">Discussion</h2>
+          <SideCard icon={MessagesSquare} title="Discussion">
             <p className="text-sm text-ink-2">Ask a question or help a classmate in this course&apos;s forum.</p>
             <ButtonLink href="/forums" variant="secondary" size="sm" className="mt-3">
               Open the forum
             </ButtonLink>
-          </section>
+          </SideCard>
 
-          <section>
-            <h2 className="mb-3 text-lg font-semibold tracking-tight">How you&apos;ll learn</h2>
+          <SideCard title="How you'll learn" className="bg-surface-2/50 shadow-none">
             <ul className="flex flex-col gap-4">
               {FEATURES.map((feature) => (
                 <li key={feature.title} className="flex gap-3">
-                  <feature.icon aria-hidden className="mt-0.5 size-5 shrink-0 text-ink-2" />
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface text-primary-ink shadow-card">
+                    <feature.icon aria-hidden className="size-4" />
+                  </span>
                   <div>
                     <div className="text-sm font-medium">{feature.title}</div>
                     <p className="text-sm text-ink-2">{feature.detail}</p>
@@ -270,10 +305,35 @@ export function CourseOverview({ courseId }: { courseId: string }) {
                 </li>
               ))}
             </ul>
-          </section>
+          </SideCard>
         </div>
       </div>
     </PageContainer>
+  );
+}
+
+/** A titled panel in the course page's side column. */
+function SideCard({
+  icon: Icon,
+  title,
+  className,
+  children,
+}: {
+  icon?: LucideIcon;
+  title: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Card className={cn("p-5", className)}>
+      <section>
+        <h2 className="mb-3 flex items-center gap-2 font-semibold tracking-tight">
+          {Icon ? <Icon aria-hidden className="size-4 text-ink-3" /> : null}
+          {title}
+        </h2>
+        {children}
+      </section>
+    </Card>
   );
 }
 
@@ -281,18 +341,17 @@ export function CourseOverview({ courseId }: { courseId: string }) {
 function AssignmentsSection({ rows, staff, canEdit }: { rows: AssignmentRow[]; staff: boolean; canEdit: boolean }) {
   if (rows.length === 0 && !canEdit) return null;
   return (
-    <section>
-      <h2 className="mb-3 text-lg font-semibold tracking-tight">Assignments</h2>
+    <SideCard icon={ClipboardCheck} title="Assignments">
       {rows.length === 0 ? (
         <p className="text-sm text-ink-2">None set yet.</p>
       ) : (
-        <ul className="flex flex-col gap-2 text-sm">
+        <ul className="-mx-2 flex flex-col text-sm">
           {rows.map(({ assignment, mine }) => (
-            <li key={assignment.id}>
+            <li key={assignment.id} className="rounded-lg px-2 py-1.5 transition-colors hover:bg-surface-2">
               <Link href={`/assignments/${assignment.id}`} className="font-medium text-primary-ink hover:underline">
                 {assignment.title || "Untitled assignment"}
               </Link>
-              <div className="text-ink-2">
+              <div className="text-xs text-ink-2">
                 Due {formatDateTime(assignment.dueAt)}
                 {staff
                   ? assignment.status === "draft"
@@ -313,7 +372,7 @@ function AssignmentsSection({ rows, staff, canEdit }: { rows: AssignmentRow[]; s
           New assignment
         </ButtonLink>
       ) : null}
-    </section>
+    </SideCard>
   );
 }
 
@@ -321,8 +380,7 @@ function AssignmentsSection({ rows, staff, canEdit }: { rows: AssignmentRow[]; s
 function ScheduleSection({ sections }: { sections: Section[] }) {
   if (sections.every((section) => section.meetings.length === 0)) return null;
   return (
-    <section>
-      <h2 className="mb-3 text-lg font-semibold tracking-tight">Class schedule</h2>
+    <SideCard icon={CalendarClock} title="Class schedule">
       <ul className="flex flex-col gap-3 text-sm">
         {sections
           .filter((section) => section.meetings.length > 0)
@@ -342,6 +400,7 @@ function ScheduleSection({ sections }: { sections: Section[] }) {
             </li>
           ))}
       </ul>
-    </section>
+    </SideCard>
   );
 }
+

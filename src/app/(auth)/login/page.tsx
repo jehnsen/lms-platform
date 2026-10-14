@@ -20,7 +20,7 @@ export default function LoginPage() {
         <main className="flex flex-1 items-center justify-center py-10">
           <LoginForm />
         </main>
-        <p className="text-xs text-ink-3">3rdLoopLearning · AI-powered learning platform</p>
+        <p className="text-xs text-ink-3">Don Bosco College – Canlubang, Calamba, Laguna · 3rdLoopLearning</p>
       </div>
 
       {/* Photo panel. Text sits on a dark scrim, so it uses fixed light colours in both themes. */}

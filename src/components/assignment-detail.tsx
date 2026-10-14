@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronRight, CircleCheck, LoaderCircle, Paperclip, Pencil, Send, Trash2, Upload } from "lucide-react";
+import { CircleCheck, LoaderCircle, Paperclip, Pencil, Send, Trash2, Upload } from "lucide-react";
 import { AnnotatedText } from "@/components/annotated-text";
 import { AssignmentFacts, FileList, LateBadge, STATE_BADGES, lateText } from "@/components/assignment-parts";
 import { ForbiddenView } from "@/components/forbidden-view";
@@ -10,6 +10,7 @@ import { NotFoundView } from "@/components/not-found-view";
 import { RubricView } from "@/components/rubric";
 import {
   Badge,
+  Breadcrumbs,
   Button,
   ButtonLink,
   Card,
@@ -60,26 +61,23 @@ export function AssignmentDetail({ assignmentId }: { assignmentId: string }) {
 
   return (
     <PageContainer className="max-w-5xl">
-      <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-sm text-ink-3">
-        <Link href="/assignments" className="hover:text-ink">
-          Assignments
-        </Link>
-        <ChevronRight aria-hidden className="size-3.5" />
-        <span className="text-ink-2">{assignment.title || "Untitled assignment"}</span>
-      </nav>
+      <Breadcrumbs
+        items={[{ label: "Assignments", href: "/assignments" }, { label: assignment.title || "Untitled assignment" }]}
+      />
 
-      <Card className="p-5 sm:p-6">
+      <Card className="p-5 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 text-sm text-ink-3">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <Badge tone="primary">Assignment</Badge>
               {course ? (
-                <Link href={`/courses/${course.id}`} className="hover:text-ink hover:underline">
+                <Link href={`/courses/${course.id}`} className="font-medium text-ink-2 hover:text-ink hover:underline">
                   {course.title}
                 </Link>
               ) : null}
               {assignment.status === "draft" ? <Badge tone="warn">Draft · students cannot see it</Badge> : null}
             </div>
-            <h1 className="mt-1 text-3xl leading-tight font-semibold tracking-tight text-balance">
+            <h1 className="mt-3 text-3xl leading-tight font-semibold tracking-[-0.025em] text-balance sm:text-4xl">
               {assignment.title || "Untitled assignment"}
             </h1>
           </div>
@@ -91,13 +89,13 @@ export function AssignmentDetail({ assignmentId }: { assignmentId: string }) {
           ) : null}
         </div>
 
-        <div className="mt-5">
+        <div className="mt-6">
           <AssignmentFacts assignment={assignment} sections={sections} />
         </div>
 
         {assignment.instructions ? (
-          <div className="mt-5 border-t border-line pt-5">
-            <h2 className="text-sm font-semibold">Instructions</h2>
+          <div className="mt-6 border-t border-line pt-6">
+            <h2 className="text-xs font-semibold tracking-wider text-ink-3 uppercase">Instructions</h2>
             <p className="mt-2 max-w-[70ch] leading-relaxed whitespace-pre-wrap text-pretty">{assignment.instructions}</p>
           </div>
         ) : null}
@@ -173,9 +171,9 @@ function StudentSection({ assignment }: { assignment: Assignment }) {
 
   return (
     <>
-      <section className="mt-8">
+      <section className="mt-10">
         <SectionTitle>{attempts.length === 0 ? "Hand in your work" : "Hand in again"}</SectionTitle>
-        <Card className="p-5">
+        <Card className="p-5 sm:p-7">
           {/* FR-3.3: the timestamped confirmation. Always rendered, so it is announced when it appears. */}
           <div role="status">
             {receipt ? (
@@ -215,7 +213,7 @@ function StudentSection({ assignment }: { assignment: Assignment }) {
 
               {acceptsText ? (
                 <div>
-                  <label htmlFor="submit-text" className="mb-1 block text-sm font-medium">
+                  <label htmlFor="submit-text" className="mb-1.5 block text-sm font-medium">
                     Your answer
                   </label>
                   <textarea
@@ -223,8 +221,12 @@ function StudentSection({ assignment }: { assignment: Assignment }) {
                     rows={8}
                     value={text}
                     onChange={(event) => setText(event.target.value)}
-                    className={cn(fieldBaseClass, "w-full px-3 py-2 leading-relaxed")}
+                    placeholder="Type or paste your work here…"
+                    className={cn(fieldBaseClass, "w-full px-3.5 py-3 leading-relaxed shadow-card transition-colors focus-visible:border-primary")}
                   />
+                  <p className="mt-1 text-right text-xs text-ink-3 tabular-nums">
+                    {text.trim() ? `${text.trim().split(/\s+/).length} words` : " "}
+                  </p>
                 </div>
               ) : null}
 
@@ -278,12 +280,14 @@ function StudentSection({ assignment }: { assignment: Assignment }) {
                 ))}
               </div>
 
-              <div>
-                <Button type="submit" disabled={busy}>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
+                <p className="text-xs text-ink-3">You get a timestamped receipt as soon as it is handed in.</p>
+                <Button type="submit" size="lg" disabled={busy}>
                   {busy ? <LoaderCircle aria-hidden className="size-4 animate-spin" /> : <Send aria-hidden className="size-4" />}
                   {attempts.length === 0 ? "Hand in" : "Hand in again"}
                 </Button>
               </div>
+
             </form>
           )}
         </Card>

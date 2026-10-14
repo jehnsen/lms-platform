@@ -310,6 +310,10 @@ export const COURSE_COVERS = [
   { src: "/thumbnails/course-web-dev.jpg", label: "Code on a screen" },
   { src: "/thumbnails/course-cell-biology.jpg", label: "Microscope" },
   { src: "/thumbnails/course-money-skills.jpg", label: "Coins and notebook" },
+  { src: "/thumbnails/course-ethics.svg", label: "Scales (purple)" },
+  { src: "/thumbnails/course-salesian-formation.svg", label: "House and cross (maroon)" },
+  { src: "/thumbnails/course-assessment-learning.svg", label: "Checklist (teal)" },
+  { src: "/thumbnails/course-automotive-engines.svg", label: "Engine gear (slate)" },
 ];
 
 export type CourseSource =

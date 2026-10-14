@@ -5,6 +5,7 @@
  */
 import { receiptCode } from "@/lib/domain/assignments";
 import type { Assignment, LatePolicy, Rubric, Submission } from "@/lib/types";
+import { programAssignments, programSubmissions } from "./assignments-programs";
 
 const FLAG: LatePolicy = { rule: "flag", penaltyPercent: 10, penaltyPer: "day", maxPenaltyPercent: 50 };
 
@@ -77,15 +78,15 @@ const projectRubric: Rubric = {
   ],
 };
 
-const OKAFOR = "u-faculty-okafor";
+const ALCANTARA = "u-faculty-alcantara";
 
-export const seedAssignments: Assignment[] = [
+const generalAssignments: Assignment[] = [
   {
     id: "asg-ml-reflection",
     courseId: "ml-foundations",
     title: "Reflection: where have you met machine learning?",
     instructions:
-      "In about 150 words, describe one thing you used this week that learns from data. Say what examples it learned from, what it predicts, and one way it could go wrong.",
+      "In about 150 words, describe one thing you used this week that learns from data, such as an app on your phone. Say what examples it learned from, what it predicts, and one way it could go wrong. You may write in English or Taglish.",
     points: 20,
     dueAt: "2026-10-09T16:00:00.000Z",
     sectionIds: ["ml-foundations-a", "ml-foundations-b"],
@@ -95,16 +96,16 @@ export const seedAssignments: Assignment[] = [
     late: FLAG,
     allowResubmission: false,
     status: "published",
-    createdById: OKAFOR,
+    createdById: ALCANTARA,
     createdAt: "2026-09-28T09:00:00.000Z",
     publishedAt: "2026-09-28T09:30:00.000Z",
   },
   {
     id: "asg-ml-house-prices",
     courseId: "ml-foundations",
-    title: "Mini project: predict house prices",
+    title: "Mini project: predict house-and-lot prices in Laguna",
     instructions:
-      "Using the worksheet from Unit 2, fit a straight-line model to the house price data. Hand in your working and a short write-up: how you split the data, the error on the test set, and how it compares with always guessing the average price.",
+      "Using the worksheet from Unit 2, fit a straight-line model to the house-and-lot price data for Calamba and Cabuyao, with lot area in square metres and price in pesos. Hand in your working and a short write-up: how you split the data, the error on the test set, and how it compares with always guessing the average price.",
     points: 50,
     dueAt: "2026-10-28T16:00:00.000Z",
     sectionIds: ["ml-foundations-a", "ml-foundations-b"],
@@ -114,7 +115,7 @@ export const seedAssignments: Assignment[] = [
     late: { rule: "penalty", penaltyPercent: 10, penaltyPer: "day", maxPenaltyPercent: 50 },
     allowResubmission: true,
     status: "published",
-    createdById: OKAFOR,
+    createdById: ALCANTARA,
     createdAt: "2026-10-12T09:00:00.000Z",
     publishedAt: "2026-10-12T09:15:00.000Z",
   },
@@ -131,7 +132,7 @@ export const seedAssignments: Assignment[] = [
     late: FLAG,
     allowResubmission: false,
     status: "draft",
-    createdById: OKAFOR,
+    createdById: ALCANTARA,
     createdAt: "2026-10-13T14:00:00.000Z",
   },
   {
@@ -139,7 +140,7 @@ export const seedAssignments: Assignment[] = [
     courseId: "web-dev",
     title: "Build a profile page",
     instructions:
-      "Build a one-page profile using only semantic HTML and the CSS from Unit 2. Hand in your HTML as text, or attach a PDF print-out of the page and its source.",
+      "Build a one-page profile of a student organization in the college, such as the Computer Society or the Salesian Youth Movement, using only semantic HTML and the CSS from Unit 2. Hand in your HTML as text, or attach a PDF print-out of the page and its source.",
     points: 30,
     dueAt: "2026-10-22T16:00:00.000Z",
     sectionIds: ["web-dev-a", "web-dev-b"],
@@ -148,18 +149,18 @@ export const seedAssignments: Assignment[] = [
     late: { rule: "block", penaltyPercent: 10, penaltyPer: "day", maxPenaltyPercent: 50 },
     allowResubmission: false,
     status: "published",
-    createdById: "u-faculty-reyes",
+    createdById: "u-faculty-villanueva",
     createdAt: "2026-10-08T10:00:00.000Z",
     publishedAt: "2026-10-08T10:10:00.000Z",
   },
 ];
 
 const REFLECTIONS = [
-  "My phone's keyboard suggests the next word as I type. It learned from the messages people write, including mine, and it predicts which word is most likely to come next.\n\nIt goes wrong when I write in two languages in one sentence: it keeps correcting words that were already right, because most of what it learned from was in one language at a time.",
-  "The music app I use builds a playlist for me every Monday. It learned from what I played and skipped, and from people who listen to similar songs. It predicts which new songs I will keep.\n\nOne way it fails is that it only ever gives me more of the same. I listened to one sad album in September and it decided that is all I like.",
-  "Our email filter decides which messages are spam. It learned from messages that people marked as spam or not spam.\n\nIt predicts a label for every new message. It can go wrong by hiding a real message, like the one from the school office about the trip, because it had the word 'free' in it.",
-  "A map app told us the bus would take 22 minutes. It learned from how long that journey took at the same time on other days.\n\nThe prediction was wrong on the day of the parade, because nothing in its examples looked like that day.",
-  "Machine learning is a field of study in artificial intelligence concerned with the development of statistical algorithms that can learn from data and generalise to unseen data.\n\nI use a translation app, which is an example of this. It could go wrong with slang.",
+  "My phone's keyboard suggests the next word as I type. It learned from the messages people write, including mine, and it predicts which word is most likely to come next.\n\nIt goes wrong when I type Taglish, with Tagalog and English in one sentence: it keeps correcting words that were already right, because most of what it learned from was in one language at a time.",
+  "The music app I use builds a playlist for me every Monday. It learned from what I played and skipped, and from people who listen to similar songs. It predicts which new songs I will keep.\n\nOne way it fails is that it only ever gives me more of the same. I listened to one sad OPM album in September and it decided that is all I like.",
+  "Our email filter decides which messages are spam. It learned from messages that people marked as spam or not spam.\n\nIt predicts a label for every new message. It can go wrong by hiding a real message, like the one from the Student Affairs office about the free seminar, because it had the word 'free' in it.",
+  "Waze told us the trip from Calamba Crossing to the campus would take 22 minutes. It learned from how long that journey took at the same time on other days.\n\nThe prediction was wrong on the day of the fiesta parade, because nothing in its examples looked like that day.",
+  "Machine learning is a field of study in artificial intelligence concerned with the development of statistical algorithms that can learn from data and generalise to unseen data.\n\nI use a translation app, which is an example of this. It could go wrong with slang, like 'lodi' or 'petmalu'.",
 ];
 
 function reflection(
@@ -191,9 +192,9 @@ const similarity = (percent: number, source: string, checkedAt: string) => ({
   matches: [{ source, percent }],
 });
 
-export const seedSubmissions: Submission[] = [
+const generalSubmissions: Submission[] = [
   // The demo student: on time, marked and released, with one inline comment.
-  reflection(0, "u-student-mike", "2026-10-08T15:20:00.000Z", {
+  reflection(0, "u-student-manalo", "2026-10-08T15:20:00.000Z", {
     similarity: similarity(4, "Blog post: A beginner's guide", "2026-10-08T15:20:05.000Z"),
     comments: [
       {
@@ -205,7 +206,7 @@ export const seedSubmissions: Submission[] = [
           quote: "most of what it learned from was in one language at a time",
         },
         body: "Exactly: the examples did not look like your real use. That is the idea of representative data from lesson 1.",
-        authorId: OKAFOR,
+        authorId: ALCANTARA,
         createdAt: "2026-10-11T10:05:00.000Z",
       },
     ],
@@ -214,7 +215,7 @@ export const seedSubmissions: Submission[] = [
       rawPoints: 18,
       points: 18,
       feedback: "A clear, concrete example, and you explained the failure in terms of the training data. Next time say what the model's output actually is: a ranked list of words.",
-      gradedById: OKAFOR,
+      gradedById: ALCANTARA,
       gradedAt: "2026-10-11T10:10:00.000Z",
       releasedAt: "2026-10-12T08:00:00.000Z",
     },
@@ -227,7 +228,7 @@ export const seedSubmissions: Submission[] = [
       rawPoints: 17,
       points: 17,
       feedback: "Well written. Push the 'what does it predict' part further.",
-      gradedById: OKAFOR,
+      gradedById: ALCANTARA,
       gradedAt: "2026-10-11T10:20:00.000Z",
       releasedAt: "2026-10-12T08:00:00.000Z",
     },
@@ -235,13 +236,13 @@ export const seedSubmissions: Submission[] = [
   // A day late, so flagged. Marked, waiting to be released.
   reflection(2, "u-student-02", "2026-10-10T09:10:00.000Z", {
     late: { daysLate: 1, penaltyPercent: 0 },
-    similarity: similarity(9, "Encyclopaedia entry", "2026-10-10T09:10:05.000Z"),
+    similarity: similarity(9, "Student paper: Don Bosco College – Canlubang, 1st Semester 2025", "2026-10-10T09:10:05.000Z"),
     grade: {
       rubricLevels: { "rf-understanding": "rf-understanding-3", "rf-clarity": "rf-clarity-3" },
       rawPoints: 15,
       points: 15,
       feedback: "Good example of a false positive. Handed in a day late.",
-      gradedById: OKAFOR,
+      gradedById: ALCANTARA,
       gradedAt: "2026-10-13T09:00:00.000Z",
     },
   }),
@@ -254,3 +255,6 @@ export const seedSubmissions: Submission[] = [
     similarity: similarity(64, "Wikipedia: Machine learning", "2026-10-09T15:55:05.000Z"),
   }),
 ];
+
+export const seedAssignments: Assignment[] = [...generalAssignments, ...programAssignments];
+export const seedSubmissions: Submission[] = [...generalSubmissions, ...programSubmissions];

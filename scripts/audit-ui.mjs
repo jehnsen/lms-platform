@@ -28,10 +28,10 @@ import { chromium } from "playwright-core";
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 const ROLES = {
-  student: "u-student-mike",
-  faculty: "u-faculty-okafor",
-  admin: "u-admin-nair",
-  parent: "u-parent-manabat",
+  student: "u-student-manalo",
+  faculty: "u-faculty-alcantara",
+  admin: "u-admin-panganiban",
+  parent: "u-parent-manalo",
 };
 const ONLY = process.env.ONLY?.split(",");
 
@@ -79,7 +79,7 @@ const STATES = [
   { role: "admin", path: "/gradebook", click: "Export to SIS" },
   { role: "faculty", path: "/announcements", click: "New announcement" },
   { role: "faculty", path: "/messages", click: "New message" },
-  { role: "student", path: "/messages", click: /Dr\. Amara Okafor/ },
+  { role: "student", path: "/messages", click: /Dr\. Maria Cristina Alcantara/ },
   { role: "faculty", path: "/calendar", click: "Month" },
   { role: "faculty", path: "/calendar", click: "Add event" },
   { role: "faculty", path: "/courses/ml-foundations", click: "Schedule live class" },
