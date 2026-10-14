@@ -149,7 +149,8 @@ export function AdminUsers() {
               <div>
                 <h2 className="text-lg font-semibold tracking-tight">SIS sync finished</h2>
                 <p className="mt-1 text-sm text-ink-2">
-                  New people were created. People who already have an account were left as they are.
+                  New people were created. People who already have an account were added to any section the
+                  SIS lists for them that they were not in, and otherwise left as they are.
                 </p>
               </div>
               <span className="flex gap-2">
@@ -168,7 +169,7 @@ export function AdminUsers() {
 
         <p className="text-xs text-ink-3">
           {sisSync.lastRunAt
-            ? `Last SIS sync ${formatDateTime(sisSync.lastRunAt)}: ${sisSync.created} created, ${sisSync.skipped} already existed, ${sisSync.failed} failed.`
+            ? `Last SIS sync ${formatDateTime(sisSync.lastRunAt)}: ${sisSync.created} created, ${sisSync.updated} existing added to sections, ${sisSync.skipped} unchanged, ${sisSync.failed} failed.`
             : "The SIS has not been synced yet."}{" "}
           The SIS connection is simulated in this demo.
         </p>

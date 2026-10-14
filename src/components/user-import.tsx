@@ -9,7 +9,9 @@ import { downloadCsv } from "@/lib/download";
 
 /**
  * The outcome of an import, before or after it is saved: the counts, then one
- * line per row that will not be (or was not) created, with the reason (FR-1.5).
+ * line per row that will not create (or did not create) an account, with the
+ * reason, including people who already have an account and are being added to
+ * sections (FR-1.5, Q-25).
  */
 export function ImportReport({
   plan,
@@ -37,6 +39,10 @@ export function ImportReport({
           <Badge tone="good">
             {counts.ready} {saved ? "created" : "ready to create"}
           </Badge>
+          <Badge tone={counts.update > 0 ? "primary" : "neutral"}>
+            {counts.update} existing {counts.update === 1 ? "account" : "accounts"}{" "}
+            {saved ? "added to sections" : "to add to sections"}
+          </Badge>
           <Badge tone={counts.duplicate > 0 ? "warn" : "neutral"}>
             {counts.duplicate} {counts.duplicate === 1 ? "duplicate" : "duplicates"} skipped
           </Badge>
@@ -57,7 +63,7 @@ export function ImportReport({
         <div className="relative overflow-x-auto rounded-lg border border-line">
           <table className="w-full min-w-[36rem] text-sm">
             <caption className="sr-only">
-              {saved ? "Rows that were not imported" : "Rows that will not be imported"}
+              {saved ? "Rows that did not create an account" : "Rows that will not create an account"}
             </caption>
             <thead>
               <tr className="text-left text-xs text-ink-3">
@@ -76,13 +82,13 @@ export function ImportReport({
                     <div className="text-xs break-all text-ink-3">{row.email}</div>
                   </td>
                   <td className="px-3 py-2">
-                    <Badge tone={row.status === "duplicate" ? "warn" : "bad"}>
-                      {row.status === "duplicate" ? "Duplicate" : "Error"}
+                    <Badge tone={row.status === "update" ? "primary" : row.status === "duplicate" ? "warn" : "bad"}>
+                      {row.status === "update" ? "Existing account" : row.status === "duplicate" ? "Duplicate" : "Error"}
                     </Badge>
                   </td>
                   <td className="px-3 py-2 text-ink-2">
                     <ul className="flex flex-col gap-0.5">
-                      {row.problems.map((problem) => (
+                      {(row.note ? [row.note] : row.problems).map((problem) => (
                         <li key={problem}>{problem}</li>
                       ))}
                     </ul>
@@ -153,7 +159,8 @@ export function UserImportPanel({ onClose }: { onClose: () => void }) {
     if (input.current) input.current.value = "";
   };
 
-  const ready = plan ? countImport(plan).ready : 0;
+  // Rows that do something: new accounts, and existing accounts being added to sections.
+  const ready = plan ? countImport(plan).ready + countImport(plan).update : 0;
   const blocked = !plan || plan.problems.length > 0 || ready === 0;
 
   return (
@@ -164,8 +171,9 @@ export function UserImportPanel({ onClose }: { onClose: () => void }) {
           <p className="mt-1 max-w-2xl text-sm text-ink-2">
             One row per person: name, email and role are required. Put section codes in{" "}
             <code className="font-mono text-xs">sections</code> and, for parents, their children&apos;s emails in{" "}
-            <code className="font-mono text-xs">children</code>, separated by semicolons. Accounts that already
-            exist are skipped.
+            <code className="font-mono text-xs">children</code>, separated by semicolons. A person who already
+            has an account is not created again: if their row lists sections they are added to them, and nothing
+            else about their account changes.
           </p>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>
@@ -228,7 +236,7 @@ export function UserImportPanel({ onClose }: { onClose: () => void }) {
               <>
                 <Button onClick={confirm} disabled={busy || blocked}>
                   {busy ? <LoaderCircle aria-hidden className="size-4 animate-spin" /> : null}
-                  {blocked ? "Nothing to import" : `Import ${ready} ${ready === 1 ? "account" : "accounts"}`}
+                  {blocked ? "Nothing to import" : `Import ${ready} ${ready === 1 ? "row" : "rows"}`}
                 </Button>
                 <Button variant="ghost" onClick={startOver} disabled={busy}>
                   Cancel

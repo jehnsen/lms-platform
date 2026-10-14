@@ -184,14 +184,17 @@ export const credentialsRepo = createRepository<Record<string, MockCredential>>(
 export interface SisSyncState {
   lastRunAt: string | null;
   created: number;
+  /** Existing accounts that were added to sections (Q-25). */
+  updated: number;
   skipped: number;
   failed: number;
 }
 
 /** The outcome of the latest manual SIS sync (FR-1.6). */
-export const sisSyncRepo = createRepository<SisSyncState>("sis-sync", 1, {
+export const sisSyncRepo = createRepository<SisSyncState>("sis-sync", 2, {
   lastRunAt: null,
   created: 0,
+  updated: 0,
   skipped: 0,
   failed: 0,
 });

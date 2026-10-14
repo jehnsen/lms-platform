@@ -120,14 +120,14 @@ describe("US-01: invalid rows are reported row by row and the valid rows are sti
   });
 
   it("still creates the valid rows", () => {
-    expect(countImport(result)).toEqual({ ready: 2, duplicate: 0, error: 2 });
+    expect(countImport(result)).toEqual({ ready: 2, update: 0, duplicate: 0, error: 2 });
     const changes = applyUserImport(result, makeId);
     expect(changes.users.map((user) => user.email)).toEqual(["sam@example.com", "lou@example.com"]);
   });
 
   it("produces a report with one line per row and the reason", () => {
     const report = importReport(result);
-    expect(report[0]).toEqual(["Row", "Name", "Email", "Role", "Result", "Problems"]);
+    expect(report[0]).toEqual(["Row", "Name", "Email", "Role", "Result", "Details"]);
     expect(report[1]).toEqual(["2", "Sam Lee", "sam@example.com", "student", "Created", ""]);
     expect(report[3]).toEqual(["4", "Kim Ito", "kim@example.com", "student", "Not imported", 'Section "CHEM-300-A" does not exist.']);
   });
@@ -197,12 +197,12 @@ describe("US-01: invalid rows are reported row by row and the valid rows are sti
 
 describe("US-01, FR-1.6: duplicate users are detected and not created twice", () => {
   it("skips a row whose email already has an account, whatever its case", () => {
-    const result = plan(["Aiko T.", "AIKO.TANAKA@example.com", "student", "MATH-101-A", "", ""]);
+    const result = plan(["Aiko T.", "AIKO.TANAKA@example.com", "student", "", "", ""]);
     expect(result.rows[0]).toMatchObject({
       status: "duplicate",
       problems: ["An account with this email already exists (Aiko Tanaka)."],
     });
-    expect(applyUserImport(result, makeId)).toEqual({ users: [], enrollments: [], teaching: [] });
+    expect(applyUserImport(result, makeId)).toEqual({ users: [], enrollments: [], teaching: [], updatedUserIds: [] });
   });
 
   it("skips a row whose SIS ID already has an account, even with a new email", () => {
@@ -233,9 +233,132 @@ describe("US-01, FR-1.6: duplicate users are detected and not created twice", ()
   it("creates nothing when the same file is imported a second time", () => {
     const lines = [["Sam Lee", "sam@example.com", "student", "MATH-101-A", "S-7", ""]];
     const first = applyUserImport(planUserImport(HEADERS, records(...lines), context), makeId);
-    const after: ImportContext = { ...context, users: [...context.users, ...first.users] };
+    const after: ImportContext = { ...context, users: [...context.users, ...first.users], enrollments: first.enrollments };
     const second = planUserImport(HEADERS, records(...lines), after);
-    expect(countImport(second)).toEqual({ ready: 0, duplicate: 1, error: 0 });
+    expect(countImport(second)).toEqual({ ready: 0, update: 0, duplicate: 1, error: 0 });
+    expect(second.rows[0].problems).toEqual([
+      "An account with this email already exists (Sam Lee).",
+      "Already in every section listed.",
+    ]);
+    expect(applyUserImport(second, makeId)).toEqual({ users: [], enrollments: [], teaching: [], updatedUserIds: [] });
+  });
+});
+
+describe("Q-25: a person who already has an account can be added to sections", () => {
+  /** Aiko is in MATH-101-A; Marco teaches it. */
+  const placed: ImportContext = {
+    ...context,
+    enrollments: [{ userId: "u-1", sectionId: "math-a" }],
+    sections: context.sections.map((section) => (section.id === "math-a" ? { ...section, facultyIds: ["u-2"] } : section)),
+  };
+  const planWith = (...lines: string[][]) => planUserImport(HEADERS, records(...lines), placed);
+
+  it("adds an existing student to the sections they are not in yet, and creates no account", () => {
+    const result = planWith(["Aiko Tanaka", "aiko.tanaka@example.com", "student", "MATH-101-A;ART-200-A", "", ""]);
+    expect(result.rows[0]).toMatchObject({
+      status: "update",
+      userId: "u-1",
+      sectionIds: ["art-a"],
+      problems: [],
+      note: "Aiko Tanaka already has an account. Added to ART-200-A.",
+    });
+    expect(countImport(result)).toEqual({ ready: 0, update: 1, duplicate: 0, error: 0 });
+    expect(applyUserImport(result, makeId)).toEqual({
+      users: [],
+      enrollments: [{ userId: "u-1", sectionId: "art-a" }],
+      teaching: [],
+      updatedUserIds: ["u-1"],
+    });
+  });
+
+  it("finds the account by SIS ID as well, and does not change its name or email", () => {
+    const result = planWith(["A. Tanaka (new name)", "new.address@example.com", "student", "ART-200-A", "s-1001", ""]);
+    expect(result.rows[0]).toMatchObject({ status: "update", userId: "u-1", sectionIds: ["art-a"] });
+    expect(applyUserImport(result, makeId).users).toEqual([]);
+  });
+
+  it("adds an existing teacher to another section", () => {
+    const result = planWith(["Marco Reyes", "marco.reyes@example.com", "faculty", "MATH-101-A;MATH-101-B", "", ""]);
+    expect(result.rows[0]).toMatchObject({
+      status: "update",
+      sectionIds: ["math-b"],
+      note: "Marco Reyes already has an account. Now also teaches MATH-101-B.",
+    });
+    expect(applyUserImport(result, makeId).teaching).toEqual([{ sectionId: "math-b", userId: "u-2" }]);
+  });
+
+  it("does not move a student to another section of a course they are already in", () => {
+    const result = planWith(["Aiko Tanaka", "aiko.tanaka@example.com", "student", "MATH-101-B;ART-200-A", "", ""]);
+    expect(result.rows[0]).toMatchObject({
+      status: "error",
+      problems: [
+        "An account with this email already exists (Aiko Tanaka).",
+        'Already in section "MATH-101-A" of the same course as "MATH-101-B". An import does not move a student between sections.',
+      ],
+    });
+    // A row with a problem changes nothing, not even the section that would have been fine.
+    expect(applyUserImport(result, makeId).enrollments).toEqual([]);
+  });
+
+  it("does not change a role, or place a deactivated account", () => {
+    const wrongRole = planWith(["Aiko Tanaka", "aiko.tanaka@example.com", "faculty", "ART-200-A", "", ""]);
+    expect(wrongRole.rows[0]).toMatchObject({
+      status: "error",
+      problems: [
+        "An account with this email already exists (Aiko Tanaka).",
+        "It is a student account and this row says faculty. An import does not change roles, so the sections were not added.",
+      ],
+    });
+    const inactive: ImportContext = { ...placed, users: placed.users.map((user) => ({ ...user, status: "inactive" as const })) };
+    const result = planUserImport(HEADERS, records(["Aiko Tanaka", "aiko.tanaka@example.com", "student", "ART-200-A", "", ""]), inactive);
+    expect(result.rows[0]).toMatchObject({
+      status: "error",
+      problems: [
+        "An account with this email already exists (Aiko Tanaka).",
+        "The account is inactive. Reactivate it on the Users page before adding it to sections.",
+      ],
+    });
+  });
+
+  it("checks the sections of an existing account like any other row", () => {
+    const result = planWith(["Aiko Tanaka", "aiko.tanaka@example.com", "student", "HIST-100-A;NOPE-1", "", ""]);
+    expect(result.rows[0].status).toBe("error");
+    expect(result.rows[0].problems.slice(1)).toEqual([
+      'Section "HIST-100-A" belongs to an archived term.',
+      'Section "NOPE-1" does not exist.',
+    ]);
+  });
+
+  it("uses the first of two rows for the same account", () => {
+    const result = planWith(
+      ["Aiko Tanaka", "aiko.tanaka@example.com", "student", "ART-200-A", "", ""],
+      ["Aiko Tanaka", "other@example.com", "student", "ART-200-A", "S-1001", ""],
+    );
+    expect(result.rows.map((row) => row.status)).toEqual(["update", "duplicate"]);
+    expect(result.rows[1].problems).toEqual(["Same person as row 2."]);
+    expect(applyUserImport(result, makeId).enrollments).toEqual([{ userId: "u-1", sectionId: "art-a" }]);
+  });
+
+  it("creates new people and places existing ones from the same file", () => {
+    const result = planWith(
+      ["Aiko Tanaka", "aiko.tanaka@example.com", "student", "ART-200-A", "", ""],
+      ["Sam Lee", "sam@example.com", "student", "ART-200-A", "", ""],
+    );
+    expect(countImport(result)).toEqual({ ready: 1, update: 1, duplicate: 0, error: 0 });
+    const changes = applyUserImport(result, () => "new-sam");
+    expect(changes.users.map((user) => user.id)).toEqual(["new-sam"]);
+    expect(changes.enrollments).toEqual([
+      { userId: "u-1", sectionId: "art-a" },
+      { userId: "new-sam", sectionId: "art-a" },
+    ]);
+    expect(importReport(result)[1]).toEqual([
+      "2",
+      "Aiko Tanaka",
+      "aiko.tanaka@example.com",
+      "student",
+      "Existing account added to sections",
+      "Aiko Tanaka already has an account. Added to ART-200-A.",
+    ]);
   });
 });
 

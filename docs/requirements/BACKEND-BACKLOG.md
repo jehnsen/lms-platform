@@ -139,7 +139,7 @@ Each gets an adapter interface and a mock in the phase shown.
 
 | Integration | Phase |
 | --- | --- |
-| Student Information System: roster import (mock built in Phase 1: `src/lib/adapters/sis.ts`) and final-grade export (mock built in Phase 4, same adapter; the real format is Q-18). Still to come: updating and deactivating existing users (Q-25), connection test | 1, 4, 8 |
+| Student Information System: roster import (mock built in Phase 1: `src/lib/adapters/sis.ts`) and final-grade export (mock built in Phase 4, same adapter; the real format is Q-18). A sync adds existing users to sections (Q-25, decided). Still to come: moving, removing and deactivating existing users (Q-63), connection test | 1, 4, 8 |
 | School identity provider (mock built in Phase 1: `src/lib/adapters/identity-provider.ts`) | 1 |
 | Plagiarism service (mock built in Phase 3a: `src/lib/adapters/plagiarism.ts`). The real one is asynchronous: submit, then receive the report by callback or polling. Student work may only be sent once the school has agreed terms with the provider (Q-42) | 3a |
 | Video conferencing: live sessions and recordings | 6 |

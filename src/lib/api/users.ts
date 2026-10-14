@@ -204,6 +204,8 @@ function importContext(): ImportContext {
   const terms = termsRepo.get();
   return {
     users: usersRepo.get(),
+    // Q-25: who is already where, so an existing account is only added to sections it is not in.
+    enrollments: enrollmentsRepo.get(),
     sections: sectionsRepo.get().map((section) => {
       const course = coursesRepo.get().find((candidate) => candidate.id === section.courseId);
       return {
@@ -211,6 +213,7 @@ function importContext(): ImportContext {
         code: section.code,
         courseId: section.courseId,
         open: course !== undefined && !isCourseArchived(course, terms),
+        facultyIds: section.facultyIds,
       };
     }),
   };
@@ -256,13 +259,23 @@ function saveImport(plan: ImportPlan, source: string): ImportPlan {
     importCounter += 1;
     return `u-import-${stamp}-${importCounter}`;
   });
-  if (changes.users.length > 0) {
-    usersRepo.update((users) => [...users, ...changes.users]);
-    enrollmentsRepo.update((enrollments) => [...enrollments, ...changes.enrollments]);
+  if (changes.users.length > 0) usersRepo.update((users) => [...users, ...changes.users]);
+  // New accounts and, since Q-25, existing ones are placed in the sections their rows list.
+  if (changes.enrollments.length > 0) {
+    enrollmentsRepo.update((enrollments) => [
+      ...enrollments,
+      ...changes.enrollments.filter(
+        (added) => !enrollments.some((entry) => entry.userId === added.userId && entry.sectionId === added.sectionId),
+      ),
+    ]);
+  }
+  if (changes.teaching.length > 0) {
     sectionsRepo.update((sections) =>
       sections.map((section) => {
-        const added = changes.teaching.filter((entry) => entry.sectionId === section.id).map((entry) => entry.userId);
-        return added.length > 0 ? { ...section, facultyIds: [...section.facultyIds, ...added] } : section;
+        const added = changes.teaching
+          .filter((entry) => entry.sectionId === section.id && !section.facultyIds.includes(entry.userId))
+          .map((entry) => entry.userId);
+        return added.length > 0 ? { ...section, facultyIds: [...section.facultyIds, ...new Set(added)] } : section;
       }),
     );
   }
@@ -271,15 +284,16 @@ function saveImport(plan: ImportPlan, source: string): ImportPlan {
     action: "users.import",
     resource: `users:${source}`,
     outcome: "allowed",
-    detail: `${counts.ready} created, ${counts.duplicate} duplicates skipped, ${counts.error} not imported`,
+    detail: `${counts.ready} created, ${counts.update} existing accounts added to sections, ${counts.duplicate} duplicates skipped, ${counts.error} not imported`,
   });
   return plan;
 }
 
 /**
- * Creates the accounts for the rows that passed. The file is checked again
- * against the accounts that exist now, so a row that became a duplicate since
- * the preview is skipped rather than created twice (FR-1.6).
+ * Creates the accounts for the rows that passed, and adds people who already
+ * have an account to the sections their rows list (Q-25). The file is checked
+ * again against the accounts that exist now, so a row that became a duplicate
+ * since the preview is skipped rather than created twice (FR-1.6).
  */
 export async function commitUserImport(file: File): Promise<ImportPlan> {
   const plan = await previewUserImport(file);
@@ -292,8 +306,9 @@ export function useSisSync(): SisSyncState {
 
 /**
  * FR-1.6: a manual sync with the SIS. New people are created; people who
- * already have an account are left as they are; records the import rejects
- * are returned in the report. Scheduled syncs need a server.
+ * already have an account are added to any section the SIS lists that they
+ * are not in yet (Q-25) and are otherwise left as they are; records the import
+ * rejects are returned in the report. Scheduled syncs need a server.
  */
 export async function syncFromSis(): Promise<ImportPlan> {
   authorize("create", { type: "user" });
@@ -316,6 +331,7 @@ export async function syncFromSis(): Promise<ImportPlan> {
   sisSyncRepo.update(() => ({
     lastRunAt: nowIso(),
     created: counts.ready,
+    updated: counts.update,
     skipped: counts.duplicate,
     failed: counts.error,
   }));
